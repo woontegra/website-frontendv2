@@ -20,7 +20,7 @@ import { AdminV2MediaPage } from '@/admin/v2/AdminV2MediaPage';
 import { AdminV2SeoPage } from '@/admin/v2/AdminV2SeoPage';
 import { AdminV2PublishPage } from '@/admin/v2/AdminV2PublishPage';
 import { AdminV2PublishPlaceholderPage } from '@/admin/v2/AdminV2PublishPlaceholderPage';
-import { AdminV2DemoPlaceholderPage } from '@/admin/v2/AdminV2DemoPlaceholderPage';
+import { AdminV2DemoPageManagement } from '@/admin/v2/AdminV2DemoPageManagement';
 import { AdminTechnicalHubPage } from '@/admin/v2/AdminTechnicalHubPage';
 import { AdminV2ContentPage } from '@/admin/v2/AdminV2ContentPage';
 import { AdminV2PagesPage } from '@/admin/v2/AdminV2PagesPage';
@@ -34,6 +34,8 @@ import FaqPage from '@/pages/FaqPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import CalculationLandingPage from '@/pages/CalculationLandingPage';
 import SatinAlPage from '@/pages/SatinAlPage';
+import OdemeBasariliPage from '@/pages/OdemeBasariliPage';
+import OdemeBasarisizPage from '@/pages/OdemeBasarisizPage';
 import CampaignRedirectPage from '@/pages/CampaignRedirectPage';
 import { calculationPageSlugs } from '@/data/calculationPages';
 import { calculationModulePathRedirects } from '@/data/calculationModulePaths';
@@ -63,7 +65,8 @@ export default function App() {
         <Route path="campaigns" element={<AdminV2CampaignsPage />} />
         <Route path="purchase" element={<AdminV2PurchasePage />} />
         <Route path="settings" element={<AdminV2SiteSettingsPage />} />
-        <Route path="demo" element={<AdminV2DemoPlaceholderPage />} />
+        <Route path="demo-page" element={<AdminV2DemoPageManagement />} />
+        <Route path="demo" element={<Navigate to="demo-page" replace />} />
         <Route path="contact" element={<AdminV2ContactPage />} />
         <Route path="faq" element={<AdminV2FaqPage />} />
         <Route path="footer" element={<AdminV2FooterPage />} />
@@ -95,6 +98,9 @@ export default function App() {
         path="/admin/analytics"
         element={<Navigate to="/admin/v2/settings?tab=takip" replace />}
       />
+
+      <Route path="odeme-basarili" element={<OdemeBasariliPage />} />
+      <Route path="odeme-basarisiz" element={<OdemeBasarisizPage />} />
 
       <Route element={<SiteLayout />}>
         <Route index element={<HomePage />} />

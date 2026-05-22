@@ -11,7 +11,14 @@ import {
   type AdminPricingPlanRow,
   type AdminV2ContentBundle,
 } from '@/lib/adminContentBundle';
+import { AdminPageHeroSection } from '@/admin/v2/AdminPageHeroSection';
 import { Card } from '@/components/ui/Card';
+
+const PRICING_HERO_DEFAULTS = {
+  eyebrow: '',
+  title: '',
+  description: '',
+};
 
 type PricingPlanEditable = AdminPricingPlanRow & {
   id: string;
@@ -121,6 +128,7 @@ const inputClass =
   'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-60';
 
 export function AdminV2PricingPage() {
+  const [bundle, setBundle] = useState<AdminV2ContentBundle | null>(null);
   const [plans, setPlans] = useState<PricingPlanEditable[]>([]);
   const [columns, setColumns] = useState<AdminPricingComparisonRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -136,9 +144,10 @@ export function AdminV2PricingPage() {
     setError(null);
 
     try {
-      const bundle = await fetchAdminV2ContentBundle();
-      const parsed = parseAdminPricing(bundle);
-      setPlans(enrichPlansFromBundle(bundle));
+      const loaded = await fetchAdminV2ContentBundle();
+      setBundle(loaded);
+      const parsed = parseAdminPricing(loaded);
+      setPlans(enrichPlansFromBundle(loaded));
       setColumns(parsed.comparisonColumns);
     } catch (err) {
       const apiErr = err as ApiError;
@@ -152,6 +161,7 @@ export function AdminV2PricingPage() {
     if (tokenPresent) {
       loadPricing();
     } else {
+      setBundle(null);
       setPlans([]);
       setColumns([]);
       setEditingId(null);
@@ -244,7 +254,11 @@ export function AdminV2PricingPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-600">
-          Abonelik paketleri ve fiyat metinleri. Paket kodu, özellik listesi ve karşılaştırma kolonları bu ekrandan değişmez.
+          Abonelik paketleri ve fiyat metinleri.{' '}
+          <strong className="font-semibold text-slate-800">
+            Aylık (monthly) ve yıllık (yearly) fiyatlar /fiyatlandirma ve /satin-al ödeme tutarına yansır.
+          </strong>{' '}
+          Fiyatı &quot;300 TL&quot; veya &quot;2.000,00 TL&quot; biçiminde yazın. Paket kodu ve özellik listesi bu ekrandan değişmez.
         </p>
         <button
           type="button"
@@ -284,8 +298,23 @@ export function AdminV2PricingPage() {
         </div>
       )}
 
-      {!loading && tokenPresent && !error && (
+      {!loading && tokenPresent && !error && bundle && (
         <>
+          <AdminPageHeroSection
+            bundle={bundle}
+            pagePath="/fiyatlandirma"
+            cardTitle="Fiyatlandırma sayfası hero"
+            fieldLabels={{
+              eyebrow: 'Fiyatlandırma sayfası hero üst etiket',
+              title: 'Hero başlık',
+              description: 'Hero açıklama',
+            }}
+            defaults={PRICING_HERO_DEFAULTS}
+            liveUrl="/fiyatlandirma"
+            editDisabled={editingId !== null}
+            onSaved={loadPricing}
+          />
+
           <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-5 py-3">
             <p className="text-sm font-semibold text-slate-700">Toplam paket</p>
             <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-sm font-bold text-emerald-800">

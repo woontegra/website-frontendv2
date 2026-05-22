@@ -39,11 +39,11 @@ export const HERO_MARKETING_SLIDES: HeroMarketingSlide[] = [
   },
 ];
 
+/** public/images altında mevcut hero görselleri (yedek galeri) */
 export const SATIN_AL_STATIC_IMAGES: string[] = [
-  '/images/product-1-fazla-mesai.png',
-  '/images/product-2-panel.png',
-  '/images/product-3-rapor.png',
-  '/images/product-4-detay.png',
+  '/images/hero-bos-form.png',
+  '/images/hero-doldurulmus-form.png',
+  '/images/hero-onizleme-rapor.png',
 ];
 
 const HERO_BY_TITLE = new Map(
@@ -102,14 +102,19 @@ export function buildHeroWorkflowItems(
     });
 }
 
-/** Satın Al: ürün imageUrl (admin) öncelikli */
+function isLikelyBrokenLocalPlaceholder(url: string): boolean {
+  return /^\/images\/product-\d+/i.test(url);
+}
+
+/** Satın Al: ürün imageUrl (admin) öncelikli — Cloudinary https ve /uploads */
 export function getSatinAlDisplayImages(imageUrl?: string | null): string[] {
   const fromAdmin = parseProductImageUrls(imageUrl)
+    .filter((u) => !isLikelyBrokenLocalPlaceholder(u))
     .map((u) => resolvePublicAssetUrl(u))
-    .filter(Boolean);
+    .filter((u) => Boolean(u && (/^https?:\/\//i.test(u) || u.startsWith('/'))));
 
   if (fromAdmin.length > 0) return fromAdmin;
-  return [...SATIN_AL_STATIC_IMAGES];
+  return SATIN_AL_STATIC_IMAGES.map((u) => resolvePublicAssetUrl(u)).filter(Boolean);
 }
 
 export function getSatinAlStaticFallback(index: number): string {

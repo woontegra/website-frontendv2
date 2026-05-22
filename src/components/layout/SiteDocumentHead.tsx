@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
 import { useContentBundle } from '@/app/ContentProvider';
+import { useRouteSeo } from '@/lib/pageSeo';
 
-/** Genel ayarlardan favicon (ve isteğe bağlı başlık) — index.html varsayılanını günceller */
+/** Site favicon + aktif sayfa SEO (v2_seo_pages → document head). */
 export function SiteDocumentHead() {
   const { content } = useContentBundle();
   const favicon = content.branding.faviconUrl;
+
+  useRouteSeo(content);
 
   useEffect(() => {
     if (!favicon) return;

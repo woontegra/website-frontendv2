@@ -11,6 +11,8 @@ export const config = {
   PAYMENT_MONTHLY_URL: 'https://www.example.com/odeme-aylik',
   PAYMENT_YEARLY_URL: 'https://www.example.com/odeme-yillik',
   YOUTUBE_URL: 'https://www.youtube.com/@bilirkisihesap',
+  /** Baro paket kartı fiyatlandırma sayfasında (anlaşma sonrası true). */
+  SHOW_BARO_PRICING_PLAN: false,
   siteName: 'Bilirkişi Hesap',
   contactEmail: 'info@bilirkisihesap.com',
   contactPhone: '+90 (212) 000 00 00',

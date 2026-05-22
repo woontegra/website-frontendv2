@@ -5,6 +5,7 @@ import { DemoRequestForm } from '@/components/forms/DemoRequestForm';
 import { Button } from '@/components/ui/Button';
 import { MarketingImage, MarketingImageFallback } from '@/components/ui/MarketingImage';
 import { getMediaAssetByKey, resolveMediaFileUrl } from '@/lib/contentBundle';
+import { usePageSeo } from '@/lib/pageSeo';
 
 const DEMO_HERO_IMAGE_FALLBACK = '';
 const DEMO_FORM_IMAGE_FALLBACK = '';
@@ -52,6 +53,11 @@ function InfoCard({
 export default function DemoRequestPage() {
   const { content } = useContentBundle();
   const demo = content.demo;
+
+  usePageSeo(content, '/demo-talep', {
+    title: demo.heroTitle,
+    description: demo.heroDescription,
+  });
 
   const heroImageSrc = resolveMediaFileUrl(
     content,

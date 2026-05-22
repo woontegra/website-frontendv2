@@ -11,9 +11,11 @@ import { useContentBundle } from '@/app/ContentProvider';
 import {
   getMediaAssetByKey,
   resolveMediaFileUrl,
+  resolvePageHero,
   type PricingComparisonColumnView,
   type PricingPlanView,
 } from '@/lib/contentBundle';
+import { usePageSeo } from '@/lib/pageSeo';
 import { Button } from '@/components/ui/Button';
 import { MarketingImage, MarketingImageFallback } from '@/components/ui/MarketingImage';
 
@@ -109,8 +111,21 @@ function PricingPlanCard({ plan }: { plan: PricingPlanView }) {
   );
 }
 
+const PRICING_HERO_DEFAULTS = {
+  eyebrow: 'Fiyatlandırma',
+  title: 'Bilirkişi Hesap paketleri',
+  description:
+    'İşçilik alacakları hesaplamalarında doğru, hızlı ve raporlanabilir hesaplama altyapısı.',
+};
+
 export default function PricingPage() {
   const { content } = useContentBundle();
+  const hero = resolvePageHero(content, '/fiyatlandirma', PRICING_HERO_DEFAULTS);
+
+  usePageSeo(content, '/fiyatlandirma', {
+    title: PRICING_HERO_DEFAULTS.title,
+    description: PRICING_HERO_DEFAULTS.description,
+  });
 
   const heroImageSrc = resolveMediaFileUrl(
     content,
@@ -161,17 +176,13 @@ export default function PricingPage() {
         <div className="container-page py-14 lg:py-20">
           <p className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-emerald-300">
             <Scale className="h-4 w-4" />
-            Fiyatlandırma
+            {hero.eyebrow}
           </p>
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Bilirkişi Hesap paketleri
+            {hero.title}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-200">
-            İşçilik alacakları hesaplamalarında doğru, hızlı ve raporlanabilir hesaplama
-            altyapısı.
-          </p>
-          <p className="mt-3 text-base font-medium text-emerald-300/90">
-            Avukatlar, bilirkişiler ve hukuk profesyonelleri için hazırlanmıştır.
+            {hero.description}
           </p>
           <PricingPageMedia
             src={heroImageSrc}
@@ -192,7 +203,13 @@ export default function PricingPage() {
             label="pricing-plans.png"
             className="mx-auto mb-8 max-w-2xl"
           />
-          <div className="grid gap-6 lg:grid-cols-3 lg:gap-8">
+          <div
+            className={`mx-auto grid max-w-5xl gap-6 lg:gap-8 ${
+              content.pricingPlans.length >= 3
+                ? 'lg:grid-cols-3'
+                : 'md:grid-cols-2'
+            }`}
+          >
             {content.pricingPlans.map((plan) => (
               <PricingPlanCard key={plan.code} plan={plan} />
             ))}

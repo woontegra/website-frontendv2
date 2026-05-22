@@ -85,8 +85,22 @@ function GeneralTab() {
       });
       const url = dto.fileUrl?.trim();
       if (!url) throw new Error('Cloudinary URL alınamadı');
-      setData((d) => (d ? { ...d, [field]: url } : d));
-      showToast('Cloudinary’ye yüklendi — Kaydet ile siteye uygulayın', 'success');
+      const next = data ? { ...data, [field]: url } : data;
+      if (!next) throw new Error('Ayarlar yüklenemedi');
+      setData(next);
+      await updateGeneralSettings({
+        siteTitle: next.siteTitle,
+        siteDescription: next.siteDescription,
+        contactEmail: next.contactEmail,
+        phone: next.phone,
+        address: next.address,
+        logoUrl: next.logoUrl,
+        faviconUrl: next.faviconUrl,
+      });
+      showToast(
+        field === 'logoUrl' ? 'Logo kaydedildi' : 'Favicon kaydedildi',
+        'success',
+      );
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Yükleme hatası', 'error');
     } finally {

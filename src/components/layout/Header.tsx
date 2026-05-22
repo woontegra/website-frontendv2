@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu, X, LogIn } from 'lucide-react';
 import { useContentBundle } from '@/app/ContentProvider';
+import {
+  isExternalNavHref,
+  isUsableBrandingLogoUrl,
+  resolveHomepageHeroCtaButtons,
+  resolvePanelLoginCta,
+} from '@/lib/contentBundle';
 import { config } from '@/lib/config';
 import { Button } from '@/components/ui/Button';
 
@@ -16,10 +22,23 @@ const navItems = [
 
 export function Header() {
   const { content } = useContentBundle();
-  const logoSrc = content.branding.logoUrl || '/images/logo.png';
+  const logoSrc = content.branding.logoUrl?.trim() ?? '';
+  const showLogo = isUsableBrandingLogoUrl(logoSrc);
   const siteName =
     content.settings.site_name?.trim() || config.siteName;
+  const heroCtas = resolveHomepageHeroCtaButtons(content);
+  const demoCta = heroCtas.find((b) => b.code === 'hero_demo');
+  const panelLogin = resolvePanelLoginCta(content);
+  const demoHref = demoCta?.href ?? '/demo-talep';
+  const demoLabel = demoCta?.label ?? 'Demo Talep Et';
+  const loginHref = panelLogin.href;
+  const loginLabel = panelLogin.label;
   const [open, setOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [logoSrc]);
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `text-[15px] font-semibold transition-colors ${
@@ -29,23 +48,19 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-slate-200 bg-white shadow-md">
       <div className="container-page flex h-[4.25rem] items-center justify-between gap-6 lg:h-[4.5rem]">
-        <Link to="/" className="flex shrink-0 items-center gap-2.5">
-          <img
-            src={logoSrc}
-            alt={siteName}
-            className="h-10 w-auto max-w-[10rem] object-contain"
-            onError={(e) => {
-              const img = e.currentTarget;
-              if (img.src.includes('/images/logo.png')) {
-                img.style.display = 'none';
-                return;
-              }
-              img.src = '/images/logo.png';
-            }}
-          />
-          <span className="text-lg font-bold tracking-tight text-slate-900 lg:text-xl">
-            {siteName}
-          </span>
+        <Link to="/" className="flex shrink-0 items-center">
+          {showLogo && !logoFailed ? (
+            <img
+              src={logoSrc}
+              alt={siteName}
+              className="h-10 w-auto max-w-[14rem] object-contain sm:h-11"
+              onError={() => setLogoFailed(true)}
+            />
+          ) : (
+            <span className="text-lg font-bold tracking-tight text-slate-900 lg:text-xl">
+              {siteName}
+            </span>
+          )}
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">
@@ -57,12 +72,17 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <Button to={config.PANEL_LOGIN_URL} variant="outline" size="md" external>
+          <Button
+            to={loginHref}
+            variant="outline"
+            size="md"
+            external={panelLogin.external}
+          >
             <LogIn className="h-4 w-4" />
-            Programa Giriş
+            {loginLabel}
           </Button>
-          <Button to="/demo-talep" variant="accent" size="md">
-            Demo Talep Et
+          <Button to={demoHref} variant="accent" size="md" external={isExternalNavHref(demoHref)}>
+            {demoLabel}
           </Button>
         </div>
 
@@ -94,11 +114,21 @@ export function Header() {
               </NavLink>
             ))}
             <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4">
-              <Button to="/demo-talep" variant="accent" className="w-full">
-                Demo Talep Et
+              <Button
+                to={demoHref}
+                variant="accent"
+                className="w-full"
+                external={isExternalNavHref(demoHref)}
+              >
+                {demoLabel}
               </Button>
-              <Button to={config.PANEL_LOGIN_URL} variant="outline" className="w-full" external>
-                Programa Giriş
+              <Button
+                to={loginHref}
+                variant="outline"
+                className="w-full"
+                external={panelLogin.external}
+              >
+                {loginLabel}
               </Button>
             </div>
           </nav>

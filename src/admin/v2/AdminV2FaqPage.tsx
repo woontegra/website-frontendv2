@@ -21,7 +21,14 @@ import {
 } from '@/lib/adminContentBundle';
 import { createAdminV2FaqCategory, createAdminV2FaqItem } from '@/lib/adminFaq';
 import { adminV2Patch } from '@/lib/adminV2Patch';
+import { AdminPageHeroSection } from '@/admin/v2/AdminPageHeroSection';
 import { Card } from '@/components/ui/Card';
+
+const FAQ_HERO_DEFAULTS = {
+  eyebrow: '',
+  title: '',
+  description: '',
+};
 
 type FaqItemEditable = {
   id: string;
@@ -98,6 +105,7 @@ function enrichFaq(bundle: AdminV2ContentBundle): FaqDataEditable {
 }
 
 export function AdminV2FaqPage() {
+  const [bundle, setBundle] = useState<AdminV2ContentBundle | null>(null);
   const [data, setData] = useState<FaqDataEditable | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -123,8 +131,9 @@ export function AdminV2FaqPage() {
     setLoading(true);
     setError(null);
     try {
-      const bundle = await fetchAdminV2ContentBundle();
-      setData(enrichFaq(bundle));
+      const loaded = await fetchAdminV2ContentBundle();
+      setBundle(loaded);
+      setData(enrichFaq(loaded));
     } catch (err) {
       const apiErr = err as ApiError;
       setError(apiErr.message ?? 'SSS yüklenemedi');
@@ -136,6 +145,7 @@ export function AdminV2FaqPage() {
   useEffect(() => {
     if (tokenPresent) loadFaq();
     else {
+      setBundle(null);
       setData(null);
       setEditingKey(null);
     }
@@ -351,8 +361,23 @@ export function AdminV2FaqPage() {
         </div>
       )}
 
-      {!loading && tokenPresent && !error && data && (
+      {!loading && tokenPresent && !error && data && bundle && (
         <>
+          <AdminPageHeroSection
+            bundle={bundle}
+            pagePath="/sss"
+            cardTitle="SSS sayfası hero"
+            fieldLabels={{
+              eyebrow: 'SSS sayfası hero üst etiket',
+              title: 'SSS sayfası hero başlık',
+              description: 'SSS sayfası hero açıklama',
+            }}
+            defaults={FAQ_HERO_DEFAULTS}
+            liveUrl="/sss"
+            editDisabled={editingKey !== null || modal !== null}
+            onSaved={loadFaq}
+          />
+
           <div className="flex flex-wrap gap-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-3">
               <p className="text-xs font-semibold uppercase text-slate-500">Toplam kategori</p>

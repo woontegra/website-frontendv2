@@ -687,7 +687,7 @@ export function AdminV2HomepageManagementPage() {
             />
             <div className="mt-3 flex flex-wrap gap-2">
               <CmsPrimaryButton to="/admin/v2/pricing">Fiyatlandırma</CmsPrimaryButton>
-              <CmsPrimaryButton to="/admin/v2/demo">Demo Talep</CmsPrimaryButton>
+              <CmsPrimaryButton to="/admin/v2/demo-page">Demo Talep</CmsPrimaryButton>
             </div>
           </CmsPanel>
 

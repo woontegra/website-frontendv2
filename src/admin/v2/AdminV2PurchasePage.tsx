@@ -19,6 +19,7 @@ import {
 } from '@/admin/ui/adminUiClasses';
 import { useAdminToken } from '@/admin/v2/AdminTokenContext';
 import { uploadAdminImage } from '@/lib/adminSiteSettings';
+import { validateMediaUploadFile } from '@/lib/adminV2Media';
 import {
   fetchAdminProduct,
   updateAdminProduct,
@@ -168,11 +169,21 @@ export function AdminV2PurchasePage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file || !tokenPresent) return;
+
+    const validationError = validateMediaUploadFile(file);
+    if (validationError) {
+      showToast(validationError, 'error');
+      return;
+    }
+
     setUploading(true);
     try {
-      const url = await uploadAdminImage(file);
+      const url = await uploadAdminImage(file, {
+        assetKeyPrefix: 'purchase.gallery',
+        altText: 'Satın al sayfası galeri',
+      });
       setForm((f) => ({ ...f, imageUrls: [...f.imageUrls, url] }));
-      showToast('Görsel yüklendi', 'success');
+      showToast('Görsel yüklendi — kaydetmeyi unutmayın', 'success');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Yükleme başarısız', 'error');
     } finally {
@@ -287,7 +298,7 @@ export function AdminV2PurchasePage() {
 
           <SectionCard
             title="Fiyatlar (TL)"
-            description="Aylık ve yıllık abonelik tutarları"
+            description="Doğrudan ödeme kaydı. Tanıtım ve paket kartları için öncelik: Fiyatlandırma → monthly / yearly fiyat metni."
           >
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
@@ -334,7 +345,7 @@ export function AdminV2PurchasePage() {
 
           <SectionCard
             title="Ürün galerisi"
-            description="Satın al sayfasındaki ürün görselleri"
+            description="Satın al sayfasındaki ürün görselleri (Cloudinary; JPEG/PNG/WEBP, en fazla 5 MB)"
           >
             <div className="flex flex-wrap gap-2">
               <label

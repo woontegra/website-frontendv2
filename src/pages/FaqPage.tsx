@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { HelpCircle, ChevronDown } from 'lucide-react';
 import { useContentBundle } from '@/app/ContentProvider';
+import { resolvePageHero } from '@/lib/contentBundle';
+import { usePageSeo } from '@/lib/pageSeo';
 import { Button } from '@/components/ui/Button';
 
 function FaqAccordionItem({
@@ -36,9 +38,22 @@ function FaqAccordionItem({
   );
 }
 
+const FAQ_HERO_DEFAULTS = {
+  eyebrow: 'Yardım merkezi',
+  title: 'Sık Sorulan Sorular',
+  description:
+    'Bilirkişi Hesap kullanımı, demo talebi, fiyatlandırma ve hesaplama modülleri hakkında merak edilenler.',
+};
+
 export default function FaqPage() {
   const { content } = useContentBundle();
   const faqCategories = content.faqCategories;
+  const hero = resolvePageHero(content, '/sss', FAQ_HERO_DEFAULTS);
+
+  usePageSeo(content, '/sss', {
+    title: FAQ_HERO_DEFAULTS.title,
+    description: FAQ_HERO_DEFAULTS.description,
+  });
 
   return (
     <div>
@@ -46,14 +61,13 @@ export default function FaqPage() {
         <div className="container-page py-14 lg:py-16">
           <p className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-emerald-300">
             <HelpCircle className="h-4 w-4" />
-            Yardım merkezi
+            {hero.eyebrow}
           </p>
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Sık Sorulan Sorular
+            {hero.title}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-200">
-            Bilirkişi Hesap kullanımı, demo talebi, fiyatlandırma ve hesaplama modülleri hakkında
-            merak edilenler.
+            {hero.description}
           </p>
         </div>
       </section>

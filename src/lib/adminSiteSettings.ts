@@ -1,6 +1,7 @@
 import { apiRequest, resolveApiUrl } from '@/lib/apiClient';
 import { getAdminToken } from '@/lib/adminAuth';
 import type { ApiError } from '@/lib/apiClient';
+import { uploadAdminV2Media, validateMediaUploadFile } from '@/lib/adminV2Media';
 
 type ApiEnvelope<T> = {
   success?: boolean;
@@ -167,7 +168,22 @@ export async function updateTrackingSettings(data: TrackingSettings): Promise<vo
   }
 }
 
-export async function uploadAdminImage(file: File): Promise<string> {
+export type UploadAdminImageOptions = {
+  /** Benzersiz medya anahtarı öneki (ör. purchase.gallery) */
+  assetKeyPrefix?: string;
+  altText?: string;
+};
+
+function isCloudinaryUnavailableMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes('cloudinary') ||
+    m.includes('yapılandırılmamış') ||
+    m.includes('(503)')
+  );
+}
+
+async function uploadAdminImageLegacyDisk(file: File): Promise<string> {
   const token = getAdminToken();
   if (!token) throw new Error('Admin token gerekli');
 
@@ -180,9 +196,61 @@ export async function uploadAdminImage(file: File): Promise<string> {
     body: formData,
   });
 
-  const json = (await res.json()) as ApiEnvelope<{ url?: string }>;
-  if (!json.success || !json.data?.url) {
-    throw new Error(json.message ?? 'Dosya yüklenemedi');
+  const text = await res.text();
+  let json: ApiEnvelope<{ url?: string }> | null = null;
+  if (text) {
+    try {
+      json = JSON.parse(text) as ApiEnvelope<{ url?: string }>;
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (!res.ok || !json?.success || !json.data?.url) {
+    throw new Error(
+      json?.message ??
+        (res.status === 401
+          ? 'Oturum süresi dolmuş olabilir — panelden tekrar giriş yapın.'
+          : `Dosya yüklenemedi (${res.status})`),
+    );
   }
   return json.data.url;
+}
+
+/**
+ * Admin görsel yükleme — önce Cloudinary (v2 medya), yoksa yerel /uploads.
+ */
+export async function uploadAdminImage(
+  file: File,
+  options?: UploadAdminImageOptions,
+): Promise<string> {
+  const fileError = validateMediaUploadFile(file);
+  if (fileError) throw new Error(fileError);
+
+  const prefix = (options?.assetKeyPrefix ?? 'cms.upload').replace(/[^a-zA-Z0-9._-]/g, '-');
+  const assetKey = `${prefix}.${Date.now()}`;
+
+  try {
+    const dto = await uploadAdminV2Media({
+      file,
+      assetKey,
+      altText: options?.altText?.trim() || file.name,
+    });
+    const url = dto.fileUrl?.trim();
+    if (!url) throw new Error('Yükleme tamamlandı ancak görsel adresi alınamadı');
+    return url;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Dosya yüklenemedi';
+    if (!isCloudinaryUnavailableMessage(message)) {
+      throw err instanceof Error ? err : new Error(message);
+    }
+    try {
+      return await uploadAdminImageLegacyDisk(file);
+    } catch (legacyErr) {
+      const legacyMsg = legacyErr instanceof Error ? legacyErr.message : String(legacyErr);
+      throw new Error(
+        `${message} Alternatif olarak görseli Cloudinary’ye yükleyip “URL ekle” ile https:// adresini yapıştırın. (${legacyMsg})`,
+      );
+    }
+  }
 }

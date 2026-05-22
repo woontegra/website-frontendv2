@@ -17,9 +17,16 @@ import {
   type AdminV2ContentBundle,
 } from '@/lib/adminContentBundle';
 import { adminV2Patch } from '@/lib/adminV2Patch';
+import { AdminPageHeroSection } from '@/admin/v2/AdminPageHeroSection';
 import { Card } from '@/components/ui/Card';
 
 const SETTING_EDIT_KEY = 'setting';
+
+const CONTACT_HERO_DEFAULTS = {
+  eyebrow: '',
+  title: '',
+  description: '',
+};
 
 type SupportCardEditable = AdminSupportCardRow & { isActive: boolean };
 
@@ -42,6 +49,7 @@ function enrichSupportCards(bundle: AdminV2ContentBundle): SupportCardEditable[]
 }
 
 export function AdminV2ContactPage() {
+  const [bundle, setBundle] = useState<AdminV2ContentBundle | null>(null);
   const [data, setData] = useState<AdminContactData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,11 +70,12 @@ export function AdminV2ContactPage() {
     setLoading(true);
     setError(null);
     try {
-      const bundle = await fetchAdminV2ContentBundle();
-      const parsed = parseAdminContact(bundle);
+      const loaded = await fetchAdminV2ContentBundle();
+      setBundle(loaded);
+      const parsed = parseAdminContact(loaded);
       setData({
         ...parsed,
-        supportCards: enrichSupportCards(bundle),
+        supportCards: enrichSupportCards(loaded),
       });
     } catch (err) {
       const apiErr = err as ApiError;
@@ -79,6 +88,7 @@ export function AdminV2ContactPage() {
   useEffect(() => {
     if (tokenPresent) loadContact();
     else {
+      setBundle(null);
       setData(null);
       setEditingKey(null);
     }
@@ -155,8 +165,7 @@ export function AdminV2ContactPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-600">
-          Content bundle <code className="rounded bg-slate-200 px-1 text-xs">contact</code> — iletişim
-          alanları ve destek kartları düzenlenebilir.
+          İletişim sayfası hero metinleri, iletişim bilgileri ve destek kartları.
         </p>
         <button
           type="button"
@@ -190,12 +199,25 @@ export function AdminV2ContactPage() {
         </div>
       )}
 
-      {!loading && tokenPresent && !error && data && (
+      {!loading && tokenPresent && !error && data && bundle && (
         <>
+          <AdminPageHeroSection
+            bundle={bundle}
+            pagePath="/iletisim"
+            cardTitle="Sayfa hero"
+            fieldLabels={{
+              eyebrow: 'Hero üst etiket',
+              title: 'Hero başlık',
+              description: 'Hero açıklama',
+            }}
+            defaults={CONTACT_HERO_DEFAULTS}
+            liveUrl="/iletisim"
+            editDisabled={globalEdit}
+            onSaved={loadContact}
+          />
+
           <Card>
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-              contact.setting
-            </h2>
+            <h2 className="text-sm font-bold text-slate-900">İletişim bilgileri</h2>
             {!data.setting ? (
               <p className="mt-4 text-sm text-slate-500">İletişim ayarı kaydı yok.</p>
             ) : settingEditing && settingDraft ? (
@@ -282,9 +304,7 @@ export function AdminV2ContactPage() {
 
           <Card className="!p-0 overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-                contact.supportCards
-              </h2>
+              <h2 className="text-sm font-bold text-slate-900">Destek kartları</h2>
               <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-sm font-bold text-emerald-800">
                 {data.totalSupportCards}
               </span>

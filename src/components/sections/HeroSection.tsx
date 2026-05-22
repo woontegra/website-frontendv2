@@ -104,7 +104,7 @@ export function HeroSection({ slides, eyebrow, title, description, buttons }: He
             className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-slate-300 transition-colors hover:text-white"
           >
             <PlayCircle className="h-5 w-5 text-emerald-400" />
-            Tanıtım videosunu izle
+            Eğitim videosunu izle
           </a>
         </div>
 

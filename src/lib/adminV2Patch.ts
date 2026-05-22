@@ -25,6 +25,7 @@ export const ADMIN_V2_PATCH_ROUTES = {
     `/api/admin/v2/marketing/cta-buttons/${encodeURIComponent(String(id))}`,
   pageContent: (id: number | string) =>
     `/api/admin/v2/pages/contents/${encodeURIComponent(String(id))}`,
+  pageContentUpsert: () => '/api/admin/v2/pages/contents/upsert',
   pageCard: (id: number | string) => `/api/admin/v2/pages/cards/${encodeURIComponent(String(id))}`,
   media: (id: number | string) => `/api/admin/v2/media/${encodeURIComponent(String(id))}`,
 } as const;

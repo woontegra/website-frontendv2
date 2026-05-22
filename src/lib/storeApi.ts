@@ -110,6 +110,60 @@ export async function fetchCampaignById(id: string): Promise<Campaign | null> {
 
 export type PaytrTokenResponse = ApiEnvelope<{ token?: string }> & { token?: string };
 
+export type ContactMessagePayload = {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  phone?: string;
+};
+
+export type DemoRequestPayload = {
+  email: string;
+  name: string;
+  phone: string;
+  company?: string;
+};
+
+export async function submitDemoRequest(
+  data: DemoRequestPayload,
+): Promise<ApiEnvelope<unknown>> {
+  const res = await fetch(resolveApiUrl('/api/demo/request'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify(data),
+  });
+  const json = (await res.json()) as ApiEnvelope<unknown> & { error?: string };
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || json.message || 'Demo talebi gönderilemedi');
+  }
+  return json;
+}
+
+export async function submitContactMessage(
+  data: ContactMessagePayload,
+): Promise<ApiEnvelope<unknown>> {
+  const res = await fetch(resolveApiUrl('/api/contact'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify(data),
+  });
+  const json = (await res.json()) as ApiEnvelope<unknown> & { error?: string };
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || json.message || 'Mesaj gönderilemedi');
+  }
+  return json;
+}
+
+export async function confirmPaymentManualCallback(
+  merchantOid: string,
+): Promise<ApiEnvelope<unknown>> {
+  return apiRequest<ApiEnvelope<unknown>>('/api/payment/manual-callback', {
+    method: 'POST',
+    body: { merchant_oid: merchantOid },
+  });
+}
+
 export async function requestPaytrToken(params: {
   subscriptionPeriod: number;
   productType: 'monthly' | 'annual';

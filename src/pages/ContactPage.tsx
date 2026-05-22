@@ -11,7 +11,13 @@ import { config } from '@/lib/config';
 import { ContactForm } from '@/components/forms/ContactForm';
 import { Button } from '@/components/ui/Button';
 import { MarketingImage, MarketingImageFallback } from '@/components/ui/MarketingImage';
-import { getMediaAssetByKey, resolveMediaFileUrl } from '@/lib/contentBundle';
+import {
+  getMediaAssetByKey,
+  resolveMediaFileUrl,
+  resolvePageHero,
+  resolvePanelLoginCta,
+} from '@/lib/contentBundle';
+import { usePageSeo } from '@/lib/pageSeo';
 
 const CONTACT_HERO_IMAGE_FALLBACK = '';
 const CONTACT_INFO_IMAGE_FALLBACK = '';
@@ -41,9 +47,22 @@ function ContactPageMedia({
   );
 }
 
+const CONTACT_HERO_DEFAULTS = {
+  eyebrow: 'Destek',
+  title: 'İletişime Geçin',
+  description:
+    'Demo talebi, abonelik, baro kampanyaları ve program kullanımı hakkında bizimle iletişime geçebilirsiniz.',
+};
+
 export default function ContactPage() {
   const { content } = useContentBundle();
   const { setting, supportCards } = content.contact;
+  const hero = resolvePageHero(content, '/iletisim', CONTACT_HERO_DEFAULTS);
+
+  usePageSeo(content, '/iletisim', {
+    title: CONTACT_HERO_DEFAULTS.title,
+    description: CONTACT_HERO_DEFAULTS.description,
+  });
 
   const heroImageSrc = resolveMediaFileUrl(
     content,
@@ -87,7 +106,7 @@ export default function ContactPage() {
     : undefined;
 
   const contactEmail = setting.contactEmail ?? config.contactEmail;
-  const panelLoginUrl = setting.panelLoginUrl ?? config.PANEL_LOGIN_URL;
+  const panelLogin = resolvePanelLoginCta(content);
   const phoneDisplay =
     setting.phoneNote?.trim() ||
     setting.contactPhone?.trim() ||
@@ -99,14 +118,13 @@ export default function ContactPage() {
         <div className="container-page py-14 lg:py-16">
           <p className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-950/50 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-emerald-300">
             <MessageCircle className="h-4 w-4" />
-            Destek
+            {hero.eyebrow}
           </p>
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            İletişime Geçin
+            {hero.title}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-200">
-            Demo talebi, abonelik, baro kampanyaları ve program kullanımı hakkında bizimle
-            iletişime geçebilirsiniz.
+            {hero.description}
           </p>
           <ContactPageMedia
             src={heroImageSrc}
@@ -170,12 +188,12 @@ export default function ContactPage() {
                   Mevcut aboneliğiniz varsa programa buradan giriş yapın.
                 </p>
                 <Button
-                  to={panelLoginUrl}
-                  external
+                  to={panelLogin.href}
+                  external={panelLogin.external}
                   variant="secondary"
                   className="mt-4 w-full"
                 >
-                  Programa Giriş
+                  {panelLogin.label}
                 </Button>
               </div>
 

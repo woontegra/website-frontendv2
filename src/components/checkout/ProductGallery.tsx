@@ -25,21 +25,23 @@ export function ProductGallery({ images, alt }: ProductGalleryProps) {
   const go = (n: number) => setIndex(((n % total) + total) % total);
 
   return (
-    <div className="overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-md">
-      <div className="relative aspect-[4/3] bg-slate-100">
+    <div className="overflow-hidden rounded-2xl border-2 border-slate-200 bg-slate-900 shadow-md">
+      <div className="relative aspect-[4/3] min-h-[240px] w-full sm:min-h-[320px] lg:min-h-[380px]">
         {slides.map((src, i) => (
           <img
             key={`${i}-${srcByIndex[i] ?? src}`}
             src={srcByIndex[i] ?? src}
             alt={total > 1 ? `${alt} — ${i + 1}/${total}` : alt}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
-              i === index ? 'opacity-100' : 'opacity-0'
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            className={`absolute inset-0 size-full object-cover object-center transition-[opacity,transform] duration-300 ${
+              i === index ? 'opacity-100 scale-[1.08]' : 'opacity-0 scale-100'
             }`}
             onError={() => {
               const fallback = getSatinAlStaticFallback(i);
-              setSrcByIndex((prev) =>
-                prev[i] === fallback ? prev : { ...prev, [i]: fallback },
-              );
+              if (!fallback || (srcByIndex[i] ?? src) === fallback) return;
+              setSrcByIndex((prev) => ({ ...prev, [i]: fallback }));
             }}
           />
         ))}

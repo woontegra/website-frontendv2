@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { showToast } from '@/components/ui/toast';
+import { submitDemoRequest } from '@/lib/storeApi';
 
 export type DemoFormValues = {
   fullName: string;
@@ -24,10 +26,30 @@ const labelClass = 'block text-sm font-semibold text-slate-800';
 export function DemoRequestForm() {
   const [values, setValues] = useState<DemoFormValues>(initialValues);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    if (loading) return;
+    setLoading(true);
+    try {
+      await submitDemoRequest({
+        email: values.email.trim(),
+        name: values.fullName.trim(),
+        phone: values.phone.trim(),
+        company: values.barAssociation.trim() || undefined,
+      });
+      setSubmitted(true);
+      showToast('Demo talebiniz alındı. E-posta adresinize giriş bilgileri gönderilecektir.', 'success');
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Demo talebi gönderilirken bir hata oluştu. Lütfen tekrar deneyin.';
+      showToast(msg, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const field = (
@@ -45,6 +67,7 @@ export function DemoRequestForm() {
         id={id}
         type={type}
         required={required}
+        disabled={loading}
         className={inputClass}
         value={values[id]}
         onChange={(ev) => setValues({ ...values, [id]: ev.target.value })}
@@ -58,10 +81,10 @@ export function DemoRequestForm() {
         <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" strokeWidth={2} />
         <p className="mt-4 text-lg font-bold text-slate-900">Teşekkürler</p>
         <p className="mt-3 text-base leading-relaxed text-slate-700">
-          Demo talep bağlantısı sonraki aşamada aktif edilecektir.
+          Demo talebiniz alındı. Giriş bilgileriniz e-posta adresinize gönderilecektir.
         </p>
         <p className="mt-2 text-sm text-slate-600">
-          Bu aşamada bilgileriniz sunucuya gönderilmedi; yalnızca arayüz önizlemesidir.
+          E-postayı birkaç dakika içinde kontrol edin; gelmezse spam klasörüne bakın.
         </p>
         <Button
           type="button"
@@ -82,7 +105,7 @@ export function DemoRequestForm() {
     <form onSubmit={handleSubmit} className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-lg sm:p-8">
       <h2 className="text-xl font-bold text-slate-900">Demo talep formu</h2>
       <p className="mt-1 text-sm text-slate-600">
-        Zorunlu alanları doldurun; ekibimiz sizinle iletişime geçecektir.
+        Zorunlu alanları doldurun; demo erişim bilgileriniz e-posta ile iletilecektir.
       </p>
       <div className="mt-6 flex flex-col gap-5">
         {field('fullName', 'Ad Soyad', 'text', true)}
@@ -90,8 +113,15 @@ export function DemoRequestForm() {
         {field('phone', 'Telefon', 'tel', true)}
         {field('barAssociation', 'Baro')}
       </div>
-      <Button type="submit" variant="accent" size="lg" className="mt-8 w-full">
-        Demo Talebi Oluştur
+      <Button type="submit" variant="accent" size="lg" className="mt-8 w-full" disabled={loading}>
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Gönderiliyor…
+          </>
+        ) : (
+          'Demo Talebi Oluştur'
+        )}
       </Button>
     </form>
   );

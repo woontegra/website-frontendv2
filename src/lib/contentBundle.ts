@@ -57,6 +57,29 @@ const FETCH_TIMEOUT_MS = 8000;
 const DEFAULT_LOGO_URL = '/images/logo.png';
 const DEFAULT_FAVICON_URL = '/images/favicon.png';
 
+/** Eski varsayılanlar — gerçek site logosu sayılmaz */
+const LEGACY_BRANDING_PLACEHOLDERS = new Set([
+  '/logo.png',
+  '/favicon.ico',
+  DEFAULT_LOGO_URL,
+  DEFAULT_FAVICON_URL,
+]);
+
+export function isUsableBrandingLogoUrl(url: string | null | undefined): boolean {
+  const u = (url || '').trim();
+  if (!u) return false;
+  if (LEGACY_BRANDING_PLACEHOLDERS.has(u)) return false;
+  return true;
+}
+
+function pickBrandingUrl(...candidates: (string | null | undefined)[]): string | null {
+  for (const raw of candidates) {
+    const u = raw?.trim();
+    if (isUsableBrandingLogoUrl(u)) return u!;
+  }
+  return null;
+}
+
 const supportIconByName: Record<string, LucideIcon> = {
   Building2,
   Headphones,
@@ -177,6 +200,7 @@ export type SeoPageView = {
   ogTitle: string | null;
   ogDescription: string | null;
   ogImage: string | null;
+  noIndex: boolean;
 };
 
 export type CalculationLandingView = {
@@ -380,6 +404,10 @@ export type ContentBundleApi = {
     }[];
   };
   settings: Record<string, string | null>;
+  branding?: {
+    logoUrl?: string | null;
+    faviconUrl?: string | null;
+  };
   homepage?: {
     sectionKey: string;
     title?: string | null;
@@ -493,6 +521,7 @@ function buildSeoByPath(seoPages: ContentBundleApi['seo'] | undefined): Record<s
       ogTitle: page.ogTitle ?? null,
       ogDescription: page.ogDescription ?? null,
       ogImage: page.ogImage ?? null,
+      noIndex: Boolean(page.noIndex),
     };
   }
   return index;
@@ -811,6 +840,28 @@ export function resolveHomepageHeroCtaButtons(
   return fromApi.length > 0 ? fromApi : STATIC_HERO_CTA_BUTTONS;
 }
 
+export function isExternalNavHref(href: string): boolean {
+  return /^https?:\/\//i.test(href);
+}
+
+/** Programa giriş — hero_login CTA ile aynı (header, iletişim, vb.). */
+export function resolvePanelLoginCta(content: ContentBundleView): {
+  href: string;
+  label: string;
+  external: boolean;
+} {
+  const loginCta = resolveHomepageHeroCtaButtons(content).find((b) => b.code === 'hero_login');
+  const href =
+    loginCta?.href?.trim() ||
+    content.contact.setting?.panelLoginUrl?.trim() ||
+    config.PANEL_LOGIN_URL;
+  return {
+    href,
+    label: loginCta?.label ?? 'Programa Giriş',
+    external: loginCta?.ctaExternal ?? isExternalNavHref(href),
+  };
+}
+
 /** Alt CTA butonları — hero_* dışındaki yayınlanmış butonlar. */
 export function resolveHomepagePricingCtaButtons(
   content: ContentBundleView,
@@ -891,17 +942,19 @@ function mapSiteBranding(
   settings: Record<string, string | null>,
   publicBranding?: Partial<SiteBrandingView>,
 ): SiteBrandingView {
-  const logoRaw =
-    publicBranding?.logoUrl?.trim() ||
-    pickSettingValue(settings, ['site.logo_url', 'logo_url', 'logoUrl']) ||
-    DEFAULT_LOGO_URL;
-  const faviconRaw =
-    publicBranding?.faviconUrl?.trim() ||
-    pickSettingValue(settings, ['site.favicon_url', 'favicon_url', 'faviconUrl']) ||
-    DEFAULT_FAVICON_URL;
+  const logoCustom = pickBrandingUrl(
+    publicBranding?.logoUrl,
+    pickSettingValue(settings, ['site.logo_url', 'logo_url', 'logoUrl']),
+  );
+  const faviconCustom = pickBrandingUrl(
+    publicBranding?.faviconUrl,
+    pickSettingValue(settings, ['site.favicon_url', 'favicon_url', 'faviconUrl']),
+  );
   return {
-    logoUrl: resolvePublicAssetUrl(logoRaw),
-    faviconUrl: resolvePublicAssetUrl(faviconRaw),
+    logoUrl: logoCustom ? resolvePublicAssetUrl(logoCustom) : '',
+    faviconUrl: faviconCustom
+      ? resolvePublicAssetUrl(faviconCustom)
+      : resolvePublicAssetUrl(DEFAULT_FAVICON_URL),
   };
 }
 
@@ -911,10 +964,12 @@ export async function fetchPublicSiteBranding(): Promise<SiteBrandingView> {
       success?: boolean;
       data?: { logoUrl?: string; faviconUrl?: string };
     }>(PUBLIC_SETTINGS_PATH);
-    const data = json.data;
+    if (json.success === false || !json.data) {
+      return mapSiteBranding({}, {});
+    }
     return mapSiteBranding({}, {
-      logoUrl: data?.logoUrl,
-      faviconUrl: data?.faviconUrl,
+      logoUrl: json.data.logoUrl,
+      faviconUrl: json.data.faviconUrl,
     });
   } catch {
     return mapSiteBranding({}, {});
@@ -981,12 +1036,50 @@ function buildPageContentsByPath(
   return index;
 }
 
-function getPageContentSection(
+function getPageContentSectionFromIndex(
   index: Record<string, PageContentView[]>,
   path: string,
   sectionKey: string,
 ): PageContentView | undefined {
-  return index[path]?.find((row) => row.sectionKey === sectionKey);
+  const normalized = normalizeContentPath(path);
+  return index[normalized]?.find((row) => row.sectionKey === sectionKey);
+}
+
+export function getPageContentSection(
+  content: ContentBundleView,
+  path: string,
+  sectionKey: string,
+): PageContentView | undefined {
+  return getPageContentSectionFromIndex(content.pageContentsByPath, path, sectionKey);
+}
+
+/** Sayfa hero metinleri — v2_page_contents (pageKey + sectionKey: hero), yoksa statik yedek. */
+export function resolvePageHero(
+  content: ContentBundleView,
+  path: string,
+  defaults: HomepageSectionHeadingView,
+): HomepageSectionHeadingView {
+  const hero = getPageContentSection(content, path, 'hero');
+  const seo = content.seoByPath[normalizeContentPath(path)];
+  return {
+    eyebrow: hero?.eyebrow?.trim() || defaults.eyebrow,
+    title: hero?.title?.trim() || defaults.title,
+    description:
+      hero?.description?.trim() ||
+      seo?.description?.trim() ||
+      defaults.description,
+  };
+}
+
+function stringListFromPageBody(
+  body: Record<string, unknown> | null | undefined,
+  key: string,
+): string[] | null {
+  if (!body || !Array.isArray(body[key])) return null;
+  const list = (body[key] as unknown[])
+    .map((item) => String(item).trim())
+    .filter(Boolean);
+  return list.length > 0 ? list : null;
 }
 
 function buildLandingSeo(
@@ -1009,8 +1102,8 @@ function enrichCalculationLanding(
   content: ContentBundleView,
 ): CalculationLandingView {
   const seo = content.seoByPath[path];
-  const hero = getPageContentSection(content.pageContentsByPath, path, 'hero');
-  const cta = getPageContentSection(content.pageContentsByPath, path, 'cta');
+  const hero = getPageContentSection(content, path, 'hero');
+  const cta = getPageContentSection(content, path, 'cta');
   const ctaBodyText =
     (typeof cta?.body?.bottomCtaDescription === 'string' && cta.body.bottomCtaDescription) ||
     (typeof cta?.body?.ctaDescription === 'string' && cta.body.ctaDescription) ||
@@ -1283,26 +1376,45 @@ export function resolveHomepageTrust(content: ContentBundleView): HomepageTrustV
   return { headline, metrics };
 }
 
-function mapApiDemoPage(api: ContentBundleApi): DemoPageView {
+function mapApiDemoPage(
+  api: ContentBundleApi,
+  pageContentsByPath: Record<string, PageContentView[]>,
+): DemoPageView {
   const fallback = getStaticDemoPage();
+  const demoPath = '/demo-talep';
+  const heroSection = getPageContentSectionFromIndex(pageContentsByPath, demoPath, 'hero');
+  const ctaSection = getPageContentSectionFromIndex(pageContentsByPath, demoPath, 'cta');
   const siteName = api.settings?.site_name ?? config.siteName;
-  const seoDemo = api.seo?.find((p) => normalizeContentPath(p.path) === '/demo-talep');
+  const seoDemo = api.seo?.find((p) => normalizeContentPath(p.path) === demoPath);
   const faqGenel = api.faq.categories.find((c) => c.code === 'genel');
   const faqDemo = api.faq.categories.find((c) => c.code === 'demo');
 
-  const heroTitle = siteName ? `${siteName} demo talebi` : fallback.heroTitle;
+  const heroTitle =
+    heroSection?.title?.trim() ||
+    (siteName ? `${siteName} demo talebi` : fallback.heroTitle);
 
   const heroDescription =
+    heroSection?.description?.trim() ||
     seoDemo?.description?.trim() ||
     faqDemo?.items[0]?.answer?.trim() ||
     fallback.heroDescription;
 
-  const heroSubtitle = faqGenel?.items[0]?.answer?.trim() || fallback.heroSubtitle;
+  const heroSubtitle =
+    heroSection?.subtitle?.trim() ||
+    faqGenel?.items[0]?.answer?.trim() ||
+    fallback.heroSubtitle;
 
   const processSteps =
-    faqDemo?.items.length && faqDemo.items.length >= 2
+    stringListFromPageBody(heroSection?.body, 'processSteps') ??
+    (faqDemo?.items.length && faqDemo.items.length >= 2
       ? faqDemo.items.map((item) => item.question.replace(/\?$/, ''))
-      : fallback.processSteps;
+      : fallback.processSteps);
+
+  const benefits =
+    stringListFromPageBody(heroSection?.body, 'benefits') ?? fallback.benefits;
+
+  const audience =
+    stringListFromPageBody(heroSection?.body, 'audience') ?? fallback.audience;
 
   const trustItems =
     api.trustMetrics?.length > 0
@@ -1314,16 +1426,20 @@ function mapApiDemoPage(api: ContentBundleApi): DemoPageView {
       : fallback.trustItems;
 
   return {
-    heroEyebrow: fallback.heroEyebrow,
+    heroEyebrow: heroSection?.eyebrow?.trim() || fallback.heroEyebrow,
     heroTitle,
     heroDescription,
     heroSubtitle,
-    benefits: fallback.benefits,
-    audience: fallback.audience,
+    benefits,
+    audience,
     processSteps,
     trustItems,
-    bottomCtaTitle: fallback.bottomCtaTitle,
-    bottomCtaDescription: fallback.bottomCtaDescription,
+    bottomCtaTitle:
+      (typeof ctaSection?.title === 'string' && ctaSection.title.trim()) ||
+      fallback.bottomCtaTitle,
+    bottomCtaDescription:
+      (typeof ctaSection?.description === 'string' && ctaSection.description.trim()) ||
+      fallback.bottomCtaDescription,
   };
 }
 
@@ -1396,8 +1512,14 @@ function normalizeComparisonVariant(variant: string): PricingComparisonVariant {
   return 'positive';
 }
 
+/** Baro paketi — config veya panelde pasif; anlaşma öncesi gizli tutulur. */
+export function filterVisiblePricingPlans(plans: PricingPlanView[]): PricingPlanView[] {
+  if (config.SHOW_BARO_PRICING_PLAN) return plans;
+  return plans.filter((plan) => plan.code !== 'baro');
+}
+
 function getStaticPricingPlans(): PricingPlanView[] {
-  return [
+  return filterVisiblePricingPlans([
     {
       code: 'monthly',
       name: 'Profesyonel Aylık',
@@ -1414,8 +1536,8 @@ function getStaticPricingPlans(): PricingPlanView[] {
         'Teknik destek',
       ],
       ctaText: 'Aylık Abone Ol',
-      ctaTo: config.PAYMENT_MONTHLY_URL,
-      ctaExternal: true,
+      ctaTo: '/satin-al?plan=pro-monthly',
+      ctaExternal: false,
       isBaro: false,
     },
     {
@@ -1434,8 +1556,8 @@ function getStaticPricingPlans(): PricingPlanView[] {
         'Öncelikli destek',
       ],
       ctaText: 'Yıllık Abone Ol',
-      ctaTo: config.PAYMENT_YEARLY_URL,
-      ctaExternal: true,
+      ctaTo: '/satin-al?plan=pro-yearly',
+      ctaExternal: false,
       isBaro: false,
     },
     {
@@ -1458,7 +1580,7 @@ function getStaticPricingPlans(): PricingPlanView[] {
       ctaExternal: false,
       isBaro: true,
     },
-  ];
+  ]);
 }
 
 function getStaticPricingComparisonColumns(): PricingComparisonColumnView[] {
@@ -1537,29 +1659,31 @@ function mapApiPricingPlans(
     return staticPlans;
   }
 
-  return apiPlans.map((plan) => {
-    const staticPlan = staticPlans.find((p) => p.code === plan.code);
-    const ctaTo = planCtaLink(plan.code, plan.ctaLink);
-    const features =
-      plan.features?.length > 0
-        ? plan.features.map((f) => f.text)
-        : (staticPlan?.features ?? []);
+  return filterVisiblePricingPlans(
+    apiPlans.map((plan) => {
+      const staticPlan = staticPlans.find((p) => p.code === plan.code);
+      const { ctaTo, ctaExternal } = resolvePricingPlanCta(plan.code, plan.ctaLink);
+      const features =
+        plan.features?.length > 0
+          ? plan.features.map((f) => f.text)
+          : (staticPlan?.features ?? []);
 
-    return {
-      code: plan.code,
-      name: plan.name || staticPlan?.name || plan.code,
-      priceDisplay: plan.priceDisplay ?? staticPlan?.priceDisplay ?? '',
-      priceSuffix: plan.priceSuffix ?? staticPlan?.priceSuffix ?? null,
-      subtitle: plan.subtitle ?? staticPlan?.subtitle ?? null,
-      badgeText: plan.badgeText ?? staticPlan?.badgeText ?? null,
-      isFeatured: plan.isFeatured ?? staticPlan?.isFeatured ?? false,
-      features,
-      ctaText: plan.ctaText ?? staticPlan?.ctaText ?? 'Abone Ol',
-      ctaTo,
-      ctaExternal: isExternalLink(ctaTo),
-      isBaro: plan.code === 'baro',
-    };
-  });
+      return {
+        code: plan.code,
+        name: plan.name || staticPlan?.name || plan.code,
+        priceDisplay: plan.priceDisplay ?? staticPlan?.priceDisplay ?? '',
+        priceSuffix: plan.priceSuffix ?? staticPlan?.priceSuffix ?? null,
+        subtitle: plan.subtitle ?? staticPlan?.subtitle ?? null,
+        badgeText: plan.badgeText ?? staticPlan?.badgeText ?? null,
+        isFeatured: plan.isFeatured ?? staticPlan?.isFeatured ?? false,
+        features,
+        ctaText: plan.ctaText ?? staticPlan?.ctaText ?? 'Abone Ol',
+        ctaTo,
+        ctaExternal,
+        isBaro: plan.code === 'baro',
+      };
+    }),
+  );
 }
 
 function mapApiPricingComparisonColumns(
@@ -1636,12 +1760,73 @@ function getStaticFooter(contact?: ContactView): FooterView {
   };
 }
 
-function planCtaLink(code: string, apiLink: string | null): string {
-  if (apiLink) return apiLink;
-  if (code === 'monthly') return config.PAYMENT_MONTHLY_URL;
-  if (code === 'yearly') return config.PAYMENT_YEARLY_URL;
-  if (code === 'baro') return '/demo-talep';
-  return '/demo-talep';
+const SATIN_AL_PLAN_QUERY: Record<string, string> = {
+  monthly: 'pro-monthly',
+  yearly: 'pro-yearly',
+};
+
+/** Satın Al sayfasında doğru paket seçilsin diye /satin-al linkine plan parametresi ekler. */
+function enrichSatinAlPlanQuery(code: string, href: string): string {
+  const plan = SATIN_AL_PLAN_QUERY[code.toLowerCase()];
+  if (!plan) return href;
+
+  const trimmed = href.trim();
+  if (!trimmed) return trimmed;
+
+  try {
+    const absolute =
+      /^https?:\/\//i.test(trimmed)
+        ? trimmed
+        : `https://local.invalid${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`;
+    const url = new URL(absolute);
+    const path = url.pathname.replace(/\/$/, '') || '/';
+    if (path !== '/satin-al' || url.searchParams.has('plan')) {
+      return trimmed;
+    }
+    url.searchParams.set('plan', plan);
+    if (/^https?:\/\//i.test(trimmed)) {
+      return url.toString();
+    }
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return trimmed;
+  }
+}
+
+function planCtaLink(code: string, apiLink: string | null | undefined): string {
+  const trimmed = apiLink?.trim();
+  let href = trimmed;
+  if (!href) {
+    if (code === 'monthly') href = config.PAYMENT_MONTHLY_URL;
+    else if (code === 'yearly') href = config.PAYMENT_YEARLY_URL;
+    else if (code === 'baro') href = '/demo-talep';
+    else href = '/demo-talep';
+  }
+  return enrichSatinAlPlanQuery(code, href);
+}
+
+function resolvePricingPlanCta(
+  code: string,
+  apiLink: string | null | undefined,
+): { ctaTo: string; ctaExternal: boolean } {
+  const href = planCtaLink(code, apiLink);
+  if (!/^https?:\/\//i.test(href)) {
+    return { ctaTo: href, ctaExternal: false };
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      const url = new URL(href);
+      if (url.origin === window.location.origin) {
+        return {
+          ctaTo: `${url.pathname}${url.search}${url.hash}`,
+          ctaExternal: false,
+        };
+      }
+    } catch {
+      /* keep absolute external */
+    }
+  }
+  return { ctaTo: href, ctaExternal: true };
 }
 
 export function getStaticContentBundle(): ContentBundleView {
@@ -1692,7 +1877,11 @@ export function mapApiContentBundle(
   const mediaAssets = mapApiMediaAssets(api.mediaAssets);
   const contact = mapApiContact(api.contact);
   const homepage = mapApiHomepageSections(api.homepage);
+  const pageContentsByPath = buildPageContentsByPath(api.pageContents);
   const settings = api.settings ?? {};
+  const comparisonColumns = mapApiPricingComparisonColumns(
+    api.pricing?.comparisonColumns ?? [],
+  );
 
   return {
     modules: (api.calculationModules ?? []).map((m) => ({
@@ -1706,14 +1895,15 @@ export function mapApiContentBundle(
     faqCategories,
     faqPreview: buildFaqPreview(faqCategories),
     pricingPlans: mapApiPricingPlans(api.pricing?.plans ?? []),
-    pricingComparisonTitle: PRICING_COMPARISON_TITLE,
-    pricingComparisonColumns: mapApiPricingComparisonColumns(api.pricing?.comparisonColumns ?? []),
+    pricingComparisonTitle:
+      comparisonColumns[0]?.title?.trim() || PRICING_COMPARISON_TITLE,
+    pricingComparisonColumns: comparisonColumns,
     pricingFaq: mapPricingFaqFromCategories(faqCategories),
     contact,
-    demo: mapApiDemoPage(api),
+    demo: mapApiDemoPage(api, pageContentsByPath),
     footer: resolveFooterView(api.pageContents, api.pageCards, contact),
     seoByPath: buildSeoByPath(api.seo ?? []),
-    pageContentsByPath: buildPageContentsByPath(api.pageContents),
+    pageContentsByPath,
     mediaAssets,
     mediaByKey: buildMediaByKey(mediaAssets),
     homepage,
@@ -1727,7 +1917,10 @@ export function mapApiContentBundle(
       return mapped.length > 0 ? mapped : getStaticCtaButtons();
     })(),
     settings,
-    branding: mapSiteBranding(settings, publicBranding),
+    branding: mapSiteBranding(settings, {
+      logoUrl: publicBranding?.logoUrl ?? api.branding?.logoUrl ?? undefined,
+      faviconUrl: publicBranding?.faviconUrl ?? api.branding?.faviconUrl ?? undefined,
+    }),
   };
 }
 

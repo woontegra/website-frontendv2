@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { showToast } from '@/components/ui/toast';
+import { submitContactMessage } from '@/lib/storeApi';
 
 type ContactValues = {
   name: string;
@@ -26,10 +28,30 @@ const labelClass = 'block text-sm font-semibold text-slate-800';
 export function ContactForm() {
   const [values, setValues] = useState<ContactValues>(initial);
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setLoading(true);
+    try {
+      await submitContactMessage({
+        name: values.name.trim(),
+        email: values.email.trim(),
+        phone: values.phone.trim() || undefined,
+        subject: values.subject.trim(),
+        message: values.message.trim(),
+      });
+      setSent(true);
+      showToast('Mesajınız gönderildi. En kısa sürede size dönüş yapacağız.', 'success');
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Mesaj gönderilirken bir hata oluştu. Lütfen tekrar deneyin.';
+      showToast(msg, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (sent) {
@@ -38,12 +60,17 @@ export function ContactForm() {
         <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" strokeWidth={2} />
         <p className="mt-4 text-lg font-bold text-slate-900">Teşekkürler</p>
         <p className="mt-3 text-base leading-relaxed text-slate-700">
-          İletişim formu bağlantısı sonraki aşamada aktif edilecektir.
+          Mesajınız alındı. Ekibimiz en kısa sürede sizinle iletişime geçecektir.
         </p>
-        <p className="mt-2 text-sm text-slate-600">
-          Bu aşamada mesajınız sunucuya gönderilmedi; yalnızca arayüz önizlemesidir.
-        </p>
-        <Button type="button" variant="outline" className="mt-6" onClick={() => setSent(false)}>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-6"
+          onClick={() => {
+            setSent(false);
+            setValues(initial);
+          }}
+        >
           Yeni mesaj
         </Button>
       </div>
@@ -67,6 +94,7 @@ export function ContactForm() {
           <input
             id="contact-name"
             required
+            disabled={loading}
             className={inputClass}
             value={values.name}
             onChange={(e) => setValues({ ...values, name: e.target.value })}
@@ -80,6 +108,7 @@ export function ContactForm() {
             id="contact-email"
             type="email"
             required
+            disabled={loading}
             className={inputClass}
             value={values.email}
             onChange={(e) => setValues({ ...values, email: e.target.value })}
@@ -92,6 +121,7 @@ export function ContactForm() {
           <input
             id="contact-phone"
             type="tel"
+            disabled={loading}
             className={inputClass}
             value={values.phone}
             onChange={(e) => setValues({ ...values, phone: e.target.value })}
@@ -104,6 +134,7 @@ export function ContactForm() {
           <input
             id="contact-subject"
             required
+            disabled={loading}
             className={inputClass}
             value={values.subject}
             onChange={(e) => setValues({ ...values, subject: e.target.value })}
@@ -117,14 +148,22 @@ export function ContactForm() {
             id="contact-message"
             rows={5}
             required
+            disabled={loading}
             className={inputClass}
             value={values.message}
             onChange={(e) => setValues({ ...values, message: e.target.value })}
           />
         </div>
       </div>
-      <Button type="submit" variant="accent" size="lg" className="mt-8 w-full">
-        Mesaj Gönder
+      <Button type="submit" variant="accent" size="lg" className="mt-8 w-full" disabled={loading}>
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Gönderiliyor…
+          </>
+        ) : (
+          'Mesaj Gönder'
+        )}
       </Button>
     </form>
   );

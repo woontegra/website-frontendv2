@@ -69,7 +69,7 @@ export const cmsNavItems: CmsNavItem[] = [
     description: 'Genel, ödeme, SMTP, analytics ve iş raporları',
   },
   {
-    to: '/admin/v2/demo',
+    to: '/admin/v2/demo-page',
     label: 'Demo Talep Sayfası',
     icon: Presentation,
     description: 'Demo talep sayfası içerikleri',
@@ -126,7 +126,10 @@ const routeTitles: { match: (path: string) => boolean; title: string }[] = [
   { match: (p) => p === '/admin/v2/campaigns', title: 'Kampanyalar' },
   { match: (p) => p === '/admin/v2/purchase', title: 'Satın Al Sayfası' },
   { match: (p) => p === '/admin/v2/settings', title: 'Site Ayarları' },
-  { match: (p) => p === '/admin/v2/demo', title: 'Demo Talep Sayfası' },
+  {
+    match: (p) => p === '/admin/v2/demo' || p === '/admin/v2/demo-page',
+    title: 'Demo Talep Sayfası',
+  },
   { match: (p) => p === '/admin/v2/contact', title: 'İletişim Sayfası' },
   { match: (p) => p === '/admin/v2/footer', title: 'Footer Yönetimi' },
   { match: (p) => p === '/admin/v2/faq', title: 'SSS Yönetimi' },

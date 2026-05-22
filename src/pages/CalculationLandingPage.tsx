@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/Button';
 import { MarketingImage, MarketingImageFallback } from '@/components/ui/MarketingImage';
 import { CalculationLegacyContent } from '@/components/calculation/CalculationLegacyContent';
 import { resolveModuleLandingContent } from '@/lib/calculationLandingContent';
+import { applyDocumentSeo } from '@/lib/pageSeo';
+import { normalizeContentPath } from '@/lib/contentBundle';
 
 function ModuleLandingMedia({
   src,
@@ -70,23 +72,21 @@ export default function CalculationLandingPage() {
 
   useEffect(() => {
     if (!page) return;
-
-    const metaTitle = page.seo.metaTitle ?? page.title;
-    if (metaTitle) {
-      document.title = metaTitle;
-    }
-
-    const metaDescription = page.seo.metaDescription;
-    if (metaDescription) {
-      let meta = document.querySelector('meta[name="description"]');
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', 'description');
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', metaDescription);
-    }
-  }, [page]);
+    const path = normalizeContentPath(pathname);
+    const seoRow = content.seoByPath[path];
+    applyDocumentSeo(
+      seoRow ?? {
+        path,
+        title: page.seo.metaTitle,
+        description: page.seo.metaDescription,
+        ogTitle: page.seo.ogTitle,
+        ogDescription: page.seo.ogDescription,
+        ogImage: null,
+        noIndex: false,
+      },
+      { defaultTitle: page.title, defaultDescription: page.description },
+    );
+  }, [page, pathname, content.seoByPath]);
 
   if (!page) {
     return <Navigate to="/" replace />;

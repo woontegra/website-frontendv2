@@ -1,27 +1,52 @@
+import { config } from '@/lib/config';
+
 /** Eski varsayılan — dosya sunucuda yok */
 export function isLegacyProductPlaceholder(url: string): boolean {
   const u = (url || '').trim();
   return u === '/dashboard-screenshot.png' || u === 'dashboard-screenshot.png';
 }
 
-/** imageUrl tek path veya JSON dizi: ["/uploads/a.png","/uploads/b.png"] */
+function normalizeRawImageUrl(url: string): string {
+  let u = url.trim();
+  if (!u) return '';
+  if (u.startsWith('//')) u = `https:${u}`;
+  return u;
+}
+
+/** API / upload dosyalarının sunulduğu origin (dev: backend :3001) */
+export function getBackendAssetOrigin(): string {
+  const base = (config.API_BASE_URL || '').trim().replace(/\/$/, '');
+  if (base) {
+    return base.replace(/\/api\/?$/i, '') || base;
+  }
+  if (import.meta.env.DEV) return 'http://localhost:3001';
+  if (typeof window !== 'undefined') return window.location.origin;
+  return '';
+}
+
+/** imageUrl tek path veya JSON dizi: ["/uploads/a.png","https://res.cloudinary.com/..."] */
 export function parseProductImageUrls(imageUrl?: string | null): string[] {
   const raw = (imageUrl || '').trim();
   if (!raw) return [];
+
+  const collect = (items: string[]): string[] =>
+    items
+      .map((item) => normalizeRawImageUrl(item))
+      .filter((item) => item && !isLegacyProductPlaceholder(item));
+
   if (raw.startsWith('[')) {
     try {
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return [];
-      return parsed
-        .filter((item): item is string => typeof item === 'string')
-        .map((item) => item.trim())
-        .filter((item) => item && !isLegacyProductPlaceholder(item));
+      return collect(
+        parsed.filter((item): item is string => typeof item === 'string'),
+      );
     } catch {
       return [];
     }
   }
   if (isLegacyProductPlaceholder(raw)) return [];
-  return [raw];
+  return collect([raw]);
 }
 
 export function serializeProductImageUrls(urls: string[]): string {
@@ -41,31 +66,31 @@ export function resolveAdminAssetUrl(url: string): string {
  * /hero/... → frontend public klasörü, her ortamda aynı origin.
  */
 export function resolvePublicAssetUrl(url: string): string {
-  const u = (url || '').trim();
+  const u = normalizeRawImageUrl(url);
   if (!u) return '';
+
   if (/^https?:\/\//i.test(u)) {
-    try {
-      const { hostname, pathname } = new URL(u);
-      if ((hostname === 'localhost' || hostname === '127.0.0.1') && pathname.startsWith('/')) {
-        return pathname;
-      }
-    } catch {
-      /* ignore */
-    }
     return u;
   }
-  if (u.startsWith('/hero/')) return u;
+
+  if (u.startsWith('/hero/') || u.startsWith('/images/')) {
+    return /[ ()]/.test(u) ? encodeURI(u) : u;
+  }
+
+  if (u.startsWith('/uploads/')) {
+    const path = encodeURI(u);
+    const origin = getBackendAssetOrigin();
+    return origin ? `${origin}${path}` : path;
+  }
+
   if (u.startsWith('/')) {
     const path = /[ ()]/.test(u) ? encodeURI(u) : u;
-    if (import.meta.env.PROD) {
-      return path;
+    const origin = getBackendAssetOrigin();
+    if (origin && (import.meta.env.DEV || u.startsWith('/uploads/'))) {
+      return `${origin}${path}`;
     }
-    if (u.startsWith('/uploads/')) {
-      return path;
-    }
-    const api = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    const origin = api.replace(/\/api\/?$/i, '');
-    return `${origin}${path}`;
+    return path;
   }
+
   return u;
 }
