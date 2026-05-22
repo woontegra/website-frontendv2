@@ -35,7 +35,8 @@ export async function apiRequest<T>(
   const init: RequestInit = {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=UTF-8',
+      Accept: 'application/json; charset=UTF-8',
       ...headers,
     },
     signal,

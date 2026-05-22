@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useContentBundle } from '@/app/ContentProvider';
 import { SectionHeading } from '@/components/ui/SectionHeading';
+import type { HomepageSectionHeadingView } from '@/lib/contentBundle';
 
-export function ModulesSection() {
+type ModulesSectionProps = HomepageSectionHeadingView;
+
+export function ModulesSection({ eyebrow, title, description }: ModulesSectionProps) {
   const { content } = useContentBundle();
   const { modules } = content;
 
@@ -12,8 +15,9 @@ export function ModulesSection() {
       <div className="container-page">
         <SectionHeading
           theme="dark"
-          title="Hesaplama Modülleri"
-          description="Kıdemden fazla mesaiye, yıllık izinden UBGT'ye kadar işçilik alacaklarını tek panelde hesaplayın."
+          eyebrow={eyebrow || undefined}
+          title={title}
+          description={description}
         />
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {modules.map((mod) => {

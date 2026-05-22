@@ -282,6 +282,8 @@ export function CmsHeroCarouselEditor({
   uploadUsageLabel,
   onAssetUploaded,
   saving,
+  onSyncCloudinary,
+  syncingCloudinary,
 }: {
   slides: HeroSlideDraft[];
   heroImageAlt: string;
@@ -295,8 +297,12 @@ export function CmsHeroCarouselEditor({
   uploadUsageLabel?: string;
   onAssetUploaded?: (asset: AdminMediaAssetRow) => void;
   saving?: boolean;
+  onSyncCloudinary?: () => void | Promise<void>;
+  syncingCloudinary?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pasteUrl, setPasteUrl] = useState('');
+  const [pasteError, setPasteError] = useState<string | null>(null);
 
   const moveSlide = (index: number, direction: -1 | 1) => {
     if (!onSlidesChange) return;
@@ -316,6 +322,29 @@ export function CmsHeroCarouselEditor({
   const updateSlideAlt = (index: number, alt: string) => {
     if (!onSlidesChange) return;
     onSlidesChange(slides.map((s, i) => (i === index ? { ...s, alt } : s)));
+  };
+
+  const addSlideFromUrl = (rawUrl: string) => {
+    if (!onAddSlide) return;
+    const url = rawUrl.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      setPasteError('Geçerli bir https:// görsel adresi girin (Cloudinary linki yapıştırabilirsiniz).');
+      return;
+    }
+    setPasteError(null);
+    const asset: AdminMediaAssetRow = {
+      id: `paste-${url}`,
+      assetKey: 'paste.url',
+      fileUrl: url,
+      altText: null,
+      mimeType: null,
+      width: null,
+      height: null,
+      sortOrder: 0,
+      title: null,
+    };
+    void onAddSlide(url, asset);
+    setPasteUrl('');
   };
 
   return (
@@ -390,22 +419,77 @@ export function CmsHeroCarouselEditor({
 
       {!readOnly && onAddSlide && (
         <>
-          <ActionButton
-            variant="secondary"
-            size="sm"
-            type="button"
-            icon={Plus}
-            disabled={pickDisabled || saving}
-            onClick={() => setPickerOpen(true)}
-          >
-            Görsel ekle
-          </ActionButton>
+          <div className="space-y-2 rounded-lg border border-dashed border-[#cfe0db] bg-white/80 p-3">
+            <p className="text-[12px] font-medium text-[#5c6b7a]">Cloudinary linki yapıştır</p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                type="url"
+                value={pasteUrl}
+                disabled={pickDisabled || saving}
+                placeholder="https://res.cloudinary.com/..."
+                className={`${adminInputClass} flex-1 font-mono text-xs`}
+                onChange={(e) => {
+                  setPasteUrl(e.target.value);
+                  setPasteError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSlideFromUrl(pasteUrl);
+                  }
+                }}
+              />
+              <ActionButton
+                variant="secondary"
+                size="sm"
+                type="button"
+                disabled={pickDisabled || saving || !pasteUrl.trim()}
+                onClick={() => addSlideFromUrl(pasteUrl)}
+              >
+                Ekle
+              </ActionButton>
+            </div>
+            {pasteError && (
+              <p className="text-[12px] text-red-700">{pasteError}</p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ActionButton
+              variant="secondary"
+              size="sm"
+              type="button"
+              icon={Plus}
+              disabled={pickDisabled || saving}
+              onClick={() => setPickerOpen(true)}
+            >
+              Görsel ekle
+            </ActionButton>
+            {onSyncCloudinary && (
+              <ActionButton
+                variant="ghost"
+                size="sm"
+                type="button"
+                disabled={pickDisabled || saving || syncingCloudinary}
+                onClick={() => void onSyncCloudinary()}
+              >
+                {syncingCloudinary ? (
+                  <>
+                    <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" />
+                    Cloudinary senkron…
+                  </>
+                ) : (
+                  'Cloudinary → medya DB'
+                )}
+              </ActionButton>
+            )}
+          </div>
           <MediaPickerModal
             open={pickerOpen}
             onClose={() => setPickerOpen(false)}
             assets={assets}
             title="Hero slaydı ekle"
             enableUpload={enableUpload}
+            autoSelectAfterUpload
             uploadUsageLabel={uploadUsageLabel}
             onAssetUploaded={onAssetUploaded}
             onSelect={(asset, value) => {
@@ -492,7 +576,9 @@ export function HeroButtonsPreview() {
           </p>
         </div>
       ))}
-      <p className="sm:col-span-2 text-[12px] text-slate-500">Buton metinleri canlı sitede sabit.</p>
+      <p className="sm:col-span-2 text-[12px] text-slate-500">
+        Hero butonları <code className="text-xs">hero_*</code> kodlu kayıtlardan canlı siteye yansır.
+      </p>
     </div>
   );
 }

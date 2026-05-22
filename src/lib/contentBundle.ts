@@ -20,6 +20,9 @@ import {
   Shield,
   LayoutGrid,
   Sparkles,
+  Layers,
+  FileCheck,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { apiGet } from './apiClient';
@@ -60,13 +63,13 @@ const supportIconByName: Record<string, LucideIcon> = {
   Wrench,
 };
 
-const demoTrustIconByName: Record<string, LucideIcon> = {
+const trustIconByName: Record<string, LucideIcon> = {
+  Layers,
+  FileCheck,
+  ShieldCheck,
   Shield,
   LayoutGrid,
   Sparkles,
-  Layers: LayoutGrid,
-  FileCheck: Shield,
-  ShieldCheck: Sparkles,
 };
 
 const iconByName: Record<string, LucideIcon> = {
@@ -259,6 +262,44 @@ export type SiteBrandingView = {
   faviconUrl: string;
 };
 
+export type TrustMetricView = {
+  value: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+};
+
+export type HomepageTrustView = {
+  headline: string;
+  metrics: TrustMetricView[];
+};
+
+export type HomepageHeroView = {
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+export type HomepageSectionHeadingView = {
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+export type HomepageExcelView = HomepageSectionHeadingView & {
+  benefits: string[];
+  imageSrc: string;
+  imageAlt: string;
+};
+
+export type HomepageCtaButtonView = {
+  code: string;
+  label: string;
+  href: string;
+  variant: string;
+  sortOrder: number;
+};
+
 export type ContentBundleView = {
   modules: ModuleCardView[];
   calculationLandings: CalculationLandingView[];
@@ -277,6 +318,8 @@ export type ContentBundleView = {
   mediaByKey: Record<string, MediaAssetView>;
   homepage: HomepageSectionView[];
   homepageByKey: Record<string, HomepageSectionView>;
+  trustMetrics: TrustMetricView[];
+  ctaButtons: HomepageCtaButtonView[];
   settings: Record<string, string | null>;
   branding: SiteBrandingView;
 };
@@ -393,6 +436,14 @@ export type ContentBundleApi = {
     mimeType?: string | null;
     width?: number | null;
     height?: number | null;
+    sortOrder?: number;
+  }[];
+  ctaButtons?: {
+    id?: number;
+    code: string;
+    label: string;
+    linkUrl?: string | null;
+    variant?: string | null;
     sortOrder?: number;
   }[];
 };
@@ -591,6 +642,181 @@ export function resolveHomepageHeroSlides(
       alt: defaultAlt,
     },
   ];
+}
+
+const DEFAULT_HERO_EYEBROW =
+  'Avukatlar ve bilirkişiler için profesyonel hesaplama yazılımı';
+const DEFAULT_HERO_TITLE =
+  'İşçilik alacaklarında doğru, hızlı ve denetlenebilir hesaplama';
+const DEFAULT_HERO_DESCRIPTION =
+  'Kıdem, ihbar, fazla mesai ve 40+ modül — Excel karmaşası olmadan mevzuata uygun sonuç ve standart rapor çıktısı.';
+
+/** Ana sayfa hero metinleri — v2_homepage_sections (sectionKey: hero). */
+export function resolveHomepageHero(content: ContentBundleView): HomepageHeroView {
+  const hero = getHomepageSection(content, 'hero');
+  return {
+    eyebrow: hero?.eyebrow?.trim() || DEFAULT_HERO_EYEBROW,
+    title: hero?.title?.trim() || DEFAULT_HERO_TITLE,
+    description: hero?.description?.trim() || DEFAULT_HERO_DESCRIPTION,
+  };
+}
+
+const DEFAULT_MODULES_TITLE = 'Hesaplama Modülleri';
+const DEFAULT_MODULES_DESCRIPTION =
+  "Kıdemden fazla mesaiye, yıllık izinden UBGT'ye kadar işçilik alacaklarını tek panelde hesaplayın.";
+
+const DEFAULT_EXCEL_EYEBROW = 'Excel yerine program';
+const DEFAULT_EXCEL_TITLE = 'Tablolarla uğraşmayın, dosyaya odaklanın';
+const DEFAULT_EXCEL_DESCRIPTION =
+  'Excel dosyaları her güncellemede risk taşır. Bilirkişi Hesap ile hesaplamalar merkezi, denetlenebilir ve profesyonel kalır.';
+const DEFAULT_EXCEL_BENEFITS = [
+  'Formül ve sürüm hatalarına son',
+  'Standart rapor ve çıktı formatı',
+  'Dosya kaybı riskini azaltma',
+  'Ekip içi tutarlı hesaplama',
+];
+const DEFAULT_EXCEL_IMAGE_ALT = 'Excel yerine program kullanımı karşılaştırması';
+
+const DEFAULT_PRICING_CTA_EYEBROW = 'Fiyatlandırma';
+const DEFAULT_PRICING_CTA_TITLE = 'Dosyanız için doğru hesaplama altyapısını seçin';
+const DEFAULT_PRICING_CTA_DESCRIPTION =
+  'Profesyonel aylık veya yıllık paketler; baro üyelerine özel kampanyalar.';
+
+const DEFAULT_FAQ_PREVIEW_EYEBROW = 'SSS';
+const DEFAULT_FAQ_PREVIEW_TITLE = 'Sık sorulan sorular';
+const DEFAULT_FAQ_PREVIEW_DESCRIPTION =
+  'Merak ettiklerinizin özeti. Tüm yanıtlar SSS sayfasında.';
+
+const STATIC_HERO_CTA_BUTTONS: HomepageCtaButtonView[] = [
+  { code: 'hero_demo', label: 'Demo Talep Et', href: '/demo-talep', variant: 'accent', sortOrder: 1 },
+  { code: 'hero_pricing', label: 'Abone Ol', href: '/fiyatlandirma', variant: 'outlineLight', sortOrder: 2 },
+  {
+    code: 'hero_login',
+    label: 'Programa Giriş',
+    href: config.PANEL_LOGIN_URL,
+    variant: 'ghostLight',
+    sortOrder: 3,
+  },
+];
+
+const STATIC_PRICING_CTA_BUTTONS: HomepageCtaButtonView[] = [
+  {
+    code: 'pricing_go',
+    label: 'Fiyatlandırmaya Git',
+    href: '/fiyatlandirma',
+    variant: 'accent',
+    sortOrder: 1,
+  },
+  { code: 'pricing_demo', label: 'Demo Talep Et', href: '/demo-talep', variant: 'outlineLight', sortOrder: 2 },
+];
+
+function sectionHeading(
+  content: ContentBundleView,
+  sectionKey: string,
+  defaults: HomepageSectionHeadingView,
+): HomepageSectionHeadingView {
+  const section = getHomepageSection(content, sectionKey);
+  return {
+    eyebrow: section?.eyebrow?.trim() || defaults.eyebrow,
+    title: section?.title?.trim() || defaults.title,
+    description: section?.description?.trim() || defaults.description,
+  };
+}
+
+/** Modül vitrini başlık/açıklama — sectionKey: modules. */
+export function resolveHomepageModulesHeading(
+  content: ContentBundleView,
+): HomepageSectionHeadingView {
+  return sectionHeading(content, 'modules', {
+    eyebrow: '',
+    title: DEFAULT_MODULES_TITLE,
+    description: DEFAULT_MODULES_DESCRIPTION,
+  });
+}
+
+/** Excel karşılaştırma — sectionKey: excel + config.benefits / config.image. */
+export function resolveHomepageExcel(
+  content: ContentBundleView,
+  imageFallback: string,
+): HomepageExcelView {
+  const excel = getHomepageSection(content, 'excel');
+  const heading = sectionHeading(content, 'excel', {
+    eyebrow: DEFAULT_EXCEL_EYEBROW,
+    title: DEFAULT_EXCEL_TITLE,
+    description: DEFAULT_EXCEL_DESCRIPTION,
+  });
+  const cfg = excel?.config ?? null;
+  const benefitsRaw = Array.isArray(cfg?.benefits) ? (cfg.benefits as string[]) : [];
+  const benefits = benefitsRaw.map((b) => String(b).trim()).filter(Boolean);
+  return {
+    ...heading,
+    benefits: benefits.length > 0 ? benefits : DEFAULT_EXCEL_BENEFITS,
+    imageSrc: resolveHomepageExcelImage(content, imageFallback),
+    imageAlt:
+      (typeof cfg?.imageAlt === 'string' && cfg.imageAlt.trim()) ||
+      DEFAULT_EXCEL_IMAGE_ALT,
+  };
+}
+
+/** Alt CTA — sectionKey: pricing_cta. */
+export function resolveHomepagePricingCta(content: ContentBundleView): HomepageSectionHeadingView {
+  return sectionHeading(content, 'pricing_cta', {
+    eyebrow: DEFAULT_PRICING_CTA_EYEBROW,
+    title: DEFAULT_PRICING_CTA_TITLE,
+    description: DEFAULT_PRICING_CTA_DESCRIPTION,
+  });
+}
+
+/** SSS önizleme başlıkları — sectionKey: faq_preview (sorular faq kategorilerinden). */
+export function resolveHomepageFaqPreviewHeading(
+  content: ContentBundleView,
+): HomepageSectionHeadingView {
+  return sectionHeading(content, 'faq_preview', {
+    eyebrow: DEFAULT_FAQ_PREVIEW_EYEBROW,
+    title: DEFAULT_FAQ_PREVIEW_TITLE,
+    description: DEFAULT_FAQ_PREVIEW_DESCRIPTION,
+  });
+}
+
+function mapApiCtaButtons(
+  rows: ContentBundleApi['ctaButtons'] | undefined,
+): HomepageCtaButtonView[] {
+  return (rows ?? [])
+    .map((row) => {
+      const code = row.code?.trim() ?? '';
+      const label = row.label?.trim() ?? '';
+      const href = row.linkUrl?.trim() ?? '';
+      if (!code || !label || !href) return null;
+      return {
+        code,
+        label,
+        href,
+        variant: row.variant?.trim() || 'primary',
+        sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : 0,
+      };
+    })
+    .filter((row): row is HomepageCtaButtonView => row !== null)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function getStaticCtaButtons(): HomepageCtaButtonView[] {
+  return [...STATIC_HERO_CTA_BUTTONS, ...STATIC_PRICING_CTA_BUTTONS];
+}
+
+/** Hero CTA — v2_cta_buttons (code: hero_*). */
+export function resolveHomepageHeroCtaButtons(
+  content: ContentBundleView,
+): HomepageCtaButtonView[] {
+  const fromApi = content.ctaButtons.filter((b) => b.code.toLowerCase().startsWith('hero_'));
+  return fromApi.length > 0 ? fromApi : STATIC_HERO_CTA_BUTTONS;
+}
+
+/** Alt CTA butonları — hero_* dışındaki yayınlanmış butonlar. */
+export function resolveHomepagePricingCtaButtons(
+  content: ContentBundleView,
+): HomepageCtaButtonView[] {
+  const fromApi = content.ctaButtons.filter((b) => !b.code.toLowerCase().startsWith('hero_'));
+  return fromApi.length > 0 ? fromApi : STATIC_PRICING_CTA_BUTTONS;
 }
 
 /** Ana sayfa excel bölümü görseli. */
@@ -1000,9 +1226,61 @@ function getStaticDemoPage(): DemoPageView {
   };
 }
 
+function resolveTrustIcon(name: string | null | undefined): LucideIcon {
+  if (name && trustIconByName[name]) return trustIconByName[name];
+  return Layers;
+}
+
 function resolveDemoTrustIcon(name: string | null | undefined): LucideIcon {
-  if (name && demoTrustIconByName[name]) return demoTrustIconByName[name];
-  return Shield;
+  return resolveTrustIcon(name);
+}
+
+const DEFAULT_TRUST_HEADLINE =
+  'İşçilik alacaklarında doğru, hızlı ve denetlenebilir hesaplama';
+
+function getStaticTrustMetrics(): TrustMetricView[] {
+  return [
+    {
+      icon: Layers,
+      value: '40+',
+      label: 'hesaplama modülü',
+      description: 'Kıdemden UBGT’ye tüm işçilik alacakları tek platformda.',
+    },
+    {
+      icon: FileCheck,
+      value: 'Dakikalar',
+      label: 'içinde rapor',
+      description: 'Manuel tablolar yerine hızlı, standart çıktı üretin.',
+    },
+    {
+      icon: ShieldCheck,
+      value: 'Mevzuata',
+      label: 'uygun yapı',
+      description: 'Güncel parametrelerle denetlenebilir hesaplama süreci.',
+    },
+  ];
+}
+
+function mapApiTrustMetrics(
+  rows: ContentBundleApi['trustMetrics'] | undefined,
+): TrustMetricView[] {
+  return (rows ?? [])
+    .map((row) => ({
+      value: row.valueText?.trim() ?? '',
+      label: row.labelText?.trim() ?? '',
+      description: row.description?.trim() ?? '',
+      icon: resolveTrustIcon(row.iconName),
+    }))
+    .filter((row) => row.value.length > 0 || row.label.length > 0);
+}
+
+/** Ana sayfa güven metrikleri — API + homepage trust başlığı. */
+export function resolveHomepageTrust(content: ContentBundleView): HomepageTrustView {
+  const trustSection = getHomepageSection(content, 'trust');
+  const headline = trustSection?.title?.trim() || DEFAULT_TRUST_HEADLINE;
+  const metrics =
+    content.trustMetrics.length > 0 ? content.trustMetrics : getStaticTrustMetrics();
+  return { headline, metrics };
 }
 
 function mapApiDemoPage(api: ContentBundleApi): DemoPageView {
@@ -1395,6 +1673,8 @@ export function getStaticContentBundle(): ContentBundleView {
     mediaByKey: {},
     homepage: [],
     homepageByKey: {},
+    trustMetrics: getStaticTrustMetrics(),
+    ctaButtons: getStaticCtaButtons(),
     settings: {},
     branding: mapSiteBranding({}, {}),
   };
@@ -1438,6 +1718,14 @@ export function mapApiContentBundle(
     mediaByKey: buildMediaByKey(mediaAssets),
     homepage,
     homepageByKey: buildHomepageByKey(homepage),
+    trustMetrics: (() => {
+      const mapped = mapApiTrustMetrics(api.trustMetrics);
+      return mapped.length > 0 ? mapped : getStaticTrustMetrics();
+    })(),
+    ctaButtons: (() => {
+      const mapped = mapApiCtaButtons(api.ctaButtons);
+      return mapped.length > 0 ? mapped : getStaticCtaButtons();
+    })(),
     settings,
     branding: mapSiteBranding(settings, publicBranding),
   };

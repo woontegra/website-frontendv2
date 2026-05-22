@@ -39,8 +39,17 @@ import {
   resolveMediaSummary,
   TrustMetricsCmsGrid,
 } from '@/admin/v2/homepageCmsUi';
-import { parseHeroSlidesFromConfig } from '@/lib/homepageHero';
+import { isStaleHeroPlaceholderPath, parseHeroSlidesFromConfig } from '@/lib/homepageHero';
+import { syncAdminV2MediaFromCloudinary } from '@/lib/adminV2Media';
 import { textUsesTextarea } from '@/admin/v2/adminV2EditUi';
+
+const HOMEPAGE_SECTION_SAVE_LABELS: Record<string, string> = {
+  hero: 'Hero alanı',
+  modules: 'Modül vitrini',
+  excel: 'Excel karşılaştırma',
+  faq_preview: 'SSS önizleme',
+  pricing_cta: 'Fiyatlandırma CTA',
+};
 
 function publishedModuleCount(modules: AdminCalculationModuleRow[]): number {
   return modules.filter(
@@ -58,7 +67,10 @@ export function AdminV2HomepageManagementPage() {
   const [draft, setDraft] = useState<SectionDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const { tokenPresent, revision } = useAdminToken();
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  const [syncingCloudinary, setSyncingCloudinary] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const { tokenPresent, revision, invalidateBundle } = useAdminToken();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,12 +110,14 @@ export function AdminV2HomepageManagementPage() {
     setActiveEdit(key);
     setDraft(draftFromSection(section));
     setSaveError(null);
+    setSaveSuccess(null);
   };
 
   const cancelEdit = () => {
     setActiveEdit(null);
     setDraft(null);
     setSaveError(null);
+    setSaveSuccess(null);
   };
 
   const saveSection = async (sectionKey: string) => {
@@ -113,6 +127,7 @@ export function AdminV2HomepageManagementPage() {
 
     setSaving(true);
     setSaveError(null);
+    setSaveSuccess(null);
     try {
       await adminV2Patch(ADMIN_V2_PATCH_ROUTES.homepageSection(sectionKey), {
         title: draft.title,
@@ -122,7 +137,10 @@ export function AdminV2HomepageManagementPage() {
         configJson: buildConfigJson(sectionKey, draft, section.config),
         isActive: draft.isActive,
       });
+      const label = HOMEPAGE_SECTION_SAVE_LABELS[sectionKey] ?? 'Bölüm';
+      setSaveSuccess(`${label} kaydedildi. Canlı sitede yenilediğinizde görünür.`);
       cancelEdit();
+      invalidateBundle();
       await load();
     } catch (err) {
       const apiErr = err as ApiError;
@@ -132,7 +150,7 @@ export function AdminV2HomepageManagementPage() {
     }
   };
 
-  const sectionEditKeys = ['hero', 'excel', 'faq_preview', 'pricing_cta'];
+  const sectionEditKeys = ['hero', 'modules', 'excel', 'faq_preview', 'pricing_cta'];
   const isSectionEditing = activeEdit !== null && sectionEditKeys.includes(activeEdit);
   const isTrustEditing = activeEdit === 'trust';
   const isCtaEditing = activeEdit === 'cta';
@@ -160,14 +178,36 @@ export function AdminV2HomepageManagementPage() {
     };
   };
 
-  const applyHeroMediaAdd = async (value: string, asset: AdminMediaAssetRow) => {
-    if (!hero || activeEdit !== 'hero') {
-      setDraft((d) => (d ? appendHeroSlide(d, value, asset) : d));
-      return;
+  const syncCloudinaryToMediaDb = async () => {
+    setSyncingCloudinary(true);
+    setSyncMessage(null);
+    setSaveError(null);
+    try {
+      const result = await syncAdminV2MediaFromCloudinary({
+        includeAll: true,
+        attachToHero: false,
+      });
+      setSyncMessage(
+        `Cloudinary: ${result.cloudinaryCount} görsel · medya tablosuna ${result.created} yeni kayıt. Hero için Düzenle → Görsel ekle ile seçin.`,
+      );
+      invalidateBundle();
+      await load();
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setSaveError(apiErr.message ?? 'Cloudinary senkronizasyonu başarısız');
+    } finally {
+      setSyncingCloudinary(false);
     }
+  };
 
-    const nextDraft = appendHeroSlide(draft!, value, asset);
-    setDraft(nextDraft);
+  const applyHeroMediaAdd = async (value: string, asset: AdminMediaAssetRow) => {
+    if (!hero) return;
+
+    const baseDraft = activeEdit === 'hero' && draft ? draft : draftFromSection(hero);
+    const nextDraft = appendHeroSlide(baseDraft, value, asset);
+    if (activeEdit === 'hero') {
+      setDraft(nextDraft);
+    }
     setSaving(true);
     setSaveError(null);
     try {
@@ -179,6 +219,8 @@ export function AdminV2HomepageManagementPage() {
         configJson: buildConfigJson('hero', nextDraft, hero.config),
         isActive: nextDraft.isActive,
       });
+      setSaveSuccess('Hero görselleri kaydedildi. Canlı sitede yenilediğinizde görünür.');
+      invalidateBundle();
       await load();
     } catch (err) {
       const apiErr = err as ApiError;
@@ -197,6 +239,10 @@ export function AdminV2HomepageManagementPage() {
     (s) => ({ url: s.url, alt: s.alt ?? '' }),
   );
   const heroSlidesEdit = heroDraft?.heroImages ?? heroSlidesReadOnly;
+  const heroCarouselWasReset =
+    heroSlidesReadOnly.length === 0 &&
+    typeof hero?.config?.heroImage === 'string' &&
+    isStaleHeroPlaceholderPath(hero.config.heroImage as string);
   const heroImagePath = heroSlidesReadOnly[0]?.url ?? '';
   const heroMedia = resolveMediaSummary(mediaAssets, heroImagePath);
 
@@ -245,6 +291,12 @@ export function AdminV2HomepageManagementPage() {
         </InfoBanner>
       )}
 
+      {saveSuccess && !activeEdit && (
+        <InfoBanner tone="success" className="mb-4">
+          {saveSuccess}
+        </InfoBanner>
+      )}
+
       {loading ? (
         <div className="flex items-center gap-2 py-16 text-[13px] text-slate-600">
           <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
@@ -279,6 +331,14 @@ export function AdminV2HomepageManagementPage() {
             ) : activeEdit === 'hero' && draft ? (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                  <CmsFormField label="Üst etiket">
+                    <input
+                      className={cmsInputClass}
+                      value={draft.eyebrow}
+                      onChange={(e) => setDraft({ ...draft, eyebrow: e.target.value })}
+                      disabled={saving}
+                    />
+                  </CmsFormField>
                   <CmsFormField label="Başlık">
                     <input
                       className={cmsInputClass}
@@ -308,6 +368,17 @@ export function AdminV2HomepageManagementPage() {
                     </CmsFormField>
                   </div>
                 </div>
+                {heroCarouselWasReset && (
+                  <InfoBanner tone="info" className="mb-3">
+                    Hero kaydında <code className="text-xs">heroImages</code> yok — sadece seed placeholder var.
+                    <strong> Düzenle</strong> → Cloudinary linki yapıştır veya <strong>Görsel ekle</strong> → Kaydet.
+                  </InfoBanner>
+                )}
+                {syncMessage && (
+                  <InfoBanner tone="success" className="mb-3">
+                    {syncMessage}
+                  </InfoBanner>
+                )}
                 <CmsHeroCarouselEditor
                   slides={heroSlidesEdit}
                   heroImageAlt={draft.heroImageAlt}
@@ -330,6 +401,8 @@ export function AdminV2HomepageManagementPage() {
                   uploadUsageLabel="Ana sayfa hero görseli"
                   onAssetUploaded={mergeUploadedMediaAsset}
                   saving={saving}
+                  onSyncCloudinary={syncCloudinaryToMediaDb}
+                  syncingCloudinary={syncingCloudinary}
                 />
                 <HeroButtonsPreview />
                 <CmsSaveError message={saveError} />
@@ -337,9 +410,17 @@ export function AdminV2HomepageManagementPage() {
             ) : (
               <>
                 <CmsFieldGrid className="grid-cols-1 gap-3 lg:grid-cols-2">
+                  <CmsField label="Üst etiket" value={hero.eyebrow} />
                   <CmsField label="Başlık" value={hero.title} />
                   <CmsField label="Açıklama" value={hero.description} />
                 </CmsFieldGrid>
+                {heroSlidesReadOnly.length === 0 && (
+                  <InfoBanner tone="info" className="mb-3">
+                    Hero’da görsel yok (DB’de <code className="text-xs">heroImages</code> boş).{' '}
+                    <strong>Düzenle</strong> ile görsel ekleyin veya Medya sayfasından Cloudinary → DB senkronu yapıp
+                    buradan seçin.
+                  </InfoBanner>
+                )}
                 <CmsHeroCarouselEditor
                   slides={heroSlidesReadOnly}
                   heroImageAlt={
@@ -401,6 +482,14 @@ export function AdminV2HomepageManagementPage() {
               </CmsEmptyState>
             ) : activeEdit === 'excel' && draft ? (
               <div className="space-y-3">
+                <CmsFormField label="Üst etiket">
+                  <input
+                    className={cmsInputClass}
+                    value={draft.eyebrow}
+                    onChange={(e) => setDraft({ ...draft, eyebrow: e.target.value })}
+                    disabled={saving}
+                  />
+                </CmsFormField>
                 <CmsFormField label="Başlık">
                   <input
                     className={cmsInputClass}
@@ -442,6 +531,7 @@ export function AdminV2HomepageManagementPage() {
             ) : (
               <>
                 <CmsFieldGrid className="grid-cols-1 gap-3">
+                  <CmsField label="Üst etiket" value={excel.eyebrow} />
                   <CmsField label="Başlık" value={excel.title} />
                   <CmsField label="Açıklama" value={excel.description} />
                 </CmsFieldGrid>
@@ -473,21 +563,59 @@ export function AdminV2HomepageManagementPage() {
             title="Modül Vitrini"
             description="Ana sayfada öne çıkan hesaplama türleri."
             locationNote="Sayfa ortasında, modül kartları ızgarası olarak listelenir."
+            editAction={
+              modulesSection ? (
+                <CmsEditButton
+                  isEditing={activeEdit === 'modules'}
+                  saving={saving}
+                  disabled={!tokenPresent || conflictUnless('modules')}
+                  onEdit={() => beginEdit('modules', modulesSection)}
+                  onSave={() => saveSection('modules')}
+                  onCancel={cancelEdit}
+                />
+              ) : undefined
+            }
           >
-            <div className={`p-4 ${adminMutedPanelClass}`}>
-              <p className="text-3xl font-semibold leading-none tracking-tight text-slate-900">
-                {moduleCount}
-              </p>
-              <p className="mt-1 text-[13px] text-slate-600">hesaplama sayfası yayında</p>
-              {modulesSection?.title && (
-                <p className="mt-2 text-[12px] text-slate-500">
-                  Bölüm: <span className="font-medium text-slate-800">{modulesSection.title}</span>
-                </p>
-              )}
-              <p className="mt-3 text-[12px] leading-snug text-slate-500">
-                Detaylar Hesaplama Sayfaları ekranından yönetilir.
-              </p>
-            </div>
+            {!modulesSection ? (
+              <CmsEmptyState>Bu bölüm henüz yapılandırılmamış.</CmsEmptyState>
+            ) : activeEdit === 'modules' && draft ? (
+              <div className="space-y-3">
+                <CmsFormField label="Başlık">
+                  <input
+                    className={cmsInputClass}
+                    value={draft.title}
+                    onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                    disabled={saving}
+                  />
+                </CmsFormField>
+                <CmsFormField label="Açıklama">
+                  <textarea
+                    className={cmsInputClass}
+                    rows={3}
+                    value={draft.description}
+                    onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                    disabled={saving}
+                  />
+                </CmsFormField>
+                <CmsSaveError message={saveError} />
+              </div>
+            ) : (
+              <>
+                <CmsFieldGrid className="grid-cols-1 gap-3">
+                  <CmsField label="Başlık" value={modulesSection.title} />
+                  <CmsField label="Açıklama" value={modulesSection.description} />
+                </CmsFieldGrid>
+                <div className={`mt-3 p-4 ${adminMutedPanelClass}`}>
+                  <p className="text-3xl font-semibold leading-none tracking-tight text-slate-900">
+                    {moduleCount}
+                  </p>
+                  <p className="mt-1 text-[13px] text-slate-600">hesaplama sayfası yayında</p>
+                </div>
+              </>
+            )}
+            <p className="mt-3 text-[12px] leading-snug text-slate-500">
+              Kart içerikleri Hesaplama Sayfaları ekranından yönetilir.
+            </p>
             <CmsPrimaryButton to="/admin/v2/calculations">Modülleri Yönet</CmsPrimaryButton>
           </CmsPanel>
 
@@ -515,6 +643,14 @@ export function AdminV2HomepageManagementPage() {
               <div className="mb-3">
                 {activeEdit === 'pricing_cta' && draft ? (
                   <div className={`grid grid-cols-1 gap-3 p-3 lg:grid-cols-2 ${adminMutedPanelSubtleClass}`}>
+                    <CmsFormField label="Üst etiket">
+                      <input
+                        className={cmsInputClass}
+                        value={draft.eyebrow}
+                        onChange={(e) => setDraft({ ...draft, eyebrow: e.target.value })}
+                        disabled={saving}
+                      />
+                    </CmsFormField>
                     <CmsFormField label="Başlık">
                       <input
                         className={cmsInputClass}
@@ -536,6 +672,7 @@ export function AdminV2HomepageManagementPage() {
                   </div>
                 ) : (
                   <CmsFieldGrid className="grid-cols-1 gap-3 lg:grid-cols-2">
+                    <CmsField label="Üst etiket" value={pricingCta.eyebrow} />
                     <CmsField label="Başlık" value={pricingCta.title} />
                     <CmsField label="Açıklama" value={pricingCta.description} />
                   </CmsFieldGrid>
@@ -577,6 +714,14 @@ export function AdminV2HomepageManagementPage() {
               <CmsEmptyState>SSS önizleme metni henüz tanımlanmamış.</CmsEmptyState>
             ) : activeEdit === 'faq_preview' && draft ? (
               <div className="grid gap-6">
+                <CmsFormField label="Üst etiket">
+                  <input
+                    className={cmsInputClass}
+                    value={draft.eyebrow}
+                    onChange={(e) => setDraft({ ...draft, eyebrow: e.target.value })}
+                    disabled={saving}
+                  />
+                </CmsFormField>
                 <CmsFormField label="Bölüm başlığı">
                   <input
                     className={cmsInputClass}
@@ -598,6 +743,7 @@ export function AdminV2HomepageManagementPage() {
               </div>
             ) : (
               <CmsFieldGrid className="grid-cols-1 gap-3">
+                <CmsField label="Üst etiket" value={faqPreview.eyebrow} />
                 <CmsField label="Başlık" value={faqPreview.title} />
                 <CmsField label="Açıklama" value={faqPreview.description} />
               </CmsFieldGrid>

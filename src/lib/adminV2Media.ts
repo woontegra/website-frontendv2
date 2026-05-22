@@ -219,3 +219,36 @@ export async function uploadAdminV2Media(body: {
   }
   return data.data;
 }
+
+export type CloudinarySyncResult = {
+  cloudinaryCount: number;
+  created: number;
+  skipped: number;
+  syncedUrls: number;
+  heroAttached: number;
+  includeAll: boolean;
+};
+
+/** Cloudinary'deki görselleri veritabanına aktarır; isteğe bağlı hero carousel'e bağlar. */
+export async function syncAdminV2MediaFromCloudinary(options?: {
+  includeAll?: boolean;
+  attachToHero?: boolean;
+  maxHeroSlides?: number;
+}): Promise<CloudinarySyncResult> {
+  const json = await apiRequest<Envelope<CloudinarySyncResult>>(
+    '/api/admin/v2/media/sync-cloudinary',
+    {
+      method: 'POST',
+      headers: authHeaders(),
+      body: {
+        includeAll: options?.includeAll === true,
+        attachToHero: options?.attachToHero === true,
+        maxHeroSlides: options?.maxHeroSlides,
+      },
+    },
+  );
+  if (!json.success || !json.data) {
+    throw new Error(json.message ?? 'Cloudinary senkronizasyonu başarısız');
+  }
+  return json.data;
+}

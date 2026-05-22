@@ -19,6 +19,7 @@ import {
   guessMimeTypeFromUrl,
   shortenUrl,
   updateAdminV2Media,
+  syncAdminV2MediaFromCloudinary,
   uploadAdminV2Media,
   validateMediaUploadFile,
 } from '@/lib/adminV2Media';
@@ -535,6 +536,7 @@ export function AdminV2MediaPage() {
   const [editTarget, setEditTarget] = useState<MediaRow | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const { tokenPresent, revision, invalidateBundle } = useAdminToken();
 
   const loadMedia = async () => {
@@ -556,6 +558,27 @@ export function AdminV2MediaPage() {
     if (tokenPresent) void loadMedia();
     else setRows([]);
   }, [tokenPresent, revision]);
+
+  const syncFromCloudinary = async () => {
+    setSyncing(true);
+    setPageError(null);
+    try {
+      const result = await syncAdminV2MediaFromCloudinary({
+        includeAll: true,
+        attachToHero: false,
+      });
+      invalidateBundle();
+      await loadMedia();
+      setPageError(
+        `Senkron tamam: ${result.cloudinaryCount} Cloudinary görseli, ${result.created} yeni medya kaydı. Hero için Ana Sayfa Yönetimi’nden seçin.`,
+      );
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setPageError(apiErr.message ?? 'Cloudinary senkronizasyonu başarısız');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const closeModal = () => {
     setModal(null);
@@ -719,6 +742,15 @@ export function AdminV2MediaPage() {
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Yenile
+          </button>
+          <button
+            type="button"
+            onClick={() => void syncFromCloudinary()}
+            disabled={!tokenPresent || loading || syncing}
+            className="inline-flex items-center gap-2 rounded-xl border border-[#dbe4ea] bg-white px-4 py-2 text-[13px] font-medium"
+          >
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Cloudinary → DB
           </button>
           <button
             type="button"

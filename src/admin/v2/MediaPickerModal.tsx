@@ -24,6 +24,8 @@ type MediaPickerModalProps = {
   title?: string;
   /** Hero vb. — modal içinden Cloudinary yükleme */
   enableUpload?: boolean;
+  /** true: yükleme bitince otomatik seç (hero slayt ekleme) */
+  autoSelectAfterUpload?: boolean;
   uploadUsageLabel?: string;
   onAssetUploaded?: (asset: AdminMediaAssetRow) => void;
 };
@@ -64,6 +66,7 @@ export function MediaPickerModal({
   onSelect,
   title = 'Görsel seç',
   enableUpload = false,
+  autoSelectAfterUpload = false,
   uploadUsageLabel = 'Ana sayfa hero görseli',
   onAssetUploaded,
 }: MediaPickerModalProps) {
@@ -269,31 +272,52 @@ export function MediaPickerModal({
               )}
 
               <div className="flex flex-wrap gap-2">
-                <ActionButton
-                  variant="primary"
-                  size="sm"
-                  type="button"
-                  disabled={!selectedFile || uploading}
-                  onClick={() => void runUpload(false)}
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" />
-                      Yükleniyor…
-                    </>
-                  ) : (
-                    'Yükle'
-                  )}
-                </ActionButton>
-                <ActionButton
-                  variant="primary"
-                  size="sm"
-                  type="button"
-                  disabled={!selectedFile || uploading}
-                  onClick={() => void runUpload(true)}
-                >
-                  Yükle ve seç
-                </ActionButton>
+                {autoSelectAfterUpload ? (
+                  <ActionButton
+                    variant="primary"
+                    size="sm"
+                    type="button"
+                    disabled={!selectedFile || uploading}
+                    onClick={() => void runUpload(true)}
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" />
+                        Yükleniyor…
+                      </>
+                    ) : (
+                      'Yükle ve slayta ekle'
+                    )}
+                  </ActionButton>
+                ) : (
+                  <>
+                    <ActionButton
+                      variant="primary"
+                      size="sm"
+                      type="button"
+                      disabled={!selectedFile || uploading}
+                      onClick={() => void runUpload(false)}
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" />
+                          Yükleniyor…
+                        </>
+                      ) : (
+                        'Yükle'
+                      )}
+                    </ActionButton>
+                    <ActionButton
+                      variant="primary"
+                      size="sm"
+                      type="button"
+                      disabled={!selectedFile || uploading}
+                      onClick={() => void runUpload(true)}
+                    >
+                      Yükle ve seç
+                    </ActionButton>
+                  </>
+                )}
               </div>
             </section>
           )}

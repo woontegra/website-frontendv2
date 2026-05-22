@@ -2,8 +2,13 @@ import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { useContentBundle } from '@/app/ContentProvider';
 import { SectionHeading } from '@/components/ui/SectionHeading';
+import type { HomepageSectionHeadingView } from '@/lib/contentBundle';
 
-export function FaqPreviewSection() {
+type FaqPreviewSectionProps = {
+  heading: HomepageSectionHeadingView;
+};
+
+export function FaqPreviewSection({ heading }: FaqPreviewSectionProps) {
   const { content } = useContentBundle();
   const preview = content.faqPreview;
 
@@ -12,9 +17,9 @@ export function FaqPreviewSection() {
       <div className="container-page">
         <SectionHeading
           theme="light"
-          eyebrow="SSS"
-          title="Sık sorulan sorular"
-          description="Merak ettiklerinizin özeti. Tüm yanıtlar SSS sayfasında."
+          eyebrow={heading.eyebrow}
+          title={heading.title}
+          description={heading.description}
         />
         <div className="mt-12 grid gap-4 md:grid-cols-3">
           {preview.map((item) => (
