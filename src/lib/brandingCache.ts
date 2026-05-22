@@ -21,6 +21,15 @@ export function readBrandingCache(): CachedBranding | null {
   }
 }
 
+export function clearBrandingCache(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function writeBrandingCache(branding: { logoUrl?: string; faviconUrl?: string }): void {
   if (typeof window === 'undefined') return;
   const logoUrl = branding.logoUrl?.trim();

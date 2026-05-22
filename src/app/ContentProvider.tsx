@@ -42,10 +42,9 @@ function initialContent(): ContentBundleView {
 }
 
 export function ContentProvider({ children }: { children: ReactNode }) {
-  const hadCachedLogo = Boolean(readBrandingCache()?.logoUrl);
   const [content, setContent] = useState<ContentBundleView>(initialContent);
-  const [source, setSource] = useState<'api' | 'static'>(hadCachedLogo ? 'api' : 'static');
-  const [ready, setReady] = useState(hadCachedLogo);
+  const [source, setSource] = useState<'api' | 'static'>('static');
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
