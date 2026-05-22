@@ -17,12 +17,20 @@ import {
   type AdminHomepageSectionRow,
 } from '@/lib/adminContentBundle';
 import { adminV2Patch, ADMIN_V2_PATCH_ROUTES, parseAdminNumericId } from '@/lib/adminV2Patch';
+import {
+  buildHeroConfigPayload,
+  parseHeroSlidesFromConfig,
+  type HeroSlideInput,
+} from '@/lib/homepageHero';
+
+export type HeroSlideDraft = { url: string; alt: string };
 
 export type SectionDraft = {
   title: string;
   eyebrow: string;
   subtitle: string;
   description: string;
+  heroImages: HeroSlideDraft[];
   heroImage: string;
   heroImageAlt: string;
   benefitsText: string;
@@ -30,20 +38,30 @@ export type SectionDraft = {
   isActive: boolean;
 };
 
+const HERO_FALLBACK_IMAGE = '/images/hero-dashboard.png';
+const HERO_FALLBACK_ALT = 'Bilirkişi Hesap yönetim paneli önizlemesi';
+
 export function draftFromSection(section: AdminHomepageSectionRow): SectionDraft {
   const cfg = section.config ?? {};
   const benefits = Array.isArray(cfg.benefits) ? (cfg.benefits as string[]).join('\n') : '';
+  const heroSlides = parseHeroSlidesFromConfig(cfg);
+  const heroImages: HeroSlideDraft[] = heroSlides.map((s) => ({
+    url: s.url,
+    alt: s.alt ?? '',
+  }));
+  const legacyImage =
+    typeof cfg.heroImage === 'string'
+      ? cfg.heroImage
+      : typeof cfg.image === 'string'
+        ? cfg.image
+        : '';
   return {
     title: section.title ?? '',
     eyebrow: section.eyebrow ?? '',
     subtitle: section.subtitle ?? '',
     description: section.description ?? '',
-    heroImage:
-      typeof cfg.heroImage === 'string'
-        ? cfg.heroImage
-        : typeof cfg.image === 'string'
-          ? cfg.image
-          : '',
+    heroImages,
+    heroImage: heroImages[0]?.url || legacyImage,
     heroImageAlt: typeof cfg.heroImageAlt === 'string' ? cfg.heroImageAlt : '',
     benefitsText: benefits,
     sortOrder: String(section.sortOrder),
@@ -57,10 +75,13 @@ export function buildConfigJson(
   existing: Record<string, unknown> | null,
 ): string {
   if (sectionKey === 'hero') {
-    return JSON.stringify({
-      heroImage: draft.heroImage || '/images/hero-dashboard.png',
-      heroImageAlt: draft.heroImageAlt || 'Bilirkişi Hesap yönetim paneli önizlemesi',
-    });
+    const slides: HeroSlideInput[] = draft.heroImages.map((s) => ({
+      url: s.url,
+      alt: s.alt,
+    }));
+    return JSON.stringify(
+      buildHeroConfigPayload(slides, draft.heroImageAlt, HERO_FALLBACK_IMAGE, HERO_FALLBACK_ALT),
+    );
   }
   if (sectionKey === 'excel') {
     const benefits = draft.benefitsText

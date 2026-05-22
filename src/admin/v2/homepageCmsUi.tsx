@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ExternalLink, ImageIcon, Loader2, Wrench } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  ImageIcon,
+  Loader2,
+  Plus,
+  Trash2,
+  Wrench,
+} from 'lucide-react';
+import type { HeroSlideDraft } from '@/admin/v2/homepageAdminShared';
 import type { ApiError } from '@/lib/apiClient';
 import { config } from '@/lib/config';
 import { useAdminToken } from '@/admin/v2/AdminTokenContext';
@@ -190,7 +200,7 @@ function CmsMediaThumb({
 }
 
 export function CmsMediaBlock({
-  defined,
+  defined: _defined,
   summary,
   assets = [],
   currentValue,
@@ -206,7 +216,7 @@ export function CmsMediaBlock({
   assets?: AdminMediaAssetRow[];
   /** Formdaki heroImage / excel image değeri */
   currentValue?: string;
-  onPick?: (value: string, asset: AdminMediaAssetRow) => void;
+  onPick?: (value: string, asset: AdminMediaAssetRow) => void | Promise<void>;
   pickDisabled?: boolean;
   pickTitle?: string;
   enableUpload?: boolean;
@@ -252,10 +262,177 @@ export function CmsMediaBlock({
           enableUpload={enableUpload}
           uploadUsageLabel={uploadUsageLabel}
           onAssetUploaded={onAssetUploaded}
-          onSelect={(asset, value) => onPick(value, asset)}
+          onSelect={(asset, value) => void onPick(value, asset)}
         />
       )}
     </>
+  );
+}
+
+export function CmsHeroCarouselEditor({
+  slides,
+  heroImageAlt,
+  onSlidesChange,
+  onAltChange,
+  assets,
+  onAddSlide,
+  readOnly = false,
+  pickDisabled,
+  enableUpload,
+  uploadUsageLabel,
+  onAssetUploaded,
+  saving,
+}: {
+  slides: HeroSlideDraft[];
+  heroImageAlt: string;
+  onSlidesChange?: (slides: HeroSlideDraft[]) => void;
+  onAltChange?: (alt: string) => void;
+  assets: AdminMediaAssetRow[];
+  onAddSlide?: (value: string, asset: AdminMediaAssetRow) => void | Promise<void>;
+  readOnly?: boolean;
+  pickDisabled?: boolean;
+  enableUpload?: boolean;
+  uploadUsageLabel?: string;
+  onAssetUploaded?: (asset: AdminMediaAssetRow) => void;
+  saving?: boolean;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const moveSlide = (index: number, direction: -1 | 1) => {
+    if (!onSlidesChange) return;
+    const next = index + direction;
+    if (next < 0 || next >= slides.length) return;
+    const copy = [...slides];
+    const [item] = copy.splice(index, 1);
+    copy.splice(next, 0, item);
+    onSlidesChange(copy);
+  };
+
+  const removeSlide = (index: number) => {
+    if (!onSlidesChange) return;
+    onSlidesChange(slides.filter((_, i) => i !== index));
+  };
+
+  const updateSlideAlt = (index: number, alt: string) => {
+    if (!onSlidesChange) return;
+    onSlidesChange(slides.map((s, i) => (i === index ? { ...s, alt } : s)));
+  };
+
+  return (
+    <div className={`space-y-3 ${adminMutedPanelClass} p-3`}>
+      <div>
+        <p className="text-[12px] font-medium text-[#5c6b7a]">Hero görselleri (carousel)</p>
+        <p className="mt-0.5 text-[11px] text-[#8a9aaa]">
+          Yatay, geniş görseller ekleyin. Canlı sitede otomatik slayt olarak döner.
+        </p>
+      </div>
+
+      {slides.length === 0 ? (
+        <p className="text-sm text-slate-500">Henüz görsel yok. İlk görseli ekleyin.</p>
+      ) : (
+        <ul className="space-y-2">
+          {slides.map((slide, index) => (
+            <li
+              key={`${slide.url}-${index}`}
+              className="flex flex-col gap-2 rounded-lg border border-[#dbe4ea] bg-white p-2.5 sm:flex-row sm:items-center"
+            >
+              <CmsMediaThumb assets={assets} value={slide.url} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-mono text-[11px] text-[#5c6b7a]">{slide.url}</p>
+                {!readOnly && onSlidesChange ? (
+                  <input
+                    type="text"
+                    value={slide.alt}
+                    onChange={(e) => updateSlideAlt(index, e.target.value)}
+                    disabled={saving}
+                    placeholder="Slayt alt metni (isteğe bağlı)"
+                    className={`${adminInputClass} mt-1.5 text-xs`}
+                  />
+                ) : slide.alt ? (
+                  <p className="mt-1 text-xs text-slate-600">{slide.alt}</p>
+                ) : null}
+              </div>
+              {!readOnly && onSlidesChange && (
+                <div className="flex shrink-0 gap-1 self-end sm:self-center">
+                  <button
+                    type="button"
+                    disabled={saving || index === 0}
+                    onClick={() => moveSlide(index, -1)}
+                    className="rounded-md border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                    aria-label="Yukarı taşı"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving || index === slides.length - 1}
+                    onClick={() => moveSlide(index, 1)}
+                    className="rounded-md border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                    aria-label="Aşağı taşı"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => removeSlide(index)}
+                    className="rounded-md border border-red-200 p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-40"
+                    aria-label="Kaldır"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!readOnly && onAddSlide && (
+        <>
+          <ActionButton
+            variant="secondary"
+            size="sm"
+            type="button"
+            icon={Plus}
+            disabled={pickDisabled || saving}
+            onClick={() => setPickerOpen(true)}
+          >
+            Görsel ekle
+          </ActionButton>
+          <MediaPickerModal
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            assets={assets}
+            title="Hero slaydı ekle"
+            enableUpload={enableUpload}
+            uploadUsageLabel={uploadUsageLabel}
+            onAssetUploaded={onAssetUploaded}
+            onSelect={(asset, value) => {
+              void onAddSlide(value, asset);
+              setPickerOpen(false);
+            }}
+          />
+        </>
+      )}
+
+      <FieldGroup
+        label="Varsayılan alt metin"
+        hint="Slaytta özel alt metin yoksa bu kullanılır"
+      >
+        {readOnly || !onAltChange ? (
+          <p className="text-sm text-slate-700">{heroImageAlt || '—'}</p>
+        ) : (
+          <input
+            type="text"
+            value={heroImageAlt}
+            onChange={(e) => onAltChange(e.target.value)}
+            disabled={saving}
+            className={adminInputClass}
+          />
+        )}
+      </FieldGroup>
+    </div>
   );
 }
 

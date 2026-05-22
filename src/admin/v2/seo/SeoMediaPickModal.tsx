@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ImageIcon, Loader2, X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import {
   fetchAdminV2ContentBundle,
   parseAdminMediaAssets,

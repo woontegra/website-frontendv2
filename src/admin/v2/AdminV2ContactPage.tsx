@@ -258,7 +258,7 @@ export function AdminV2ContactPage() {
                   >
                     <dt className="w-40 shrink-0 text-sm font-semibold text-slate-600">{label}</dt>
                     <dd className="min-w-0 flex-1 break-words text-sm text-slate-900">
-                      {data.setting[key] ?? (
+                      {data.setting?.[key] ?? (
                         <span className="italic text-slate-400">(boş)</span>
                       )}
                     </dd>

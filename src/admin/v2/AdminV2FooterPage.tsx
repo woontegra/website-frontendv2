@@ -139,7 +139,11 @@ export function AdminV2FooterPage() {
   const { tokenPresent, revision, invalidateBundle } = useAdminToken();
   const [data, setData] = useState<AdminFooterData | null>(null);
   const [form, setForm] = useState<FooterForm | null>(null);
-  const [contactPreview, setContactPreview] = useState({
+  const [contactPreview, setContactPreview] = useState<{
+    email: string;
+    phone: string;
+    address: string;
+  }>({
     email: config.contactEmail,
     phone: config.contactPhone,
     address: config.contactAddress,

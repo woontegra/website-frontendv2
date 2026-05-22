@@ -14,7 +14,12 @@ import {
   type AdminMediaAssetRow,
 } from '@/lib/adminContentBundle';
 import { adminV2Patch, ADMIN_V2_PATCH_ROUTES } from '@/lib/adminV2Patch';
-import { buildConfigJson, draftFromSection, type SectionDraft } from '@/admin/v2/homepageAdminShared';
+import {
+  buildConfigJson,
+  draftFromSection,
+  type HeroSlideDraft,
+  type SectionDraft,
+} from '@/admin/v2/homepageAdminShared';
 import {
   CmsAdvancedInfo,
   CmsEditButton,
@@ -22,6 +27,7 @@ import {
   CmsField,
   CmsFieldGrid,
   CmsFormField,
+  CmsHeroCarouselEditor,
   CmsMediaBlock,
   CmsPanel,
   CmsPrimaryButton,
@@ -33,6 +39,7 @@ import {
   resolveMediaSummary,
   TrustMetricsCmsGrid,
 } from '@/admin/v2/homepageCmsUi';
+import { parseHeroSlidesFromConfig } from '@/lib/homepageHero';
 import { textUsesTextarea } from '@/admin/v2/adminV2EditUi';
 
 function publishedModuleCount(modules: AdminCalculationModuleRow[]): number {
@@ -142,16 +149,43 @@ export function AdminV2HomepageManagementPage() {
     });
   };
 
-  const applyHeroMediaPick = (value: string, asset: AdminMediaAssetRow) => {
-    setDraft((d) =>
-      d
-        ? {
-            ...d,
-            heroImage: value,
-            heroImageAlt: asset.altText?.trim() || d.heroImageAlt,
-          }
-        : d,
-    );
+  const appendHeroSlide = (prev: SectionDraft, value: string, asset: AdminMediaAssetRow): SectionDraft => {
+    const alt = asset.altText?.trim() ?? '';
+    const heroImages: HeroSlideDraft[] = [...prev.heroImages, { url: value, alt }];
+    return {
+      ...prev,
+      heroImages,
+      heroImage: heroImages[0]?.url ?? value,
+      heroImageAlt: prev.heroImageAlt || alt,
+    };
+  };
+
+  const applyHeroMediaAdd = async (value: string, asset: AdminMediaAssetRow) => {
+    if (!hero || activeEdit !== 'hero') {
+      setDraft((d) => (d ? appendHeroSlide(d, value, asset) : d));
+      return;
+    }
+
+    const nextDraft = appendHeroSlide(draft!, value, asset);
+    setDraft(nextDraft);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await adminV2Patch(ADMIN_V2_PATCH_ROUTES.homepageSection('hero'), {
+        title: nextDraft.title,
+        eyebrow: nextDraft.eyebrow,
+        subtitle: nextDraft.subtitle,
+        description: nextDraft.description,
+        configJson: buildConfigJson('hero', nextDraft, hero.config),
+        isActive: nextDraft.isActive,
+      });
+      await load();
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setSaveError(apiErr.message ?? 'Hero görselleri kaydedilemedi');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const applyExcelMediaPick = (value: string) => {
@@ -159,10 +193,11 @@ export function AdminV2HomepageManagementPage() {
   };
 
   const heroDraft = activeEdit === 'hero' ? draft : null;
-  const heroImagePath =
-    heroDraft?.heroImage ||
-    (hero?.config?.heroImage as string | undefined) ||
-    (hero?.config?.image as string | undefined);
+  const heroSlidesReadOnly: HeroSlideDraft[] = parseHeroSlidesFromConfig(hero?.config ?? null).map(
+    (s) => ({ url: s.url, alt: s.alt ?? '' }),
+  );
+  const heroSlidesEdit = heroDraft?.heroImages ?? heroSlidesReadOnly;
+  const heroImagePath = heroSlidesReadOnly[0]?.url ?? '';
   const heroMedia = resolveMediaSummary(mediaAssets, heroImagePath);
 
   const excelDraft = activeEdit === 'excel' ? draft : null;
@@ -273,17 +308,28 @@ export function AdminV2HomepageManagementPage() {
                     </CmsFormField>
                   </div>
                 </div>
-                <CmsMediaBlock
-                  defined={heroMedia.defined}
-                  summary={heroMedia.summary}
+                <CmsHeroCarouselEditor
+                  slides={heroSlidesEdit}
+                  heroImageAlt={draft.heroImageAlt}
                   assets={mediaAssets}
-                  currentValue={draft.heroImage}
-                  onPick={applyHeroMediaPick}
+                  onSlidesChange={(heroImages) =>
+                    setDraft((d) =>
+                      d
+                        ? {
+                            ...d,
+                            heroImages,
+                            heroImage: heroImages[0]?.url ?? '',
+                          }
+                        : d,
+                    )
+                  }
+                  onAltChange={(heroImageAlt) => setDraft((d) => (d ? { ...d, heroImageAlt } : d))}
+                  onAddSlide={applyHeroMediaAdd}
                   pickDisabled={saving}
-                  pickTitle="Hero görseli seç"
                   enableUpload
                   uploadUsageLabel="Ana sayfa hero görseli"
                   onAssetUploaded={mergeUploadedMediaAsset}
+                  saving={saving}
                 />
                 <HeroButtonsPreview />
                 <CmsSaveError message={saveError} />
@@ -294,12 +340,19 @@ export function AdminV2HomepageManagementPage() {
                   <CmsField label="Başlık" value={hero.title} />
                   <CmsField label="Açıklama" value={hero.description} />
                 </CmsFieldGrid>
-                <CmsMediaBlock
-                  defined={heroMedia.defined}
-                  summary={heroMedia.summary}
+                <CmsHeroCarouselEditor
+                  slides={heroSlidesReadOnly}
+                  heroImageAlt={
+                    typeof hero.config?.heroImageAlt === 'string' ? hero.config.heroImageAlt : ''
+                  }
                   assets={mediaAssets}
-                  currentValue={heroImagePath}
+                  readOnly
                 />
+                {heroSlidesReadOnly.length > 1 && (
+                  <p className="mt-2 text-xs text-slate-500">
+                    {heroSlidesReadOnly.length} görsel carousel olarak canlı sitede gösterilir.
+                  </p>
+                )}
                 <HeroButtonsPreview />
                 {heroMedia.technical && (
                   <CmsAdvancedInfo>{heroMedia.technical}</CmsAdvancedInfo>

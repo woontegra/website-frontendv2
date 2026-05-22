@@ -92,11 +92,13 @@ export function parseAdminCalculationModules(
       if (!code) return null;
 
       const cardTitle =
-        (typeof row.cardTitle === 'string' && row.cardTitle) ||
-        (typeof row.landingTitle === 'string' && row.landingTitle) ||
-        code;
+        (typeof row.cardTitle === 'string' && row.cardTitle.trim()
+          ? row.cardTitle
+          : typeof row.landingTitle === 'string' && row.landingTitle.trim()
+            ? row.landingTitle
+            : code);
       const landingTitle =
-        typeof row.landingTitle === 'string' ? row.landingTitle : cardTitle;
+        typeof row.landingTitle === 'string' ? row.landingTitle : null;
       const cardDescription =
         typeof row.cardDescription === 'string' ? row.cardDescription : null;
       const landingDescription =
@@ -306,6 +308,7 @@ export type AdminSupportCardRow = {
   description: string | null;
   iconName: string | null;
   sortOrder: number;
+  isActive: boolean;
 };
 
 export type AdminContactData = {
@@ -359,6 +362,7 @@ export function parseAdminContact(bundle: AdminV2ContentBundle): AdminContactDat
         description: typeof row.description === 'string' ? row.description : null,
         iconName: typeof row.iconName === 'string' ? row.iconName : null,
         sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : 0,
+        isActive: typeof row.isActive === 'boolean' ? row.isActive : true,
       };
     })
     .filter((row): row is AdminSupportCardRow => row !== null)
@@ -421,6 +425,7 @@ export type AdminPageContentRow = {
   subtitle: string | null;
   description: string | null;
   sortOrder: number;
+  isActive: boolean;
 };
 
 export type AdminPageCardRow = {
@@ -432,6 +437,7 @@ export type AdminPageCardRow = {
   iconName: string | null;
   linkUrl: string | null;
   sortOrder: number;
+  isActive: boolean;
 };
 
 export type AdminPageGroup = {
@@ -528,6 +534,7 @@ export function parseAdminPages(bundle: AdminV2ContentBundle): AdminPagesData {
         subtitle: typeof row.subtitle === 'string' ? row.subtitle : null,
         description: typeof row.description === 'string' ? row.description : null,
         sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : 0,
+        isActive: typeof row.isActive === 'boolean' ? row.isActive : true,
       };
     })
     .filter((row): row is AdminPageContentRow => row !== null);
@@ -560,6 +567,7 @@ export function parseAdminPages(bundle: AdminV2ContentBundle): AdminPagesData {
               iconName: typeof row.iconName === 'string' ? row.iconName : null,
               linkUrl: typeof row.linkUrl === 'string' ? row.linkUrl : null,
               sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : 0,
+              isActive: typeof row.isActive === 'boolean' ? row.isActive : true,
             };
           })
           .filter((row): row is AdminPageCardRow => row !== null)

@@ -201,10 +201,11 @@ export async function uploadAdminV2Media(body: {
   }
 
   const text = await response.text();
-  let data: { success?: boolean; data?: MediaAssetDto; message?: string } | null = null;
+  type UploadResponse = { success?: boolean; data?: MediaAssetDto; message?: string };
+  let data: UploadResponse | null = null;
   if (text) {
     try {
-      data = JSON.parse(text) as typeof data;
+      data = JSON.parse(text) as UploadResponse;
     } catch {
       /* ignore */
     }

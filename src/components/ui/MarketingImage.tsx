@@ -16,18 +16,30 @@ export function MarketingImage({
       ? 'rounded-xl border border-slate-600 bg-slate-900 object-cover'
       : 'rounded-xl border-2 border-slate-200 bg-white object-cover shadow-md';
 
+  const safeSrc = (src || '').trim();
+
   return (
     <img
-      src={src}
+      key={safeSrc}
+      src={safeSrc}
       alt={alt}
       className={`${frameClass} ${className}`}
       loading="lazy"
+      decoding="async"
+      referrerPolicy="no-referrer"
       onError={(e) => {
+        if (import.meta.env.DEV) {
+          console.warn('[MarketingImage] Yüklenemedi:', safeSrc);
+        }
         const target = e.currentTarget;
         target.style.display = 'none';
         const fallback = target.nextElementSibling;
         if (fallback instanceof HTMLElement) {
           fallback.style.display = 'flex';
+          const labelEl = fallback.querySelector('[data-fallback-src]');
+          if (labelEl instanceof HTMLElement) {
+            labelEl.textContent = safeSrc.length > 48 ? `${safeSrc.slice(0, 48)}…` : safeSrc;
+          }
         }
       }}
     />
@@ -60,8 +72,8 @@ export function MarketingImageFallback({
         }`}
       />
       <p className="text-sm font-semibold text-inherit">Panel önizlemesi</p>
-      <p className="max-w-xs text-xs text-slate-400">
-        Görsel: public/images/{label}
+      <p className="max-w-xs break-all text-xs text-slate-400" data-fallback-src>
+        {label.startsWith('http') ? label : `Görsel: public/images/${label}`}
       </p>
     </div>
   );

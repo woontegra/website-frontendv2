@@ -7,25 +7,25 @@ import { PricingCtaSection } from '@/components/sections/PricingCtaSection';
 import { FaqPreviewSection } from '@/components/sections/FaqPreviewSection';
 import {
   resolveHomepageExcelImage,
-  resolveHomepageHeroAlt,
-  resolveHomepageHeroImage,
+  resolveHomepageHeroSlides,
 } from '@/lib/contentBundle';
 
 const HOME_HERO_IMAGE_FALLBACK = '/images/hero-dashboard.png';
+const HOME_HERO_ALT_FALLBACK = 'Bilirkişi Hesap yönetim paneli önizlemesi';
 const HOME_EXCEL_IMAGE_FALLBACK = '/images/excel-vs-program.png';
 
 export default function HomePage() {
   const { content } = useContentBundle();
-  const heroImageSrc = resolveHomepageHeroImage(content, HOME_HERO_IMAGE_FALLBACK);
-  const heroImageAlt = resolveHomepageHeroAlt(
+  const heroSlides = resolveHomepageHeroSlides(
     content,
-    'Bilirkişi Hesap yönetim paneli önizlemesi',
+    HOME_HERO_IMAGE_FALLBACK,
+    HOME_HERO_ALT_FALLBACK,
   );
   const excelImageSrc = resolveHomepageExcelImage(content, HOME_EXCEL_IMAGE_FALLBACK);
 
   return (
     <>
-      <HeroSection imageSrc={heroImageSrc} imageAlt={heroImageAlt} />
+      <HeroSection slides={heroSlides} />
       <TrustSection />
       <ModulesSection />
       <ExcelSection imageSrc={excelImageSrc} />

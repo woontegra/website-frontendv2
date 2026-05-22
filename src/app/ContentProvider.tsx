@@ -30,6 +30,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       setContent(result.data);
       setSource(result.source);
+      if (import.meta.env.DEV) {
+        const heroCfg = result.data.homepageByKey?.hero?.config;
+        const heroCount = Array.isArray(heroCfg?.heroImages)
+          ? heroCfg.heroImages.length
+          : heroCfg?.heroImage
+            ? 1
+            : 0;
+        console.info('[content-bundle] kaynak:', result.source, 'heroSlides:', heroCount);
+      }
     });
 
     return () => {

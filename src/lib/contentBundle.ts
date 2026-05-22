@@ -24,6 +24,12 @@ import {
 } from 'lucide-react';
 import { apiGet } from './apiClient';
 import { config } from './config';
+import {
+  heroImageAltFromConfig,
+  isStaleHeroPlaceholderPath,
+  parseHeroSlidesFromConfig,
+  type HeroSlideResolved,
+} from './homepageHero';
 import { resolvePublicAssetUrl } from './resolvePublicAssetUrl';
 import {
   calculationPages,
@@ -516,6 +522,8 @@ export function resolveConfigImageUrl(
 ): string {
   const raw = configUrl?.trim();
   if (!raw) return resolvePublicAssetUrl(fallbackUrl);
+  const byKey = getMediaAssetByKey(content, raw);
+  if (byKey?.fileUrl) return resolvePublicAssetUrl(byKey.fileUrl);
   const matched = findMediaAssetByFileUrl(content, raw);
   if (matched?.fileUrl) return resolvePublicAssetUrl(matched.fileUrl);
   return resolvePublicAssetUrl(raw);
@@ -533,29 +541,56 @@ export function resolveHomepageHeroImage(
   content: ContentBundleView,
   fallbackUrl: string,
 ): string {
-  const hero = getHomepageSection(content, 'hero');
-  const cfg = hero?.config;
-  const fromConfig =
-    typeof cfg?.heroImage === 'string'
-      ? cfg.heroImage
-      : typeof cfg?.image === 'string'
-        ? cfg.image
-        : null;
-  if (fromConfig) return resolveConfigImageUrl(content, fromConfig, fallbackUrl);
-  return resolveMediaFileUrl(content, 'home.hero.image', fallbackUrl);
+  const slides = resolveHomepageHeroSlides(content, fallbackUrl, '');
+  return slides[0]?.src ?? resolveConfigImageUrl(content, null, fallbackUrl);
 }
 
 export function resolveHomepageHeroAlt(content: ContentBundleView, fallback: string): string {
   const cfg = getHomepageSection(content, 'hero')?.config;
-  const alt =
-    typeof cfg?.heroImageAlt === 'string'
-      ? cfg.heroImageAlt.trim()
-      : typeof cfg?.imageAlt === 'string'
-        ? cfg.imageAlt.trim()
-        : '';
-  if (alt) return alt;
+  const fromCfg = heroImageAltFromConfig(cfg ?? null, '');
+  if (fromCfg) return fromCfg;
   const asset = getMediaAssetByKey(content, 'home.hero.image');
   return asset?.altText?.trim() || fallback;
+}
+
+/** Ana sayfa hero carousel slaytları. */
+export function resolveHomepageHeroSlides(
+  content: ContentBundleView,
+  fallbackUrl: string,
+  fallbackAlt: string,
+): HeroSlideResolved[] {
+  const hero = getHomepageSection(content, 'hero');
+  const cfg = hero?.config ?? null;
+  const defaultAlt = heroImageAltFromConfig(cfg, fallbackAlt);
+  let inputs = parseHeroSlidesFromConfig(cfg);
+
+  if (inputs.length === 0) {
+    const asset = getMediaAssetByKey(content, 'home.hero.image');
+    if (asset?.fileUrl?.trim()) {
+      inputs = [{ url: asset.fileUrl.trim() }];
+    }
+  }
+
+  const seen = new Set<string>();
+  const resolved: HeroSlideResolved[] = [];
+  for (const slide of inputs) {
+    const src = resolveConfigImageUrl(content, slide.url, fallbackUrl).trim();
+    if (!src || isStaleHeroPlaceholderPath(src) || seen.has(src)) continue;
+    seen.add(src);
+    resolved.push({
+      src,
+      alt: slide.alt?.trim() || defaultAlt,
+    });
+  }
+
+  if (resolved.length > 0) return resolved;
+
+  return [
+    {
+      src: resolveConfigImageUrl(content, null, fallbackUrl),
+      alt: defaultAlt,
+    },
+  ];
 }
 
 /** Ana sayfa excel bölümü görseli. */
@@ -1304,9 +1339,9 @@ function resolveFooterView(
     tagline: brand?.description?.trim() || fallback.tagline,
     copyrightNote: copyright?.subtitle?.trim() || fallback.copyrightNote,
     navLinks: navLinks.length > 0 ? navLinks : fallback.navLinks,
-    contactEmail: contact.setting.contactEmail,
-    contactPhone: contact.setting.contactPhone,
-    contactAddress: contact.setting.contactAddress,
+    contactEmail: contact.setting.contactEmail ?? '',
+    contactPhone: contact.setting.contactPhone ?? '',
+    contactAddress: contact.setting.contactAddress ?? '',
   };
 }
 
@@ -1317,9 +1352,9 @@ function getStaticFooter(contact?: ContactView): FooterView {
     tagline: DEFAULT_FOOTER_TAGLINE,
     copyrightNote: 'Tüm hakları saklıdır.',
     navLinks: DEFAULT_FOOTER_NAV,
-    contactEmail: c.setting.contactEmail,
-    contactPhone: c.setting.contactPhone,
-    contactAddress: c.setting.contactAddress,
+    contactEmail: c.setting.contactEmail ?? '',
+    contactPhone: c.setting.contactPhone ?? '',
+    contactAddress: c.setting.contactAddress ?? '',
   };
 }
 
@@ -1370,17 +1405,17 @@ export function mapApiContentBundle(
   publicBranding?: Partial<SiteBrandingView>,
 ): ContentBundleView {
   const faqCategories =
-    api.faq.categories.length > 0
-      ? mapApiFaqCategories(api.faq.categories)
+    (api.faq?.categories?.length ?? 0) > 0
+      ? mapApiFaqCategories(api.faq!.categories)
       : mapStaticFaqCategories();
-  const calculationLandings = api.calculationModules.map(mapApiModuleToLanding);
+  const calculationLandings = (api.calculationModules ?? []).map(mapApiModuleToLanding);
   const mediaAssets = mapApiMediaAssets(api.mediaAssets);
   const contact = mapApiContact(api.contact);
   const homepage = mapApiHomepageSections(api.homepage);
   const settings = api.settings ?? {};
 
   return {
-    modules: api.calculationModules.map((m) => ({
+    modules: (api.calculationModules ?? []).map((m) => ({
       id: m.code,
       title: m.cardTitle,
       description: m.cardDescription ?? '',
@@ -1390,14 +1425,14 @@ export function mapApiContentBundle(
     calculationLandings,
     faqCategories,
     faqPreview: buildFaqPreview(faqCategories),
-    pricingPlans: mapApiPricingPlans(api.pricing.plans),
+    pricingPlans: mapApiPricingPlans(api.pricing?.plans ?? []),
     pricingComparisonTitle: PRICING_COMPARISON_TITLE,
-    pricingComparisonColumns: mapApiPricingComparisonColumns(api.pricing.comparisonColumns),
+    pricingComparisonColumns: mapApiPricingComparisonColumns(api.pricing?.comparisonColumns ?? []),
     pricingFaq: mapPricingFaqFromCategories(faqCategories),
     contact,
     demo: mapApiDemoPage(api),
     footer: resolveFooterView(api.pageContents, api.pageCards, contact),
-    seoByPath: buildSeoByPath(api.seo),
+    seoByPath: buildSeoByPath(api.seo ?? []),
     pageContentsByPath: buildPageContentsByPath(api.pageContents),
     mediaAssets,
     mediaByKey: buildMediaByKey(mediaAssets),
@@ -1432,7 +1467,13 @@ export async function getContentBundleWithFallback(): Promise<{
       return { data: { ...getStaticContentBundle(), branding }, source: 'static' };
     }
     return { data, source: 'api' };
-  } catch {
+  } catch (err) {
+    if (import.meta.env.DEV) {
+      console.error(
+        '[content-bundle] API yüklenemedi — statik yedek kullanılıyor. Backend (3001) çalışıyor mu?',
+        err,
+      );
+    }
     try {
       const branding = await fetchPublicSiteBranding();
       return { data: { ...getStaticContentBundle(), branding }, source: 'static' };

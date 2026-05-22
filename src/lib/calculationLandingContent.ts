@@ -45,10 +45,10 @@ export function parseLandingContent(raw: unknown): ModuleLandingContent | null {
           const heading = typeof s.heading === 'string' ? s.heading.trim() : '';
           if (!heading) return null;
           const paragraphs = Array.isArray(s.paragraphs)
-            ? s.paragraphs.filter((p): p is string => typeof p === 'string' && p.trim()).map((p) => p.trim())
+            ? s.paragraphs.filter((p): p is string => typeof p === 'string' && p.trim().length > 0).map((p) => p.trim())
             : [];
           const listItems = Array.isArray(s.listItems)
-            ? s.listItems.filter((p): p is string => typeof p === 'string' && p.trim()).map((p) => p.trim())
+            ? s.listItems.filter((p): p is string => typeof p === 'string' && p.trim().length > 0).map((p) => p.trim())
             : undefined;
           return { heading, paragraphs, ...(listItems?.length ? { listItems } : {}) };
         })
@@ -201,7 +201,7 @@ export function serializePipeLines(
   return rows.map((r) => `${r.title}|${r.second}`).join('\n');
 }
 
-export function parsePipeLines(text: string, mode: 'desc' | 'text'): { title: string; second: string }[] {
+export function parsePipeLines(text: string, _mode: 'desc' | 'text'): { title: string; second: string }[] {
   return text
     .split('\n')
     .map((line) => line.trim())

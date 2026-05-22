@@ -48,13 +48,13 @@ function authHeaders(): Record<string, string> {
 
 function parseJsonArray(value: unknown): string[] {
   if (Array.isArray(value)) {
-    return value.filter((x): x is string => typeof x === 'string' && x.trim()).map((x) => x.trim());
+    return value.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).map((x) => x.trim());
   }
   if (typeof value === 'string' && value.trim()) {
     try {
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) {
-        return parsed.filter((x): x is string => typeof x === 'string' && x.trim()).map((x) => x.trim());
+        return parsed.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).map((x) => x.trim());
       }
     } catch {
       return [];

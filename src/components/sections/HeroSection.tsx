@@ -1,17 +1,14 @@
 import { ArrowRight, PlayCircle, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { MarketingImage, MarketingImageFallback } from '@/components/ui/MarketingImage';
+import { HeroCarousel } from '@/components/sections/HeroCarousel';
 import { config } from '@/lib/config';
+import type { HeroSlideResolved } from '@/lib/homepageHero';
 
 type HeroSectionProps = {
-  imageSrc?: string;
-  imageAlt?: string;
+  slides: HeroSlideResolved[];
 };
 
-export function HeroSection({
-  imageSrc = '/images/hero-dashboard.png',
-  imageAlt = 'Bilirkişi Hesap yönetim paneli önizlemesi',
-}: HeroSectionProps) {
+export function HeroSection({ slides }: HeroSectionProps) {
   return (
     <section className="hero-section-bg relative overflow-hidden text-white">
       <div
@@ -23,8 +20,8 @@ export function HeroSection({
         }}
       />
 
-      <div className="container-page relative grid items-center gap-10 py-14 lg:grid-cols-2 lg:gap-14 lg:py-20 xl:py-24">
-        <div className="z-10">
+      <div className="relative mx-auto grid w-full max-w-7xl items-center gap-8 px-4 py-14 sm:px-6 sm:gap-10 lg:grid-cols-[minmax(0,0.43fr)_minmax(0,0.57fr)] lg:gap-10 lg:px-8 lg:py-20 xl:max-w-[90rem] xl:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] xl:gap-12 xl:py-[5.5rem] 2xl:max-w-[96rem] 2xl:gap-14">
+        <div className="z-10 min-w-0 lg:pr-2 xl:max-w-[36rem]">
           <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/50 bg-emerald-950/60 px-4 py-2 text-xs font-bold uppercase tracking-wide text-emerald-300">
             <Scale className="h-4 w-4 text-emerald-400" />
             Avukatlar ve bilirkişiler için profesyonel hesaplama yazılımı
@@ -35,7 +32,7 @@ export function HeroSection({
             <span className="text-emerald-400">doğru, hızlı ve denetlenebilir</span> hesaplama
           </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
+          <p className="mt-6 max-w-lg text-base leading-relaxed text-slate-300 sm:text-lg lg:max-w-md xl:max-w-lg">
             Kıdem, ihbar, fazla mesai ve 40+ modül — Excel karmaşası olmadan mevzuata uygun sonuç
             ve standart rapor çıktısı.
           </p>
@@ -64,20 +61,12 @@ export function HeroSection({
           </a>
         </div>
 
-        <div className="relative z-10 lg:pl-2">
+        <div className="relative z-10 w-full min-w-0">
           <div
-            className="absolute -inset-3 rounded-3xl bg-emerald-500/20 blur-3xl"
+            className="pointer-events-none absolute -inset-2 rounded-3xl bg-emerald-500/25 blur-3xl lg:-inset-4"
             aria-hidden
           />
-          <div className="relative min-h-[300px] rounded-2xl border border-slate-600 bg-slate-800/90 p-3 shadow-2xl ring-1 ring-emerald-500/25 sm:min-h-[360px] lg:min-h-[400px]">
-            <MarketingImage
-              src={imageSrc}
-              alt={imageAlt}
-              className="h-full min-h-[280px] w-full lg:min-h-[360px]"
-              frame="dark"
-            />
-            <MarketingImageFallback label="hero-dashboard.png" variant="dark" />
-          </div>
+          <HeroCarousel slides={slides} />
         </div>
       </div>
     </section>

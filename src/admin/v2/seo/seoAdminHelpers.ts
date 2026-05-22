@@ -104,7 +104,9 @@ export function seoPageLabel(path: string, pageKey?: string | null): string {
 }
 
 export function sortSeoRowsByKnownPaths<T extends { path: string }>(rows: T[]): T[] {
-  const order = new Map(SEO_KNOWN_PATH_ORDER.map((p, i) => [p, i]));
+  const order = new Map<string, number>(
+    SEO_KNOWN_PATH_ORDER.map((p, i) => [p, i]),
+  );
   return [...rows].sort((a, b) => {
     const ai = order.has(a.path) ? order.get(a.path)! : 999;
     const bi = order.has(b.path) ? order.get(b.path)! : 999;

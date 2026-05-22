@@ -80,7 +80,6 @@ export async function fetchAdminDashboardStats(
 }
 
 function buildCampaignSummary(rows: CampaignStatRow[]): CampaignStatsSummary {
-  const now = Date.now();
   let activeCount = 0;
   let totalUsage = 0;
   for (const row of rows) {
