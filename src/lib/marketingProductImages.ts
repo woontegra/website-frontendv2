@@ -39,6 +39,24 @@ export const HERO_MARKETING_SLIDES: HeroMarketingSlide[] = [
   },
 ];
 
+/**
+ * Satın Al ürün galerisi — görsel hazırlama ölçüsü
+ * Kolon genişliği ~520–600 px (masaüstü); alan oranı 4:3.
+ * Bu ölçüde export edilirse kırpma olmadan alanı doldurur.
+ */
+export const SATIN_AL_GALLERY_IMAGE_SPEC = {
+  aspectRatio: '4:3' as const,
+  /** Önerilen (Retina dahil) */
+  width: 1200,
+  height: 900,
+  /** Minimum kabul edilebilir */
+  minWidth: 800,
+  minHeight: 600,
+  format: 'PNG veya WebP',
+  safeAreaNote:
+    'Önemli metin/ arayüz kenarlardan en az 24 px içeride kalsın (ok butonları için).',
+};
+
 /** public/images altında mevcut hero görselleri (yedek galeri) */
 export const SATIN_AL_STATIC_IMAGES: string[] = [
   '/images/hero-bos-form.png',

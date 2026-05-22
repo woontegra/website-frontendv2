@@ -37,6 +37,8 @@ import SatinAlPage from '@/pages/SatinAlPage';
 import OdemeBasariliPage from '@/pages/OdemeBasariliPage';
 import OdemeBasarisizPage from '@/pages/OdemeBasarisizPage';
 import CampaignRedirectPage from '@/pages/CampaignRedirectPage';
+import LegalDocumentPage from '@/pages/LegalDocumentPage';
+import { LEGAL_PAGES, type LegalPageKey } from '@/data/legalPages';
 import { calculationPageSlugs } from '@/data/calculationPages';
 import { calculationModulePathRedirects } from '@/data/calculationModulePaths';
 
@@ -111,6 +113,13 @@ export default function App() {
         <Route path="demo-talep" element={<DemoRequestPage />} />
         <Route path="iletisim" element={<ContactPage />} />
         <Route path="sss" element={<FaqPage />} />
+        {LEGAL_PAGES.map((page) => (
+          <Route
+            key={page.path}
+            path={page.path.slice(1)}
+            element={<LegalDocumentPage pageKey={page.path.slice(1) as LegalPageKey} />}
+          />
+        ))}
         {calculationModulePathRedirects.map(({ from, to }) => (
           <Route
             key={`redirect-${from}`}

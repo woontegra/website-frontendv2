@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useContentBundle } from '@/app/ContentProvider';
 import {
   Check,
   CheckCircle,
@@ -21,12 +22,12 @@ import { getSatinAlDisplayImages } from '@/lib/marketingProductImages';
 import {
   fetchAuthMe,
   fetchCampaignById,
-  fetchPageBySlug,
   fetchPublicProduct,
   requestPaytrToken,
   type Campaign,
   type PublicProduct,
 } from '@/lib/storeApi';
+import { loadLegalContentByApiSlug } from '@/lib/legal/loadLegalBySlug';
 
 const MONTHLY_FALLBACK_TL = 1800;
 const ANNUAL_FALLBACK_TL = 22000;
@@ -53,6 +54,13 @@ const DEFAULT_SECURE_PAYMENT =
 
 const DEFAULT_INVOICE_RECEIPT =
   'Satın alma işleminizden sonra e-posta adresinize fatura veya makbuz gönderilir. Tüm işlemler KVKK uyumlu olarak gerçekleştirilir.';
+
+/** API boş veya kısa placeholder döndüğünde tam metin gösterilir */
+function pickTrustParagraph(value: string | undefined | null, fallback: string): string {
+  const text = value?.trim() ?? '';
+  if (!text || text.length < 50) return fallback;
+  return text;
+}
 
 type ProductType = 'monthly' | 'annual';
 
@@ -82,6 +90,7 @@ function formatBillingForApi(data: BillingFormData) {
 }
 
 export default function SatinAlPage() {
+  const { content } = useContentBundle();
   const [searchParams] = useSearchParams();
   const [product, setProduct] = useState<PublicProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -120,15 +129,15 @@ export default function SatinAlPage() {
         const [me, productRes, terms, contract] = await Promise.all([
           fetchAuthMe(),
           fetchPublicProduct(),
-          fetchPageBySlug('on-bilgilendirme'),
-          fetchPageBySlug('mesafeli-satis-sozlesmesi'),
+          loadLegalContentByApiSlug('on-bilgilendirme', content),
+          loadLegalContentByApiSlug('mesafeli-satis-sozlesmesi', content),
         ]);
         if (cancelled) return;
         setIsAuthenticated(Boolean(me.success && me.data));
         if (productRes.success && productRes.data) setProduct(productRes.data);
         else setProduct(null);
-        if (terms) setTermsContent(terms);
-        if (contract) setContractContent(contract);
+        if (terms) setTermsContent({ title: terms.title, content: terms.content });
+        if (contract) setContractContent({ title: contract.title, content: contract.content });
         setError(null);
       } catch {
         if (!cancelled) {
@@ -146,7 +155,7 @@ export default function SatinAlPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [content]);
 
   useEffect(() => {
     const campaignId = searchParams.get('c');
@@ -204,8 +213,14 @@ export default function SatinAlPage() {
     product?.targetAudience && product.targetAudience.length > 0
       ? product.targetAudience
       : DEFAULT_TARGET_AUDIENCE;
-  const securePaymentText = product?.trustInfo?.securePayment ?? DEFAULT_SECURE_PAYMENT;
-  const invoiceReceiptText = product?.trustInfo?.invoiceReceipt ?? DEFAULT_INVOICE_RECEIPT;
+  const securePaymentText = pickTrustParagraph(
+    product?.trustInfo?.securePayment,
+    DEFAULT_SECURE_PAYMENT,
+  );
+  const invoiceReceiptText = pickTrustParagraph(
+    product?.trustInfo?.invoiceReceipt,
+    DEFAULT_INVOICE_RECEIPT,
+  );
 
   const handlePurchase = () => {
     if (!acceptedTerms || !acceptedContract) {
@@ -479,25 +494,25 @@ export default function SatinAlPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-md sm:mt-8 sm:p-8">
-          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
-            <Shield className="h-6 w-6 text-emerald-600" />
-            Güven ve yasal bilgiler
+        <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 p-6 shadow-lg sm:mt-8 sm:p-8 lg:p-10">
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold text-white sm:mb-6 sm:text-2xl">
+            <Shield className="h-6 w-6 shrink-0 text-cyan-400" />
+            Güven &amp; Yasal Bilgiler
           </h2>
-          <div className="mt-6 grid gap-6 md:grid-cols-2 md:gap-8">
+          <div className="grid gap-6 md:grid-cols-2 md:gap-8">
             <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                <Lock className="h-5 w-5 text-emerald-600" />
-                Güvenli ödeme
+              <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
+                <Lock className="h-5 w-5 shrink-0 text-cyan-400" />
+                Güvenli Ödeme
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">{securePaymentText}</p>
+              <p className="text-sm leading-relaxed text-slate-300">{securePaymentText}</p>
             </div>
             <div>
-              <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-                <FileText className="h-5 w-5 text-sky-600" />
-                Fatura ve makbuz
+              <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-white">
+                <FileText className="h-5 w-5 shrink-0 text-cyan-400" />
+                Fatura &amp; Makbuz
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">{invoiceReceiptText}</p>
+              <p className="text-sm leading-relaxed text-slate-300">{invoiceReceiptText}</p>
             </div>
           </div>
         </div>

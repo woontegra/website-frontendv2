@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useContentBundle } from '@/app/ContentProvider';
+import { FOOTER_LEGAL_LINKS } from '@/data/legalPages';
 
 export function Footer() {
   const { content } = useContentBundle();
@@ -45,6 +46,31 @@ export function Footer() {
             </li>
           </ul>
         </div>
+      </div>
+
+      <div className="border-t border-slate-700 px-4 py-6">
+        <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-500">Yasal</p>
+        <ul className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm">
+          {FOOTER_LEGAL_LINKS.map((link) => (
+            <li key={link.to}>
+              <Link to={link.to} className="text-slate-400 hover:text-white">
+                {link.label}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <button
+              type="button"
+              className="text-slate-400 hover:text-white"
+              onClick={() => {
+                const w = window as Window & { openCookiePreferences?: () => void };
+                w.openCookiePreferences?.();
+              }}
+            >
+              Çerez ayarları
+            </button>
+          </li>
+        </ul>
       </div>
 
       <div className="border-t border-slate-700 py-5 text-center text-sm text-slate-400">
