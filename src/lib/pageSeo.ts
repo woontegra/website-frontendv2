@@ -107,7 +107,15 @@ export function usePageSeo(
   const seo = content.seoByPath[normalized];
 
   useEffect(() => {
-    applyDocumentSeo(seo, defaults);
+    applyDocumentSeo(
+      seo,
+      defaults
+        ? {
+            defaultTitle: defaults.title,
+            defaultDescription: defaults.description,
+          }
+        : undefined,
+    );
   }, [seo, defaults?.title, defaults?.description, normalized]);
 }
 

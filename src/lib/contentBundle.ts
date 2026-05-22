@@ -322,6 +322,7 @@ export type HomepageCtaButtonView = {
   href: string;
   variant: string;
   sortOrder: number;
+  ctaExternal: boolean;
 };
 
 export type ContentBundleView = {
@@ -430,6 +431,7 @@ export type ContentBundleApi = {
     ogTitle?: string | null;
     ogDescription?: string | null;
     ogImage?: string | null;
+    noIndex?: boolean | null;
   }[];
   pageContents?: {
     id?: number;
@@ -485,10 +487,6 @@ const DEFAULT_MODULE_CTA_DESCRIPTION =
 function resolveIcon(name: string | null | undefined): LucideIcon {
   if (name && iconByName[name]) return iconByName[name];
   return Calculator;
-}
-
-function isExternalLink(url: string): boolean {
-  return /^https?:\/\//i.test(url);
 }
 
 export function normalizeContentPath(path: string): string {
@@ -717,14 +715,29 @@ const DEFAULT_FAQ_PREVIEW_DESCRIPTION =
   'Merak ettiklerinizin özeti. Tüm yanıtlar SSS sayfasında.';
 
 const STATIC_HERO_CTA_BUTTONS: HomepageCtaButtonView[] = [
-  { code: 'hero_demo', label: 'Demo Talep Et', href: '/demo-talep', variant: 'accent', sortOrder: 1 },
-  { code: 'hero_pricing', label: 'Abone Ol', href: '/fiyatlandirma', variant: 'outlineLight', sortOrder: 2 },
+  {
+    code: 'hero_demo',
+    label: 'Demo Talep Et',
+    href: '/demo-talep',
+    variant: 'accent',
+    sortOrder: 1,
+    ctaExternal: false,
+  },
+  {
+    code: 'hero_pricing',
+    label: 'Abone Ol',
+    href: '/fiyatlandirma',
+    variant: 'outlineLight',
+    sortOrder: 2,
+    ctaExternal: false,
+  },
   {
     code: 'hero_login',
     label: 'Programa Giriş',
     href: config.PANEL_LOGIN_URL,
     variant: 'ghostLight',
     sortOrder: 3,
+    ctaExternal: /^https?:\/\//i.test(config.PANEL_LOGIN_URL),
   },
 ];
 
@@ -735,8 +748,16 @@ const STATIC_PRICING_CTA_BUTTONS: HomepageCtaButtonView[] = [
     href: '/fiyatlandirma',
     variant: 'accent',
     sortOrder: 1,
+    ctaExternal: false,
   },
-  { code: 'pricing_demo', label: 'Demo Talep Et', href: '/demo-talep', variant: 'outlineLight', sortOrder: 2 },
+  {
+    code: 'pricing_demo',
+    label: 'Demo Talep Et',
+    href: '/demo-talep',
+    variant: 'outlineLight',
+    sortOrder: 2,
+    ctaExternal: false,
+  },
 ];
 
 function sectionHeading(
@@ -822,6 +843,7 @@ function mapApiCtaButtons(
         href,
         variant: row.variant?.trim() || 'primary',
         sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : 0,
+        ctaExternal: isExternalNavHref(href),
       };
     })
     .filter((row): row is HomepageCtaButtonView => row !== null)
