@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
+
+  .admin-v2-root {
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-dark {
+    @apply text-slate-100;
+    background-color: #0f172a;
+  }
+
+  .section-muted {
+    @apply bg-slate-100;
+  }
+
+  /* Koyu hero — Tailwind custom gradient’e bağımlı değil */
+  .hero-section-bg {
+    background: linear-gradient(135deg, #0f172a 0%, #123c3a 55%, #0f172a 100%);
+  }
+
+  .cta-section-bg {
+    background: linear-gradient(135deg, #0f172a 0%, #134e4a 48%, #0f172a 100%);
+  }
+}

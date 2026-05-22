@@ -1,0 +1,922 @@
+{
+  "/kidem-tazminati-hesaplama": {
+    "articleSections": [
+      {
+        "heading": "Kıdem Tazminatı Nedir?",
+        "paragraphs": [
+          "Kıdem tazminatı, işçinin aynı işverene bağlı olarak en az bir yıl çalışmasının ardından iş sözleşmesinin kanunda belirtilen nedenlerle sona ermesi halinde ödenen bir tazminattır. Türkiye'de kıdem tazminatına ilişkin düzenlemeler 1475 sayılı İş Kanunu'nun 14. maddesinde yer almaktadır. İşçi her tam çalışma yılı için 30 günlük brüt ücret tutarında kıdem tazminatına hak kazanır. Bir yıldan artan süreler ise çalışılan süre oranında hesaplamaya dahil edilir."
+        ]
+      },
+      {
+        "heading": "Kıdem Tazminatı Nasıl Hesaplanır?",
+        "paragraphs": [
+          "Kıdem tazminatı hesaplamasında işçinin toplam çalışma süresi ve son brüt ücreti esas alınır. Hesaplama yapılırken işçinin çıplak ücretinin yanı sıra düzenli olarak ödenen bazı yan haklar da brüt ücrete dahil edilebilir. Hesaplama temel olarak şu unsurlara dayanır:",
+          "Her tam çalışma yılı için 30 günlük brüt ücret esas alınarak hesaplama yapılır. Hesaplanan tutar yasal kıdem tazminatı tavanını aşamaz."
+        ],
+        "listItems": [
+          "İşçinin toplam hizmet süresi",
+          "Son brüt ücret",
+          "Kıdem tazminatı tavanı",
+          "Ücrete eklenen yan haklar (yol, yemek vb.)"
+        ]
+      },
+      {
+        "heading": "Kıdem Tazminatı Hesaplamasında Dikkate Alınan Unsurlar",
+        "paragraphs": [
+          "Kıdem tazminatı hesaplanırken aşağıdaki unsurlar dikkate alınır:",
+          "Bu unsurların doğru şekilde belirlenmesi, hesaplamanın mevzuata uygun olması açısından önemlidir."
+        ],
+        "listItems": [
+          "İşçinin işe giriş ve işten çıkış tarihi",
+          "Toplam çalışma süresi",
+          "Son brüt ücret",
+          "Ücrete eklenen düzenli ödemeler",
+          "Yasal kıdem tazminatı tavanı"
+        ]
+      },
+      {
+        "heading": "Bilirkişiler İçin Kıdem Tazminatı Hesaplama",
+        "paragraphs": [
+          "İş mahkemelerinde görülen davalarda kıdem tazminatı hesaplamaları çoğu zaman bilirkişiler tarafından yapılmaktadır. Bilirkişi raporlarında hizmet süresi, ücret unsurları ve yasal sınırlar dikkate alınarak ayrıntılı hesaplama yapılır. Özellikle işçilik alacakları davalarında doğru ve mevzuata uygun hesaplama yapılması büyük önem taşır."
+        ]
+      }
+    ],
+    "moduleTypes": {
+      "title": "Kıdem Tazminatı Hesaplama Türleri",
+      "cards": [
+        {
+          "title": "İş Kanununa Göre",
+          "description": "4857 sayılı İş Kanunu kapsamında kıdem tazminatı hesaplaması yapılır."
+        },
+        {
+          "title": "Borçlar Kanunu İşçi Alacağı",
+          "description": "Türk Borçlar Kanunu kapsamında işçi alacaklarına göre kıdem tazminatı hesaplanır."
+        },
+        {
+          "title": "Gemi Adamları",
+          "description": "Deniz İş Kanunu kapsamında gemi adamlarına özel kıdem tazminatı hesaplaması."
+        },
+        {
+          "title": "Mevsimlik İşçi",
+          "description": "Mevsimlik çalışan işçiler için kıdem tazminatı hesaplaması."
+        },
+        {
+          "title": "Basın İş",
+          "description": "5953 sayılı Basın İş Kanunu kapsamında çalışanlar için kıdem hesaplaması."
+        },
+        {
+          "title": "Kısmi Süreli / Part Time",
+          "description": "Part-time çalışanlar için kıdem tazminatı hesaplaması yapılır."
+        },
+        {
+          "title": "Belirli Süreli İş Sözleşmesi",
+          "description": "Belirli süreli iş sözleşmelerine göre kıdem hesaplama desteği."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "Kıdem tazminatı hesaplamaları saniyeler içinde yapılır."
+      },
+      {
+        "title": "Mevzuata Uygun Sonuç",
+        "text": "Hesaplamalar iş hukuku ve güncel mevzuata uygun şekilde yapılır."
+      },
+      {
+        "title": "Profesyonel Rapor Çıktısı",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/ihbar-tazminati-hesaplama": {
+    "intro": "Bilirkişi Hesap programı ihbar tazminatı alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. Çalışma süresi, ihbar süreleri ve farklı çalışma türleri sistem tarafından değerlendirilerek doğru ve mevzuata uygun hesaplama sonuçları oluşturulur.",
+    "articleSections": [
+      {
+        "heading": "İhbar Tazminatı Nedir?",
+        "paragraphs": [
+          "İhbar tazminatı, iş sözleşmesinin taraflardan biri tarafından kanunda belirtilen ihbar sürelerine uyulmadan feshedilmesi halinde ödenmesi gereken tazminattır. 4857 sayılı İş Kanunu'na göre işçi veya işveren iş sözleşmesini sona erdirirken belirli bir süre önceden bildirim yapmak zorundadır. Bu bildirim yapılmadan gerçekleştirilen fesihlerde ihbar tazminatı gündeme gelir.",
+          "İhbar tazminatı hem işçi hem de işveren açısından doğabilecek bir tazminattır. İşveren işçiyi ihbar süresine uymadan işten çıkarırsa işçiye ihbar tazminatı öder. Aynı şekilde işçi de ihbar süresine uymadan işi bırakırsa işverene ihbar tazminatı ödeme yükümlülüğü doğabilir."
+        ]
+      },
+      {
+        "heading": "İhbar Süreleri",
+        "paragraphs": [
+          "İhbar süreleri işçinin kıdemine göre belirlenir. İş Kanunu'na göre ihbar süreleri şu şekildedir:",
+          "Bu süreler iş sözleşmesinin feshedilmesinden önce karşı tarafa bildirilmesi gereken yasal sürelerdir."
+        ],
+        "listItems": [
+          "6 aydan az çalışan işçiler için: 2 hafta",
+          "6 ay – 1.5 yıl arası çalışan işçiler için: 4 hafta",
+          "1.5 yıl – 3 yıl arası çalışan işçiler için: 6 hafta",
+          "3 yıldan fazla çalışan işçiler için: 8 hafta"
+        ]
+      },
+      {
+        "heading": "İhbar Tazminatı Nasıl Hesaplanır?",
+        "paragraphs": [
+          "İhbar tazminatı hesaplanırken işçinin son brüt ücreti esas alınır. Hesaplama yapılırken ihbar süresi kadar ücret dikkate alınır.",
+          "Örneğin 3 yıldan fazla çalışan bir işçi için ihbar süresi 8 haftadır. Bu durumda işçinin 8 haftalık brüt ücreti ihbar tazminatı olarak hesaplanır.",
+          "Hesaplama yapılırken yalnızca çıplak ücret değil, düzenli olarak ödenen bazı yan haklar da dikkate alınabilir. Yol yardımı, yemek yardımı, prim gibi sürekli ödemeler ihbar tazminatı hesabına dahil edilebilir."
+        ]
+      },
+      {
+        "heading": "İhbar Tazminatı Hesaplama Programı",
+        "paragraphs": [
+          "İhbar tazminatı hesaplamaları özellikle dava dosyalarında ve bilirkişi raporlarında oldukça detaylı şekilde yapılmaktadır. Çalışma süresi, ücret unsurları, farklı çalışma türleri ve mevzuat hükümleri birlikte değerlendirilerek doğru sonuçlara ulaşılması gerekir.",
+          "Bilirkişi Hesap Programı, ihbar tazminatı hesaplamalarında kullanılan tüm parametreleri dikkate alarak mevzuata uygun sonuçlar üretmek üzere geliştirilmiştir. Program sayesinde ihbar süreleri, ücret kalemleri ve farklı çalışma türleri sistem tarafından değerlendirilerek hızlı ve hatasız hesaplama yapılabilir."
+        ]
+      }
+    ],
+    "moduleTypes": {
+      "title": "İhbar Tazminatı Hesaplama Türleri",
+      "cards": [
+        {
+          "title": "İş Kanununa Göre",
+          "description": "4857 sayılı İş Kanunu kapsamında ihbar tazminatı hesaplaması."
+        },
+        {
+          "title": "Borçlar Kanunu İşçi Alacağı",
+          "description": "Türk Borçlar Kanunu hükümlerine göre ihbar tazminatı hesaplaması."
+        },
+        {
+          "title": "Gemi Adamları",
+          "description": "Deniz İş Kanunu kapsamında gemi adamlarına özel ihbar tazminatı hesaplaması."
+        },
+        {
+          "title": "Mevsimlik İşçi",
+          "description": "Mevsimlik çalışan işçiler için ihbar tazminatı hesaplaması."
+        },
+        {
+          "title": "Basın İşçileri",
+          "description": "5953 sayılı Basın İş Kanunu kapsamında ihbar tazminatı hesaplaması."
+        },
+        {
+          "title": "Kısmi Süreli / Part Time",
+          "description": "Part-time çalışanlar için ihbar tazminatı hesaplaması yapılır."
+        },
+        {
+          "title": "Belirli Süreli İş Sözleşmesi",
+          "description": "Belirli süreli iş sözleşmelerine göre ihbar tazminatı hesaplama desteği."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Otomatik Hesaplama",
+        "text": "İhbar tazminatı hesaplamaları sistem tarafından otomatik yapılır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Rapor",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/fazla-mesai-hesaplama": {
+    "intro": "Bilirkişi Hesap programı fazla mesai alacaklarının hesaplanmasında kullanılan tüm hesaplama türlerini destekler. Tanıklı çalışmalar, vardiya sistemleri ve özel çalışma modelleri dahil olmak üzere farklı fazla mesai türleri sistem tarafından otomatik hesaplanabilir.",
+    "articleSections": [
+      {
+        "heading": "Fazla Mesai Hesaplama Nedir?",
+        "paragraphs": [
+          "Fazla mesai hesaplama, 4857 sayılı İş Kanunu ve ilgili mevzuat çerçevesinde işçinin kanuni çalışma sürelerini aşan süreler için hak ettiği ücretin hesaplanmasıdır. Türk iş hukukunda haftalık çalışma süresi genel olarak 45 saat ile sınırlıdır; bu süreyi aşan çalışmalar fazla mesai sayılır ve en az yüzde 50 zamlı ödenmesi gerekir. Bilirkişiler ve iş hukuku uzmanları, davalarda fazla mesai alacağı iddialarını değerlendirirken hem yasal süreleri hem de işyerine özgü çalışma düzenini (vardiya, dönemsel çalışma, tanık beyanları vb.) dikkate almak zorundadır.",
+          "Fazla mesai alacağı hesaplaması yalnızca standart günlük/haftalık modelle sınırlı kalmaz; deniz işleri, yeraltı işleri, basın işi ve ev hizmetleri gibi özel düzenlemelere tabi işkollarında farklı süre ve oranlar uygulanır. Bu nedenle bilirkişi ve avukatların kullandığı hesaplama aracının tüm bu modelleri desteklemesi ve mevzuata uygun sonuç üretmesi büyük önem taşır."
+        ]
+      },
+      {
+        "heading": "Fazla Mesai Nasıl Hesaplanır?",
+        "paragraphs": [
+          "Fazla mesai ücreti hesaplanırken öncelikle işçinin saatlik brüt ücreti (aylık ücretin aylık çalışma saatine bölünmesiyle) esas alınır. Bu saatlik ücretin 1,5 katı (yüzde 50 zamlı) fazla mesai saatleriyle çarpılarak alacak tutarı bulunur. Haftalık 45 saati aşan her saat fazla mesai kapsamındadır. Günlük 7,5 saatten fazla çalışılan süreler de aynı şekilde fazla mesai sayılır; hesaplamada haftalık toplamın 45 saati geçmesi koşulu dikkate alınır.",
+          "Vardiya, dönemsel veya tanıklı hesaplama gibi farklı senaryolarda çalışma günleri ve saat dilimleri ayrı ayrı girilerek sistem tarafından otomatik toplam ve zamlı tutar hesaplanır. Bilirkişi Hesap programında tüm bu parametreler tek ekrandan yönetilir; rapor çıktıları mahkeme ve bilirkişi raporlarına uygun formatta üretilir. Böylece Excel veya manuel hesaplama karmaşası ortadan kalkar ve hata riski azalır.",
+          "İş hukuku uzmanları ve avukatlar, davada iddia edilen çalışma sürelerini (tanık ifadeleri, bordro, mesai çizelgeleri vb.) programa girerek hem tarafların iddialarını hem de mevzuata uygun alternatif senaryoları hızlıca test edebilir; mahkemeye sunulacak hesaplama raporunu dakikalar içinde hazırlayabilir."
+        ]
+      },
+      {
+        "heading": "Fazla Mesai Alacağı Nedir?",
+        "paragraphs": [
+          "Fazla mesai alacağı, işçinin yasal çalışma süresini aşarak yaptığı çalışmalar karşılığında hak kazandığı ücrettir. 4857 sayılı İş Kanunu'na göre haftalık normal çalışma süresi 45 saattir. Bu sürenin üzerinde yapılan çalışmalar fazla çalışma olarak kabul edilir ve işçiye zamlı ücret ödenmesi gerekir.",
+          "Fazla çalışma ücretinin doğru şekilde hesaplanması iş hukuku uyuşmazlıklarında önemli bir yer tutar. Özellikle iş mahkemelerinde açılan davalarda fazla mesai alacağı çoğu zaman bilirkişi incelemesi ile hesaplanmaktadır. Bu nedenle çalışma sürelerinin, ücret bilgilerinin ve çalışma düzeninin doğru değerlendirilmesi gerekir."
+        ]
+      },
+      {
+        "heading": "Fazla Mesai Nasıl Hesaplanır?",
+        "paragraphs": [
+          "Fazla mesai hesaplanırken işçinin saatlik brüt ücreti esas alınır. İş Kanunu'na göre fazla çalışma ücreti normal saatlik ücretin yüzde elli artırılmasıyla hesaplanır. Başka bir ifadeyle fazla mesai saatleri için işçiye saatlik ücretinin %150'si ödenir.",
+          "Saatlik ücret genellikle aylık brüt ücretin 225'e bölünmesi ile bulunur. Daha sonra elde edilen saatlik ücret %50 artırılarak fazla mesai saatleri ile çarpılır ve fazla mesai alacağı hesaplanır."
+        ]
+      },
+      {
+        "heading": "Fazla Mesai Hesaplamasında Dikkate Alınan Unsurlar",
+        "paragraphs": [
+          "Fazla mesai hesaplamalarında yalnızca çalışma süresi değil, işçinin ücret yapısı ve çalışma düzeni de dikkate alınır. Hesaplama yapılırken şu unsurlar değerlendirilir:",
+          "Bazı durumlarda işçinin bordrolarında fazla mesai ödemesi görünse bile bu ödemelerin gerçeği yansıtıp yansıtmadığı ayrıca değerlendirilir. Mahkemeler çoğu zaman çalışma düzenini ve işyerindeki uygulamaları dikkate alarak hesaplama yapılmasını ister."
+        ],
+        "listItems": [
+          "İşçinin brüt ücreti",
+          "Haftalık çalışma süresi",
+          "Günlük çalışma saatleri",
+          "Fazla mesai yapılan dönem",
+          "Bordro kayıtları",
+          "Tanık beyanları"
+        ]
+      },
+      {
+        "heading": "Fazla Mesai Hesaplama Programı",
+        "paragraphs": [
+          "Fazla mesai alacağının doğru hesaplanması özellikle dava dosyalarında büyük önem taşır. Çalışma dönemleri, ücret değişiklikleri, farklı çalışma düzenleri ve mevzuat hükümleri birlikte değerlendirilmelidir.",
+          "Bilirkişi Hesap Programı, fazla mesai alacağı hesaplamalarında kullanılan tüm parametreleri dikkate alarak mevzuata uygun sonuçlar üretmek üzere geliştirilmiştir. Program sayesinde çalışma saatleri, ücret bilgileri ve dönemsel değişiklikler sistem tarafından değerlendirilerek hızlı ve hatasız fazla mesai hesaplaması yapılabilir."
+        ]
+      }
+    ],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "Standart Fazla Mesai",
+          "description": "4857 sayılı İş Kanunu kapsamında günlük 7,5 saati aşan çalışmaların standart fazla mesai ücreti hesaplaması. Haftalık 45 saat sınırı ve %50 zamlı ödeme esas alınır."
+        },
+        {
+          "title": "Tanıklı Standart",
+          "description": "Tanık beyanlarına dayalı fazla mesai hesaplaması. Bilirkişi raporlarında sık kullanılan, delil değeri yüksek tanıklı çalışma sürelerinin hesaplanması."
+        },
+        {
+          "title": "Haftalık Karma",
+          "description": "Haftada iki farklı çalışma zaman dilimine göre karma fazla mesai hesaplaması. Farklı gün grupları ve saat aralıkları tek ekranda hesaplanır."
+        },
+        {
+          "title": "Dönemsel",
+          "description": "Yaz ve kış dönemlerinde farklı çalışma düzenleri olan işyerleri için dönemsel fazla mesai hesabı. Mevsimsel çalışma modellerine uyumlu."
+        },
+        {
+          "title": "Dönemsel Haftalık",
+          "description": "Dönemsel çalışma ile haftalık karma modelin birleşimi. Hem yaz/kış ayrımı hem haftalık zaman dilimleri dikkate alınır."
+        },
+        {
+          "title": "Yeraltı İşçileri",
+          "description": "Yeraltı maden ve tünel işlerinde çalışan işçilere özel fazla mesai hesaplaması. Yeraltı işlerine ilişkin özel mevzuat ve süre sınırları uygulanır."
+        },
+        {
+          "title": "12 Saat Usulü Vardiya",
+          "description": "12 saat çalışma, 24 saat dinlenme veya benzeri vardiya sistemlerinde fazla mesai alacağının hesaplanması. Sağlık, güvenlik gibi sektörlere uygun."
+        },
+        {
+          "title": "24 Saat Usulü Vardiya",
+          "description": "24 saat kesintisiz çalışma gerektiren işlerde (güvenlik, sağlık vb.) fazla mesai ve dinlenme sürelerinin mevzuata uygun hesaplanması."
+        },
+        {
+          "title": "Gemi Adamı",
+          "description": "Deniz İş Kanunu kapsamındaki gemi adamları için özel çalışma ve dinlenme süreleri ile fazla mesai hesaplaması."
+        },
+        {
+          "title": "Ev İşçileri",
+          "description": "Ev hizmetlerinde çalışanlar için 4857 sayılı Kanun ve ilgili yönetmelikler çerçevesinde fazla mesai alacağı hesabı."
+        },
+        {
+          "title": "Fazla Sürelerle Çalışma",
+          "description": "Normal fazla mesai (haftalık 45 saat aşımı) dışında kalan fazla sürelerle çalışmaların ayrı hesaplanması. İş Kanunu md. 41 uyumlu."
+        },
+        {
+          "title": "Basın İş",
+          "description": "Basın Mesleğinde Çalışanlarla Çalıştırılanlar Hakkında Yönetmelik kapsamında basın işçilerine özel fazla mesai hesaplama modülü."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Otomatik Hesaplama",
+        "text": "Tüm fazla mesai türleri sistem tarafından otomatik hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Rapor",
+        "text": "Bilirkişi raporlarında kullanılabilecek çıktılar oluşturulur."
+      }
+    ]
+  },
+  "/yillik-izin-hesaplama": {
+    "intro": "Bilirkişi Hesap programı yıllık ücretli izin alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. Çalışma süresi, kullanılmayan izin günleri, farklı çalışma türleri ve mevzuat hükümleri sistem tarafından değerlendirilerek doğru ve mevzuata uygun hesaplama sonuçları oluşturulur.",
+    "articleSections": [
+      {
+        "heading": "Yıllık Ücretli İzin Alacağı Nedir?",
+        "paragraphs": [
+          "Yıllık ücretli izin alacağı, işçinin kullanamadığı yıllık izin sürelerine karşılık hak kazandığı ücrettir. 4857 sayılı İş Kanunu'na göre işçiler belirli bir çalışma süresini tamamladıktan sonra yıllık ücretli izin hakkı kazanırlar. İş sözleşmesi devam ederken bu izinlerin kullandırılması esastır. Ancak iş sözleşmesi sona erdiğinde kullanılmamış izin süreleri varsa, bu süreler için işçiye izin ücreti ödenmesi gerekir.",
+          "Yıllık izin hakkı işçinin dinlenme hakkının bir parçasıdır ve kanunla güvence altına alınmıştır. Bu nedenle işverenin yıllık izinleri kullandırması gerekir. Kullanılmayan izin süreleri iş sözleşmesinin sona ermesi halinde ücret alacağına dönüşür."
+        ]
+      },
+      {
+        "heading": "Yıllık Ücretli İzin Süreleri",
+        "paragraphs": [
+          "İş Kanunu'na göre yıllık ücretli izin süreleri işçinin kıdemine göre belirlenir. Asgari izin süreleri şu şekildedir:",
+          "Yer altı işlerinde çalışan işçiler için bu süreler dört gün artırılarak uygulanır. Ayrıca 18 yaşından küçük veya 50 yaşından büyük işçiler için yıllık izin süresi en az 20 gün olarak uygulanır."
+        ],
+        "listItems": [
+          "1 yıldan 5 yıla kadar (5 yıl dahil) çalışanlar için: 14 gün",
+          "5 yıldan fazla 15 yıldan az çalışanlar için: 20 gün",
+          "15 yıl ve daha fazla çalışanlar için: 26 gün"
+        ]
+      },
+      {
+        "heading": "Yıllık İzin Alacağı Nasıl Hesaplanır?",
+        "paragraphs": [
+          "Yıllık izin alacağı hesaplanırken işçinin son brüt ücreti esas alınır. İş sözleşmesinin sona erdiği tarihte kullanılmamış izin günleri tespit edilir ve bu günler için işçinin günlük brüt ücreti üzerinden hesaplama yapılır.",
+          "Öncelikle işçinin günlük brüt ücreti belirlenir. Daha sonra kullanılmamış izin günleri ile günlük ücret çarpılarak toplam yıllık izin alacağı hesaplanır. Bu hesaplama yapılırken işçinin son aldığı ücret dikkate alınır."
+        ]
+      },
+      {
+        "heading": "Yıllık İzin Alacağı Hesaplamasında Dikkate Alınan Unsurlar",
+        "paragraphs": [
+          "Yıllık izin alacağı hesaplanırken çeşitli unsurlar değerlendirilir. Özellikle dava dosyalarında yapılan bilirkişi hesaplamalarında aşağıdaki faktörler önem taşır:",
+          "İşveren tarafından düzenlenen izin kayıtları ve bordrolar da hesaplama sırasında dikkate alınır."
+        ],
+        "listItems": [
+          "İşçinin işe giriş ve çıkış tarihi",
+          "Toplam çalışma süresi",
+          "Hak edilen yıllık izin günleri",
+          "Kullanılan izin süreleri",
+          "Kullanılmamış izin günleri",
+          "İşçinin son brüt ücreti"
+        ]
+      },
+      {
+        "heading": "Yıllık Ücretli İzin Alacağı Hesaplama Programı",
+        "paragraphs": [
+          "Yıllık izin alacaklarının doğru şekilde hesaplanması işçilik alacaklarına ilişkin davalarda önemli bir yer tutar. İşçinin çalışma süresi, izin hakları ve ücret bilgileri birlikte değerlendirilerek doğru sonuçlara ulaşılması gerekir.",
+          "Bilirkişi Hesap Programı, yıllık ücretli izin alacağı hesaplamalarında kullanılan tüm parametreleri dikkate alarak mevzuata uygun sonuçlar üretmek üzere geliştirilmiştir. Program sayesinde izin süreleri, çalışma dönemleri ve ücret bilgileri sistem tarafından değerlendirilerek hızlı ve güvenilir hesaplama yapılabilir."
+        ]
+      }
+    ],
+    "moduleTypes": {
+      "title": "Yıllık Ücretli İzin Hesaplama Türleri",
+      "cards": [
+        {
+          "title": "İş Kanununa Göre",
+          "description": "4857 sayılı İş Kanunu kapsamında yıllık ücretli izin alacağı hesaplaması."
+        },
+        {
+          "title": "Borçlar Kanunu İşçileri",
+          "description": "Türk Borçlar Kanunu kapsamında çalışan işçiler için izin alacağı hesaplaması."
+        },
+        {
+          "title": "Gemi Adamları",
+          "description": "Deniz İş Kanunu kapsamında gemi adamlarına özel izin hesaplaması."
+        },
+        {
+          "title": "Mevsimlik İşçiler",
+          "description": "Mevsimlik çalışan işçiler için yıllık izin alacağı hesaplaması."
+        },
+        {
+          "title": "Basın İşçileri",
+          "description": "5953 sayılı Basın İş Kanunu kapsamında izin alacağı hesaplaması."
+        },
+        {
+          "title": "Kısmi Süreli / Part Time",
+          "description": "Part-time çalışanlar için yıllık izin alacağı hesaplanabilir."
+        },
+        {
+          "title": "Belirli Süreli Sözleşme",
+          "description": "Belirli süreli iş sözleşmelerine göre izin alacağı hesaplaması."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Otomatik Hesaplama",
+        "text": "Yıllık izin alacakları sistem tarafından otomatik hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Rapor",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/ubgt-hesaplama": {
+    "intro": "Bilirkişi Hesap programı ulusal bayram ve genel tatil (UBGT) alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. Çalışma süreleri, resmi tatil günleri ve farklı çalışma düzenleri sistem tarafından değerlendirilerek doğru ve mevzuata uygun hesaplama sonuçları oluşturulur.",
+    "articleSections": [
+      {
+        "heading": "UBGT Alacağı Nedir?",
+        "paragraphs": [
+          "UBGT alacağı, işçinin ulusal bayram ve genel tatil günlerinde çalışması halinde hak kazandığı ücrettir. 4857 sayılı İş Kanunu'na göre işçiler resmi tatil ve genel tatil günlerinde çalıştırıldıklarında normal ücretlerine ek olarak bir günlük ücret daha kazanırlar. Bu nedenle ulusal bayram ve genel tatil günlerinde yapılan çalışmalar için işçiye çift yevmiye ödenmesi gerekir.",
+          "Ulusal bayram ve genel tatil günleri arasında 29 Ekim Cumhuriyet Bayramı, 23 Nisan Ulusal Egemenlik ve Çocuk Bayramı, 19 Mayıs Atatürk'ü Anma Gençlik ve Spor Bayramı, 30 Ağustos Zafer Bayramı ile dini bayramlar ve yılbaşı gibi resmi tatiller bulunmaktadır. İşçi bu günlerde çalışmadığı takdirde ücretini almaya devam eder. Ancak çalıştırılması halinde ayrıca UBGT ücreti ödenmesi gerekir."
+        ]
+      },
+      {
+        "heading": "UBGT Alacağı Nasıl Hesaplanır?",
+        "paragraphs": [
+          "UBGT alacağı hesaplanırken işçinin günlük brüt ücreti esas alınır. Ulusal bayram ve genel tatil gününde çalışan işçi bir günlük ücretine ek olarak bir günlük ücret daha kazanır. Başka bir ifadeyle bu günlerde çalışan işçiye iki günlük ücret ödenmesi gerekir.",
+          "UBGT alacağı hesaplanırken öncelikle işçinin günlük brüt ücreti belirlenir. Daha sonra çalışılan resmi tatil günleri tespit edilir ve bu günler için bir günlük ek ücret hesaplanır. Bu şekilde toplam UBGT alacağı ortaya çıkar."
+        ]
+      },
+      {
+        "heading": "UBGT Hesaplamasında Dikkate Alınan Unsurlar",
+        "paragraphs": [
+          "UBGT alacağı hesaplanırken çeşitli faktörler dikkate alınır. Özellikle dava dosyalarında yapılan hesaplamalarda aşağıdaki unsurlar önem taşır:",
+          "Bazı durumlarda bordrolarda UBGT ödemesi görünse bile bu ödemelerin gerçeği yansıtıp yansıtmadığı ayrıca değerlendirilir. Mahkemeler çoğu zaman işyerindeki fiili çalışma düzenini dikkate alarak hesaplama yapılmasını ister."
+        ],
+        "listItems": [
+          "İşçinin brüt ücreti",
+          "Çalışılan resmi tatil günleri",
+          "Bordro kayıtları",
+          "İşyerindeki çalışma düzeni",
+          "Tanık beyanları",
+          "Çalışma dönemleri"
+        ]
+      },
+      {
+        "heading": "UBGT Alacağı Hesaplama Programı",
+        "paragraphs": [
+          "Ulusal bayram ve genel tatil alacaklarının doğru şekilde hesaplanması özellikle işçilik alacaklarına ilişkin davalarda büyük önem taşır. Çalışılan dönemlerin, resmi tatil günlerinin ve ücret bilgilerinin doğru değerlendirilmesi gerekir.",
+          "Bilirkişi Hesap Programı, UBGT alacağı hesaplamalarında kullanılan tüm parametreleri dikkate alarak mevzuata uygun sonuçlar üretmek üzere geliştirilmiştir. Program sayesinde resmi tatil günleri, çalışma süreleri ve ücret bilgileri sistem tarafından değerlendirilerek hızlı ve hatasız UBGT hesaplaması yapılabilir."
+        ]
+      }
+    ],
+    "moduleTypes": {
+      "title": "UBGT Hesaplama Türleri",
+      "cards": [
+        {
+          "title": "Standart UBGT",
+          "description": "Ulusal bayram ve genel tatil günlerinde yapılan çalışmalar için standart UBGT alacağı hesaplaması."
+        },
+        {
+          "title": "Bilirkişi UBGT",
+          "description": "Bilirkişi raporlarında kullanılan yöntemlere uygun UBGT alacağı hesaplama modülü."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Otomatik Hesaplama",
+        "text": "UBGT alacakları sistem tarafından otomatik hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve resmi tatil düzenlemelerine uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Rapor",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/hafta-tatili-hesaplama": {
+    "intro": "Bilirkişi Hesap programı hafta tatili alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. Çalışma düzeni, hafta tatili günleri ve farklı çalışma modelleri sistem tarafından değerlendirilerek doğru ve mevzuata uygun hesaplama sonuçları oluşturulur.",
+    "articleSections": [
+      {
+        "heading": "Hafta Tatili Alacağı Nedir?",
+        "paragraphs": [
+          "Hafta tatili alacağı, işçinin haftalık dinlenme günü olan hafta tatilinde çalıştırılması halinde hak kazandığı ücrettir. 4857 sayılı İş Kanunu'na göre işçiye her yedi günlük çalışma süresi içinde kesintisiz en az yirmi dört saat dinlenme hakkı tanınması zorunludur. Bu süre hafta tatili olarak kabul edilir.",
+          "İşçi hafta tatilinde çalıştırılmazsa o gün için ücretini almaya devam eder. Ancak işçi hafta tatilinde çalıştırılmışsa, bu çalışma karşılığında ayrıca bir günlük ücret daha kazanır. Bu nedenle hafta tatilinde çalışan işçiye bir günlük ücretine ek olarak bir günlük ücret daha ödenmesi gerekir."
+        ]
+      },
+      {
+        "heading": "Hafta Tatili Ücreti Nasıl Hesaplanır?",
+        "paragraphs": [
+          "Hafta tatili alacağı hesaplanırken işçinin günlük brüt ücreti esas alınır. Hafta tatilinde çalışan işçi o gün için bir günlük ücretine ek olarak bir günlük ücret daha kazanır. Başka bir ifadeyle hafta tatilinde yapılan çalışmalar için işçiye iki günlük ücret ödenmesi gerekir.",
+          "Hesaplama yapılırken öncelikle işçinin günlük brüt ücreti belirlenir. Daha sonra hafta tatilinde çalışılan günler tespit edilir ve bu günler için bir günlük ek ücret hesaplanır. Bu şekilde toplam hafta tatili alacağı ortaya çıkar."
+        ]
+      },
+      {
+        "heading": "Hafta Tatili Alacağı Hesaplamasında Dikkate Alınan Unsurlar",
+        "paragraphs": [
+          "Hafta tatili alacağı hesaplanırken çeşitli unsurlar dikkate alınır. Özellikle işçilik alacaklarına ilişkin davalarda yapılan hesaplamalarda aşağıdaki faktörler önem taşır:",
+          "Bazı durumlarda bordrolarda hafta tatili ücreti ödendiği görünse bile bu ödemelerin gerçeği yansıtıp yansıtmadığı ayrıca değerlendirilir. Mahkemeler çoğu zaman işyerindeki fiili çalışma düzenini dikkate alarak hesaplama yapılmasını ister."
+        ],
+        "listItems": [
+          "İşçinin brüt ücreti",
+          "Haftalık çalışma düzeni",
+          "Hafta tatilinde çalışılan günler",
+          "Bordro kayıtları",
+          "İşyerindeki çalışma uygulamaları",
+          "Tanık beyanları"
+        ]
+      },
+      {
+        "heading": "Hafta Tatili Alacağı Hesaplama Programı",
+        "paragraphs": [
+          "Hafta tatili alacaklarının doğru şekilde hesaplanması özellikle bilirkişi raporlarında önemli bir yer tutar. Çalışma düzeni, ücret bilgileri ve çalışma dönemleri birlikte değerlendirilerek doğru sonuçlara ulaşılması gerekir.",
+          "Bilirkişi Hesap Programı, hafta tatili alacağı hesaplamalarında kullanılan tüm parametreleri dikkate alarak mevzuata uygun sonuçlar üretmek üzere geliştirilmiştir. Program sayesinde hafta tatilinde yapılan çalışmalar sistem tarafından değerlendirilir ve hızlı, güvenilir hesaplama sonuçları elde edilir."
+        ]
+      }
+    ],
+    "moduleTypes": {
+      "title": "Hafta Tatili Hesaplama Türleri",
+      "cards": [
+        {
+          "title": "İş Kanununa Göre",
+          "description": "4857 sayılı İş Kanunu kapsamında hafta tatili alacağı hesaplaması yapılır."
+        },
+        {
+          "title": "Gemi Adamları",
+          "description": "Deniz İş Kanunu kapsamında gemi adamları için hafta tatili alacağı hesaplaması."
+        },
+        {
+          "title": "Basın İş",
+          "description": "5953 sayılı Basın İş Kanunu kapsamında çalışanlar için hafta tatili alacağı hesaplama modülü."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Otomatik Hesaplama",
+        "text": "Hafta tatili alacakları sistem tarafından otomatik hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Rapor",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/ucret-alacagi-hesaplama": {
+    "intro": "Bilirkişi Hesap programı işçi ücret alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. Çalışma süresi, ödenmeyen ücret dönemleri ve farklı çalışma koşulları sistem tarafından değerlendirilerek doğru ve mevzuata uygun hesaplama sonuçları oluşturulur.",
+    "articleSections": [
+      {
+        "heading": "Ücret Alacağı Nedir?",
+        "paragraphs": [
+          "Ücret alacağı, işçinin yaptığı çalışma karşılığında hak kazandığı ancak kendisine ödenmeyen ücretleri ifade eder. 4857 sayılı İş Kanunu'na göre işveren, işçiye yaptığı çalışma karşılığında ücret ödeme borcu altındadır. İşçinin ücretinin zamanında ve eksiksiz şekilde ödenmesi işverenin temel yükümlülüklerinden biridir.",
+          "Bazı durumlarda işçinin ücretinin hiç ödenmemesi, eksik ödenmesi veya geciktirilmesi söz konusu olabilir. Bu durumda işçi ödenmeyen ücretlerini talep edebilir ve bu alacaklar dava konusu yapılabilir. Ücret alacakları iş mahkemelerinde en sık karşılaşılan işçilik alacaklarından biridir."
+        ]
+      },
+      {
+        "heading": "Ücret Alacağı Nasıl Hesaplanır?",
+        "paragraphs": [
+          "Ücret alacağı hesaplanırken işçinin çalıştığı dönem ve bu dönemlerde hak ettiği ücret dikkate alınır. İşçinin aylık brüt ücreti belirlenir ve ödenmeyen dönemler tespit edilerek toplam ücret alacağı hesaplanır.",
+          "Hesaplama yapılırken işçinin sözleşmesinde belirtilen ücret, bordro kayıtları ve çalışma süresi dikkate alınır. İşçinin çalıştığı halde kendisine ödenmeyen ücretler bu şekilde belirlenir ve toplam alacak ortaya çıkar."
+        ]
+      },
+      {
+        "heading": "Ücret Alacağı Hesaplamasında Dikkate Alınan Unsurlar",
+        "paragraphs": [
+          "Ücret alacağı hesaplanırken çeşitli faktörler dikkate alınır. Özellikle dava dosyalarında yapılan bilirkişi hesaplamalarında aşağıdaki unsurlar önem taşır:",
+          "Bu unsurlar birlikte değerlendirilerek işçinin hak ettiği ancak kendisine ödenmeyen ücretler belirlenir."
+        ],
+        "listItems": [
+          "İşçinin aylık brüt ücreti",
+          "Çalışılan dönemler",
+          "Ödenmeyen ücret süreleri",
+          "Bordro kayıtları",
+          "Banka kayıtları",
+          "Tanık beyanları"
+        ]
+      },
+      {
+        "heading": "Ücret Alacağı Hesaplama Programı",
+        "paragraphs": [
+          "Ücret alacaklarının doğru şekilde hesaplanması özellikle işçilik alacaklarına ilişkin davalarda büyük önem taşır. Çalışma süreleri, ücret bilgileri ve ödeme kayıtları birlikte değerlendirilerek doğru sonuçlara ulaşılması gerekir.",
+          "Bilirkişi Hesap Programı, ücret alacağı hesaplamalarında kullanılan tüm parametreleri dikkate alarak mevzuata uygun sonuçlar üretmek üzere geliştirilmiştir. Program sayesinde çalışma dönemleri ve ücret bilgileri sistem tarafından değerlendirilerek hızlı ve güvenilir hesaplama yapılabilir."
+        ]
+      }
+    ],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "Eksik Ödenen Ücretler",
+          "description": "İşçiye ödenmeyen veya eksik ödenen ücretlerin hesaplanması yapılır."
+        },
+        {
+          "title": "Dönemsel Ücret Hesaplama",
+          "description": "Farklı çalışma dönemlerine göre ücret alacakları hesaplanabilir."
+        },
+        {
+          "title": "Otomatik Hesaplama",
+          "description": "Program tüm hesaplama işlemlerini otomatik olarak gerçekleştirir."
+        },
+        {
+          "title": "Mahkeme Uyumlu Rapor",
+          "description": "Mahkemelerde kullanılabilecek profesyonel rapor çıktıları oluşturulur."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "Ücret alacakları saniyeler içinde hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Çıktı",
+        "text": "Bilirkişi raporlarında kullanılabilecek çıktılar oluşturulur."
+      }
+    ]
+  },
+  "/bakiye-ucret-hesaplama": {
+    "intro": "Bilirkişi Hesap programı bakiye ücret alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. İşçinin çalıştığı döneme ait ödenmemiş veya eksik ödenmiş ücretlerin hesaplanması sistem tarafından hızlı ve mevzuata uygun şekilde gerçekleştirilir.",
+    "articleSections": [],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "Ödenmeyen Ücret Hesabı",
+          "description": "İşçiye ödenmeyen ücretlerin bakiye alacak olarak hesaplanması yapılır."
+        },
+        {
+          "title": "Dönemsel Ücret Analizi",
+          "description": "Farklı çalışma dönemlerine göre bakiye ücret alacakları hesaplanabilir."
+        },
+        {
+          "title": "Otomatik Hesaplama",
+          "description": "Program gerekli tüm hesaplama işlemlerini otomatik olarak gerçekleştirir."
+        },
+        {
+          "title": "Mahkeme Uyumlu Rapor",
+          "description": "Bilirkişi raporlarında kullanılabilecek profesyonel rapor çıktıları oluşturulur."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "Bakiye ücret alacakları saniyeler içinde hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Çıktı",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/kotu-niyet-tazminati": {
+    "intro": "Bilirkişi Hesap programı kötü niyet tazminatı alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. İş sözleşmesinin işveren tarafından kötü niyetli şekilde feshedilmesi halinde doğan tazminat alacakları sistem tarafından mevzuata uygun şekilde hesaplanır.",
+    "articleSections": [],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "Kötü Niyet Tazminatı Hesabı",
+          "description": "İşverenin kötü niyetli feshi durumunda doğan tazminat alacaklarının hesaplanması yapılır."
+        },
+        {
+          "title": "Fesih Analizi",
+          "description": "Fesih türüne göre hesaplama parametreleri sistem tarafından dikkate alınır."
+        },
+        {
+          "title": "Otomatik Hesaplama",
+          "description": "Program gerekli tüm hesaplama işlemlerini otomatik olarak gerçekleştirir."
+        },
+        {
+          "title": "Mahkeme Uyumlu Rapor",
+          "description": "Bilirkişi raporlarında kullanılabilecek profesyonel rapor çıktıları oluşturulur."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "Kötü niyet tazminatı alacakları saniyeler içinde hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Çıktı",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/ise-baslatmama-tazminati": {
+    "intro": "Bilirkişi Hesap programı işe iade davaları sonucunda işçinin işe başlatılmaması halinde doğan işe başlatmama tazminatı alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. Mahkeme kararına göre belirlenen tazminat tutarları ve ilgili ücret hesaplamaları sistem tarafından mevzuata uygun şekilde gerçekleştirilir.",
+    "articleSections": [],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "İşe Başlatmama Tazminatı Hesabı",
+          "description": "İşe iade davası sonucunda işçinin işe başlatılmaması halinde doğan tazminat alacağı hesaplanır."
+        },
+        {
+          "title": "Mahkeme Kararına Göre Hesaplama",
+          "description": "Mahkeme tarafından belirlenen süre ve ücret esas alınarak hesaplama yapılır."
+        },
+        {
+          "title": "Otomatik Hesaplama",
+          "description": "Program gerekli tüm hesaplama işlemlerini otomatik olarak gerçekleştirir."
+        },
+        {
+          "title": "Mahkeme Uyumlu Rapor",
+          "description": "Bilirkişi raporlarında kullanılabilecek profesyonel rapor çıktıları oluşturulur."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "İşe başlatmama tazminatı saniyeler içinde hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Çıktı",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/bosta-gecen-sure-ucreti": {
+    "intro": "Bilirkişi Hesap programı işe iade davaları sonucunda ortaya çıkan boşta geçen süre ücreti alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. İşçinin işe başlatılmaması halinde geçen süreye ait ücret ve diğer haklar sistem tarafından mevzuata uygun şekilde hesaplanır.",
+    "articleSections": [],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "Boşta Geçen Süre Hesabı",
+          "description": "İşe iade davalarında geçen süreye ait ücret alacaklarının hesaplanması yapılır."
+        },
+        {
+          "title": "Ücret ve Haklar Analizi",
+          "description": "Boşta geçen süreye ait ücret ve diğer haklar hesaplamaya dahil edilir."
+        },
+        {
+          "title": "Otomatik Hesaplama",
+          "description": "Program gerekli tüm hesaplama işlemlerini otomatik olarak gerçekleştirir."
+        },
+        {
+          "title": "Mahkeme Uyumlu Rapor",
+          "description": "Bilirkişi raporlarında kullanılabilecek profesyonel rapor çıktıları oluşturulur."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "Boşta geçen süre ücretleri saniyeler içinde hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Çıktı",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/ayrimcilik-tazminati": {
+    "intro": "Bilirkişi Hesap programı ayrımcılık tazminatı alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. İşçinin eşit davranma ilkesine aykırı şekilde ayrımcılığa uğraması durumunda doğan tazminat alacakları sistem tarafından hızlı ve mevzuata uygun şekilde hesaplanır.",
+    "articleSections": [],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "Ayrımcılık Tazminatı Hesabı",
+          "description": "İşçinin eşit davranma ilkesine aykırı şekilde ayrımcılığa uğraması halinde doğan tazminat alacağı hesaplanır."
+        },
+        {
+          "title": "Eşit Davranma İlkesi Analizi",
+          "description": "İş hukukunda düzenlenen eşit davranma ilkesine göre hesaplama yapılır."
+        },
+        {
+          "title": "Otomatik Hesaplama",
+          "description": "Program gerekli tüm hesaplama işlemlerini otomatik olarak gerçekleştirir."
+        },
+        {
+          "title": "Mahkeme Uyumlu Rapor",
+          "description": "Bilirkişi raporlarında kullanılabilecek profesyonel rapor çıktıları oluşturulur."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "Ayrımcılık tazminatı alacakları saniyeler içinde hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Çıktı",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/prim-alacagi-hesaplama": {
+    "intro": "Bilirkişi Hesap programı prim alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. İşçiye ödenmesi gereken satış primi, performans primi veya sözleşmeden doğan prim alacakları sistem tarafından hızlı ve mevzuata uygun şekilde hesaplanır.",
+    "articleSections": [],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "Prim Alacağı Hesabı",
+          "description": "İşçiye ödenmesi gereken prim alacaklarının hesaplanması yapılır."
+        },
+        {
+          "title": "Performans Primi",
+          "description": "Performansa bağlı prim ödemelerinin hesaplanması desteklenir."
+        },
+        {
+          "title": "Dönemsel Prim Hesabı",
+          "description": "Farklı dönemlere ait prim alacakları ayrı ayrı hesaplanabilir."
+        },
+        {
+          "title": "Mahkeme Uyumlu Rapor",
+          "description": "Bilirkişi raporlarında kullanılabilecek profesyonel rapor çıktıları oluşturulur."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "Prim alacakları saniyeler içinde hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Çıktı",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/haksiz-fesih-tazminati": {
+    "intro": "Bilirkişi Hesap programı haksız fesih nedeniyle doğan tazminat alacaklarının hesaplanmasında kullanılan tüm parametreleri otomatik olarak dikkate alır. İş sözleşmesinin haksız şekilde sona erdirilmesi halinde ortaya çıkan tazminat alacakları sistem tarafından mevzuata uygun şekilde hesaplanır.",
+    "articleSections": [],
+    "moduleTypes": {
+      "title": "Hesaplama türleri",
+      "cards": [
+        {
+          "title": "Haksız Fesih Tazminatı Hesabı",
+          "description": "İş sözleşmesinin haksız şekilde sona erdirilmesi halinde doğan tazminat alacakları hesaplanır."
+        },
+        {
+          "title": "Fesih Analizi",
+          "description": "Fesih nedenine göre tazminat hesaplama parametreleri sistem tarafından değerlendirilir."
+        },
+        {
+          "title": "Otomatik Hesaplama",
+          "description": "Program gerekli tüm hesaplama işlemlerini otomatik olarak gerçekleştirir."
+        },
+        {
+          "title": "Mahkeme Uyumlu Rapor",
+          "description": "Bilirkişi raporlarında kullanılabilecek profesyonel rapor çıktıları oluşturulur."
+        }
+      ]
+    },
+    "programBenefits": [
+      {
+        "title": "Hızlı Hesaplama",
+        "text": "Haksız fesih tazminatı alacakları saniyeler içinde hesaplanır."
+      },
+      {
+        "title": "Mevzuata Uygun",
+        "text": "İş hukuku ve ilgili mevzuata uygun hesaplama yapılır."
+      },
+      {
+        "title": "Profesyonel Çıktı",
+        "text": "Mahkemelerde kullanılabilecek rapor çıktıları oluşturulur."
+      }
+    ]
+  },
+  "/sendikal-tazminat": {
+    "intro": "Sendikal nedenle fesih veya sendikal ayrımcılık kaynaklı tazminat taleplerinin mevzuata uygun hesaplanması için profesyonel modül.",
+    "articleSections": [
+      {
+        "heading": "Sendikal Tazminat Nedir?",
+        "paragraphs": [
+          "Sendikal tazminat, işçinin sendikal faaliyetleri veya sendika üyeliği nedeniyle iş sözleşmesinin feshedilmesi veya ayrımcı uygulamalar sonucu doğan tazminat kalemlerini kapsar. İş Kanunu ve ilgili mevzuatta sendikal hakların korunmasına ilişkin hükümler dikkate alınarak hesaplama yapılır."
+        ]
+      },
+      {
+        "heading": "Sendikal Tazminat Nasıl Hesaplanır?",
+        "paragraphs": [
+          "Hesaplamada fesih tarihi, sendikal süreç, ücret esası ve talep edilen tazminat türü birlikte değerlendirilir. Bilirkişi Hesap programı bu parametreleri tek akışta toplayarak denetlenebilir sonuç üretir."
+        ]
+      }
+    ],
+    "programBenefits": [
+      {
+        "title": "Mevzuata uygun hesap",
+        "text": "Sendikal tazminat kalemleri güncel iş hukuku çerçevesinde hesaplanır."
+      },
+      {
+        "title": "Hızlı rapor",
+        "text": "Dosya bazlı hesap tablosu ve rapor çıktısı oluşturulur."
+      },
+      {
+        "title": "Denetlenebilir süreç",
+        "text": "Girdi ve sonuçlar dosya içinde izlenebilir şekilde saklanır."
+      }
+    ]
+  }
+}
