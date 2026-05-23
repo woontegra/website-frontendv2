@@ -448,13 +448,20 @@ function TrackingTab() {
       }}
     >
       <p className="text-[13px] text-[#5c6b7a]">
-        GA4, GTM, Meta Pixel ve özel scriptler — eski Analytics sayfası.
+        GA4, GTM, Meta Pixel ve özel scriptler. Public sitede Pixel yalnızca ziyaretçi
+        &quot;Pazarlama çerezleri&quot;ni kabul ederse yüklenir; admin panelde çalışmaz.
       </p>
+      {!data.metaPixelId.trim() && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-950">
+          <strong>Meta Pixel ID boş.</strong> CAPI (Dataset ID, Access Token) tek başına
+          tarayıcıda Pixel Helper göstermez. Events Manager → Veri Kümeleri → Pikseliniz →
+          <strong> Piksel Kimliği</strong> (genelde 15–16 haneli sayı; Dataset ID ile aynı değil).
+        </div>
+      )}
       {(
         [
           ['ga4MeasurementId', 'GA4 Measurement ID'],
           ['gtmId', 'Google Tag Manager ID'],
-          ['metaPixelId', 'Meta Pixel ID'],
         ] as const
       ).map(([key, label]) => (
         <div key={key}>
@@ -466,6 +473,19 @@ function TrackingTab() {
           />
         </div>
       ))}
+      <div>
+        <label className={adminLabelClass}>Meta Pixel ID</label>
+        <input
+          className={`${adminInputClass} mt-1.5`}
+          placeholder="Örn. 123456789012345"
+          value={data.metaPixelId}
+          onChange={(e) => setData({ ...data, metaPixelId: e.target.value.trim() })}
+        />
+        <p className="mt-1.5 text-[12px] leading-relaxed text-[#5c6b7a]">
+          Tarayıcı pikseli (fbq). <code className="text-[11px]">metaDatasetId</code> alanı
+          Conversion API içindir; buraya yazmayın.
+        </p>
+      </div>
       <label className="flex items-center gap-2 text-[13px] font-medium">
         <input
           type="checkbox"
