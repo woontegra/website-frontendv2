@@ -20,8 +20,8 @@ export const config = {
   SHOW_BARO_PRICING_PLAN: false,
   siteName: 'Bilirkişi Hesap',
   contactEmail: 'info@bilirkisihesap.com',
-  contactPhone: '+90 (212) 000 00 00',
-  contactAddress: 'İstanbul, Türkiye',
+  contactPhone: '0531 586 17 55',
+  contactAddress: 'İskele Mahallesi Bademli Caddesi 43/6 Datça-Muğla',
 } as const;
 
 export type SiteConfig = typeof config;

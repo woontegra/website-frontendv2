@@ -6,6 +6,11 @@ import { escapeHtml } from './escapeHtml';
 
 const COMPANY_NAME = 'Woontegra Teknoloji Yazılım ve Dijital Hizmetler Ltd. Şti.';
 
+/** Yasal metinlerde (veri sorumlusu vb.) gösterilen sabit iletişim */
+export const LEGAL_CONTACT_PHONE = '0531 586 17 55';
+export const LEGAL_CONTACT_ADDRESS =
+  'İskele Mahallesi Bademli Caddesi 43/6 Datça-Muğla';
+
 function contactLabel(value: string | undefined, fallback: string): string {
   const v = value?.trim();
   return v ? escapeHtml(v) : fallback;
@@ -20,14 +25,8 @@ export function buildLegalContactFromBundle(content: ContentBundleView): LegalCo
       footer.contactEmail,
       'web sitesinde yayınlanan iletişim e-posta adresi',
     ),
-    phoneLabel: contactLabel(
-      footer.contactPhone,
-      'web sitesinde yayınlanan telefon numarası',
-    ),
-    addressLabel: contactLabel(
-      footer.contactAddress,
-      'web sitesinde yayınlanan adres bilgisi',
-    ),
+    phoneLabel: escapeHtml(LEGAL_CONTACT_PHONE),
+    addressLabel: escapeHtml(LEGAL_CONTACT_ADDRESS),
   };
 }
 
@@ -41,12 +40,8 @@ export async function resolveLegalContact(content: ContentBundleView): Promise<L
       emailLabel: settings.contactEmail?.trim()
         ? escapeHtml(settings.contactEmail.trim())
         : base.emailLabel,
-      phoneLabel: settings.phone?.trim()
-        ? escapeHtml(settings.phone.trim())
-        : base.phoneLabel,
-      addressLabel: settings.address?.trim()
-        ? escapeHtml(settings.address.trim())
-        : base.addressLabel,
+      phoneLabel: escapeHtml(LEGAL_CONTACT_PHONE),
+      addressLabel: escapeHtml(LEGAL_CONTACT_ADDRESS),
     };
   } catch {
     return base;

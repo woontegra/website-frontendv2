@@ -24,9 +24,9 @@ export const LEGAL_PAGES: LegalPageDef[] = [
   },
   {
     path: '/cerez-politikasi',
-    title: 'Çerez Politikası',
+    title: 'Çerez ve Benzeri Teknolojiler Politikası',
     description:
-      'Zorunlu, analitik, pazarlama ve fonksiyonel çerezler; Meta Pixel yalnızca onay ile çalışır.',
+      'Public website çerez envanteri ve program localStorage ayrımı; cookieConsent 12 ay, Meta Pixel yalnızca pazarlama onayı ile.',
     apiSlugs: ['cerez-politikasi'],
   },
   {

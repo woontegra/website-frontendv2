@@ -11,6 +11,44 @@ export function trackMetaPageView(): void {
   }
 }
 
+function clearMetaCookies(): void {
+  const hostParts = window.location.hostname.split('.');
+  const domains: (string | undefined)[] = [undefined, window.location.hostname];
+  if (hostParts.length > 1) {
+    domains.push(`.${hostParts.slice(-2).join('.')}`);
+  }
+
+  const names = new Set<string>();
+  document.cookie.split(';').forEach((part) => {
+    const name = part.split('=')[0]?.trim();
+    if (name && (name === '_fbp' || name === '_fbc' || name.startsWith('_fbp') || name.startsWith('_fbc'))) {
+      names.add(name);
+    }
+  });
+
+  for (const name of names) {
+    for (const domain of domains) {
+      const domainPart = domain ? `;domain=${domain}` : '';
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/${domainPart}`;
+    }
+  }
+}
+
+function removeMetaPixelFromDom(): void {
+  document
+    .querySelectorAll('script[data-meta-pixel], script[src*="fbevents.js"]')
+    .forEach((el) => el.remove());
+  document.querySelectorAll('noscript[data-meta-pixel]').forEach((el) => el.remove());
+
+  try {
+    delete window.fbq;
+    delete window._fbq;
+  } catch {
+    window.fbq = undefined;
+    window._fbq = undefined;
+  }
+}
+
 export function injectMetaPixel(pixelId: string): void {
   const id = pixelId.trim();
   if (!id) return;
@@ -60,10 +98,6 @@ export function revokeMetaPixel(): void {
       /* ignore */
     }
   }
-  document.cookie.split(';').forEach((part) => {
-    const name = part.split('=')[0]?.trim();
-    if (name?.startsWith('_fbp') || name?.startsWith('_fbc')) {
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
-    }
-  });
+  clearMetaCookies();
+  removeMetaPixelFromDom();
 }
