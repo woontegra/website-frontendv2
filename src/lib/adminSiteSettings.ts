@@ -78,8 +78,9 @@ export async function fetchPaymentSettings(): Promise<PaymentSettings> {
 }
 
 export async function updatePaymentSettings(data: PaymentSettings): Promise<void> {
+  /** Backend: POST /api/admin/payment-settings (PUT tanımlı değil; eski panel de POST kullanır) */
   const json = await apiRequest<ApiEnvelope<unknown>>('/api/admin/payment-settings', {
-    method: 'PUT',
+    method: 'POST',
     headers: authHeaders(),
     body: data,
   });
