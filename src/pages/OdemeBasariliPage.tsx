@@ -4,6 +4,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { useContentBundle } from '@/app/ContentProvider';
 import { resolvePanelLoginCta } from '@/lib/contentBundle';
 import { paymentPageInternalNav } from '@/lib/paymentPageNav';
+import { useRedirectPaymentResultFromWebapi } from '@/lib/redirectWebapiPaymentHost';
 import {
   confirmPaymentManualCallback,
   fetchPaymentPublicStatus,
@@ -46,6 +47,7 @@ function isGuestNoUserManualFailure(res: ApiEnvelope<unknown>): boolean {
 }
 
 export default function OdemeBasariliPage() {
+  useRedirectPaymentResultFromWebapi();
   const [searchParams] = useSearchParams();
   const merchantOid = searchParams.get('merchant_oid');
   const [phase, setPhase] = useState<Phase>(merchantOid ? 'checking' : 'neutral_no_oid');

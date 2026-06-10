@@ -1,9 +1,11 @@
 import { useSearchParams } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
 import { paymentPageInternalNav } from '@/lib/paymentPageNav';
+import { useRedirectPaymentResultFromWebapi } from '@/lib/redirectWebapiPaymentHost';
 import { Button } from '@/components/ui/Button';
 
 export default function OdemeBasarisizPage() {
+  useRedirectPaymentResultFromWebapi();
   const [searchParams] = useSearchParams();
   const merchantOid = searchParams.get('merchant_oid');
 
