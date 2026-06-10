@@ -78,15 +78,39 @@ function formatPriceTL(amount: number): string {
   return `${intPart},${parts[1]} TL`;
 }
 
-function formatBillingForApi(data: BillingFormData) {
-  return {
-    name: data.fullName,
-    email: data.email,
-    phone: data.phone,
-    address: data.address,
+function composeBillingAddressLine(data: BillingFormData): string {
+  const street = data.address.trim();
+  const tail = [data.district.trim(), data.city.trim()].filter(Boolean).join(' / ');
+  return tail ? `${street} — ${tail}` : street;
+}
+
+/** Backend `billingInfo.address` PayTR `user_address` için kullanılıyor; il/ilçe birleşik satır. */
+function formatBillingForApi(data: BillingFormData): Record<string, unknown> {
+  const isCorp = data.invoiceType === 'corporate';
+  const displayName = isCorp ? data.companyName.trim() : data.fullName.trim();
+  const combinedAddress = composeBillingAddressLine(data);
+  const idDigits = data.identityNumber.replace(/\D/g, '');
+
+  const payload: Record<string, unknown> = {
     invoiceType: data.invoiceType,
-    ...(data.taxNumber ? { taxNumber: data.taxNumber } : {}),
+    fullName: displayName,
+    name: displayName,
+    email: data.email.trim(),
+    phone: data.phone.trim(),
+    city: data.city.trim(),
+    district: data.district.trim(),
+    openAddress: data.address.trim(),
+    address: combinedAddress,
   };
+
+  if (!isCorp && idDigits) payload.identityNumber = idDigits;
+  if (isCorp) {
+    payload.companyName = data.companyName.trim();
+    payload.taxNumber = data.taxNumber.trim();
+    payload.taxOffice = data.taxOffice.trim();
+  }
+
+  return payload;
 }
 
 export default function SatinAlPage() {

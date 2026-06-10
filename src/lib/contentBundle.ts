@@ -1819,12 +1819,31 @@ function planCtaLink(code: string, apiLink: string | null | undefined): string {
   const trimmed = apiLink?.trim();
   let href = trimmed;
   if (!href) {
-    if (code === 'monthly') href = config.PAYMENT_MONTHLY_URL;
-    else if (code === 'yearly') href = config.PAYMENT_YEARLY_URL;
+    if (code === 'monthly') href = '/satin-al?plan=pro-monthly';
+    else if (code === 'yearly') href = '/satin-al?plan=pro-yearly';
     else if (code === 'baro') href = '/demo-talep';
     else href = '/demo-talep';
   }
   return enrichSatinAlPlanQuery(code, href);
+}
+
+/** CMS’te yanlışlıkla kayıtlı localhost / dev origin tam URL’lerini SPA içi relative path’e indirger. */
+function tryStripDevOriginAbsoluteUrl(href: string): string | null {
+  if (!/^https?:\/\//i.test(href)) return null;
+  try {
+    const u = new URL(href);
+    const h = u.hostname.toLowerCase();
+    const isDevHost =
+      h === 'localhost' ||
+      h === '127.0.0.1' ||
+      h === '[::1]' ||
+      h.endsWith('.local') ||
+      h === 'local.invalid';
+    if (!isDevHost) return null;
+    return `${u.pathname}${u.search}${u.hash}` || '/';
+  } catch {
+    return null;
+  }
 }
 
 function resolvePricingPlanCta(
@@ -1832,12 +1851,13 @@ function resolvePricingPlanCta(
   apiLink: string | null | undefined,
 ): { ctaTo: string; ctaExternal: boolean } {
   const href = planCtaLink(code, apiLink);
-  if (!/^https?:\/\//i.test(href)) {
-    return { ctaTo: href, ctaExternal: false };
+  const normalized = tryStripDevOriginAbsoluteUrl(href) ?? href;
+  if (!/^https?:\/\//i.test(normalized)) {
+    return { ctaTo: normalized, ctaExternal: false };
   }
   if (typeof window !== 'undefined') {
     try {
-      const url = new URL(href);
+      const url = new URL(normalized);
       if (url.origin === window.location.origin) {
         return {
           ctaTo: `${url.pathname}${url.search}${url.hash}`,
@@ -1848,7 +1868,7 @@ function resolvePricingPlanCta(
       /* keep absolute external */
     }
   }
-  return { ctaTo: href, ctaExternal: true };
+  return { ctaTo: normalized, ctaExternal: true };
 }
 
 export function getStaticContentBundle(): ContentBundleView {

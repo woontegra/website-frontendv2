@@ -1,4 +1,4 @@
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -15,22 +15,28 @@ export default function OdemeBasarisizPage() {
           Ödeme işlemi iptal edildi veya başarısız oldu. Kart bilgilerinizi kontrol ederek tekrar
           deneyebilirsiniz.
         </p>
-        {merchantOid && (
+        {merchantOid ? (
           <p className="mt-4 text-xs text-slate-500">
-            Referans: <span className="font-mono">{merchantOid}</span>
+            Referans{' '}
+            <code className="mt-1 block break-all rounded-md bg-slate-100 px-2 py-1 font-mono text-[13px] text-slate-700">
+              {merchantOid}
+            </code>
           </p>
-        )}
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button to="/satin-al" variant="accent">
-            Tekrar dene
+        ) : null}
+        <p className="mt-6 border-t border-slate-200 pt-6 text-xs text-slate-500">
+          Sorun devam ederse destek ile iletişime geçebilirsiniz.
+        </p>
+        <div className="mt-6 flex w-full flex-col gap-3">
+          <Button to="/satin-al" variant="accent" className="w-full justify-center">
+            Tekrar dene / Satın al
           </Button>
-          <Button to="/" variant="outline">
-            Ana sayfa
+          <Button to="/" variant="outline" className="w-full justify-center">
+            Ana sayfaya dön
+          </Button>
+          <Button to="/iletisim" variant="outline" className="w-full justify-center">
+            Destek / iletişim
           </Button>
         </div>
-        <Link to="/iletisim" className="mt-4 inline-block text-sm text-sky-700 hover:underline">
-          Destek ile iletişim
-        </Link>
       </div>
     </div>
   );
