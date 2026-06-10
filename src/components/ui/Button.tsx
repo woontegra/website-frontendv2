@@ -47,6 +47,8 @@ type ButtonProps = BaseProps &
 type LinkButtonProps = BaseProps & {
   to: string;
   external?: boolean;
+  /** `external` true iken varsayılan `_blank`; site içi tam URL’lerde `_self` kullanılabilir. */
+  externalTarget?: '_blank' | '_self';
 };
 
 export function Button(props: ButtonProps | LinkButtonProps) {
@@ -60,12 +62,23 @@ export function Button(props: ButtonProps | LinkButtonProps) {
   const to = 'to' in props ? props.to : undefined;
   const external =
     'to' in props && 'external' in props ? (props as LinkButtonProps).external : undefined;
+  const externalTarget: '_blank' | '_self' | undefined =
+    'to' in props && 'externalTarget' in props
+      ? (props as LinkButtonProps).externalTarget
+      : undefined;
   const classes = `inline-flex items-center justify-center gap-2 rounded-lg transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
   if (to) {
     if (external) {
+      const tab = externalTarget ?? '_blank';
       return (
-        <a href={to} className={classes} target="_blank" rel="noopener noreferrer">
+        <a
+          href={to}
+          className={classes}
+          {...(tab === '_blank'
+            ? { target: '_blank' as const, rel: 'noopener noreferrer' as const }
+            : {})}
+        >
           {children}
         </a>
       );

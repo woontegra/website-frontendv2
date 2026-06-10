@@ -1,10 +1,15 @@
 import { useSearchParams } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
+import { paymentPageInternalNav } from '@/lib/paymentPageNav';
 import { Button } from '@/components/ui/Button';
 
 export default function OdemeBasarisizPage() {
   const [searchParams] = useSearchParams();
   const merchantOid = searchParams.get('merchant_oid');
+
+  const satinAlNav = paymentPageInternalNav('/satin-al');
+  const homeNav = paymentPageInternalNav('/');
+  const iletisimNav = paymentPageInternalNav('/iletisim');
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-16">
@@ -27,13 +32,31 @@ export default function OdemeBasarisizPage() {
           Sorun devam ederse destek ile iletişime geçebilirsiniz.
         </p>
         <div className="mt-6 flex w-full flex-col gap-3">
-          <Button to="/satin-al" variant="accent" className="w-full justify-center">
+          <Button
+            to={satinAlNav.href}
+            external={satinAlNav.external}
+            externalTarget={satinAlNav.externalTarget}
+            variant="accent"
+            className="w-full justify-center"
+          >
             Tekrar dene / Satın al
           </Button>
-          <Button to="/" variant="outline" className="w-full justify-center">
+          <Button
+            to={homeNav.href}
+            external={homeNav.external}
+            externalTarget={homeNav.externalTarget}
+            variant="outline"
+            className="w-full justify-center"
+          >
             Ana sayfaya dön
           </Button>
-          <Button to="/iletisim" variant="outline" className="w-full justify-center">
+          <Button
+            to={iletisimNav.href}
+            external={iletisimNav.external}
+            externalTarget={iletisimNav.externalTarget}
+            variant="outline"
+            className="w-full justify-center"
+          >
             Destek / iletişim
           </Button>
         </div>

@@ -1,7 +1,7 @@
 import { apiRequest, resolveApiUrl } from '@/lib/apiClient';
 import { getAdminToken } from '@/lib/adminAuth';
 
-type ApiEnvelope<T> = {
+export type ApiEnvelope<T> = {
   success?: boolean;
   data?: T;
   message?: string;
@@ -162,6 +162,43 @@ export async function confirmPaymentManualCallback(
     method: 'POST',
     body: { merchant_oid: merchantOid },
   });
+}
+
+export type PublicPaymentStatusData = {
+  found: boolean;
+  merchantOid: string;
+  status: string;
+  updatedAt: string;
+  userExists: boolean;
+  productType: string | null;
+  amount: number;
+  hasEmail: boolean;
+};
+
+/** Salt okunur ödeme durumu (callback / aktivasyon tetiklemez). */
+export async function fetchPaymentPublicStatus(merchantOid: string): Promise<{
+  ok: boolean;
+  status: number;
+  data?: PublicPaymentStatusData;
+  message?: string;
+}> {
+  const url = resolveApiUrl(
+    `/api/payment/public-status?merchant_oid=${encodeURIComponent(merchantOid)}`,
+  );
+  const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' } });
+  const json = (await res.json().catch(() => ({}))) as {
+    success?: boolean;
+    data?: PublicPaymentStatusData;
+    message?: string;
+  };
+  if (res.ok && json.success && json.data) {
+    return { ok: true, status: res.status, data: json.data };
+  }
+  return {
+    ok: false,
+    status: res.status,
+    message: typeof json.message === 'string' ? json.message : undefined,
+  };
 }
 
 export async function requestPaytrToken(params: {
