@@ -208,6 +208,41 @@ function GeneralTab() {
   );
 }
 
+function PaytrBildirimUrlNotu() {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const primary = origin ? `${origin}/api/paytr-callback` : 'https://www.bilirkisihesap.com/api/paytr-callback';
+  const alternate = origin ? `${origin}/api/payment/callback` : 'https://www.bilirkisihesap.com/api/payment/callback';
+
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50/90 p-3 text-[13px] leading-relaxed text-[#1e293b]">
+      <p className="font-semibold text-amber-900">PayTR “Bildirim URL” (sunucu bildirimi)</p>
+      <p className="mt-1.5 text-[#5c6b7a]">
+        Ödeme ekranındaki hata, bu adresin <strong>PayTR mağaza panelinizde</strong> (paytr.com › Mağaza › Ayarlar /
+        Entegrasyon) tanımlı olmamasından kaynaklanır. Burada ayrı bir “Bildirim URL” alanı yoktur; aşağıdaki
+        adreslerden <strong>birini</strong> PayTR&apos;ye yapıştırın (genelde POST, form verisi).
+      </p>
+      <p className="mt-2 font-medium text-slate-800">Önerilen:</p>
+      <code className="mt-1 block break-all rounded border border-amber-100 bg-white px-2 py-1.5 font-mono text-[11px]">
+        {primary}
+      </code>
+      <p className="mt-2 text-[12px] text-[#5c6b7a]">
+        Alternatif (aynı işlev):{' '}
+        <code className="rounded bg-white px-1 font-mono text-[11px]">{alternate}</code>
+      </p>
+      <p className="mt-2 text-[12px] text-[#64748b]">
+        “Başarılı URL” ve “Hata URL” alanları ödeme bitince kullanıcının tarayıcıya yönlenmesi içindir; PayTR’nin
+        sunucunuza sonuç bildirmesi (callback) değildir.
+      </p>
+      {origin.startsWith('http://localhost') ? (
+        <p className="mt-2 text-[12px] font-medium text-amber-800">
+          Yerelde test ediyorsanız PayTR&apos;ye canlı, dışarıdan erişilebilir bir HTTPS adresi yazmanız gerekir
+          (ör. production domain veya ngrok).
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function PaymentTab() {
   const [data, setData] = useState<PaymentSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -239,6 +274,7 @@ function PaymentTab() {
       }}
     >
       <p className="text-[13px] text-[#5c6b7a]">PayTR merchant bilgileri (eski panel ile aynı API).</p>
+      <PaytrBildirimUrlNotu />
       <div>
         <label className={adminLabelClass}>Merchant ID</label>
         <input
