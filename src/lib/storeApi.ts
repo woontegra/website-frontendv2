@@ -207,12 +207,14 @@ export async function requestPaytrToken(params: {
   billingInfo?: Record<string, unknown>;
   campaignId?: string;
   authenticated: boolean;
+  legalConsents?: Record<string, boolean>;
 }): Promise<PaytrTokenResponse> {
   const body = {
     subscriptionPeriod: params.subscriptionPeriod,
     product_type: params.productType,
     ...(params.billingInfo && { billingInfo: params.billingInfo }),
     ...(params.campaignId && { campaignId: params.campaignId }),
+    ...(params.legalConsents && { legalConsents: params.legalConsents }),
   };
   const path = params.authenticated ? '/api/payment/paytr-token' : '/api/payment/paytr-token-guest';
   return apiRequest<PaytrTokenResponse>(path, {

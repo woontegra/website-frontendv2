@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   Wrench,
   PanelBottom,
+  Archive,
 } from 'lucide-react';
 
 export type CmsNavItem = {
@@ -61,6 +62,12 @@ export const cmsNavItems: CmsNavItem[] = [
     label: 'Satın Al Sayfası',
     icon: ShoppingCart,
     description: 'Ürün adı, fiyatlar, galeri ve satın al metinleri',
+  },
+  {
+    to: '/admin/v2/legal-archive',
+    label: 'Sözleşme Arşivi',
+    icon: Archive,
+    description: 'Onaylanan sözleşme paketleri ve PDF arşivi',
   },
   {
     to: '/admin/v2/settings',
@@ -125,6 +132,7 @@ const routeTitles: { match: (path: string) => boolean; title: string }[] = [
   { match: (p) => p === '/admin/v2/pricing', title: 'Fiyatlandırma' },
   { match: (p) => p === '/admin/v2/campaigns', title: 'Kampanyalar' },
   { match: (p) => p === '/admin/v2/purchase', title: 'Satın Al Sayfası' },
+  { match: (p) => p.startsWith('/admin/v2/legal-archive'), title: 'Sözleşme Arşivi' },
   { match: (p) => p === '/admin/v2/settings', title: 'Site Ayarları' },
   {
     match: (p) => p === '/admin/v2/demo' || p === '/admin/v2/demo-page',

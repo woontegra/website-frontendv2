@@ -27,10 +27,14 @@ import {
   type Campaign,
   type PublicProduct,
 } from '@/lib/storeApi';
-import { loadLegalContentByApiSlug } from '@/lib/legal/loadLegalBySlug';
+import {
+  fetchLegalTemplatePreview,
+  LEGAL_CONSENT_LABELS,
+  REQUIRED_LEGAL_TYPES,
+} from '@/lib/legalApi';
 
-const MONTHLY_FALLBACK_TL = 1800;
-const ANNUAL_FALLBACK_TL = 22000;
+const MONTHLY_FALLBACK_TL = 2000;
+const ANNUAL_FALLBACK_TL = 20000;
 
 const DEFAULT_FEATURES = [
   '40+ farklı hesaplama türü',
@@ -63,8 +67,6 @@ function pickTrustParagraph(value: string | undefined | null, fallback: string):
 }
 
 type ProductType = 'monthly' | 'annual';
-
-type LegalPage = { title?: string; content?: string };
 
 function toKurus(v: unknown): number | null {
   if (v == null) return null;
@@ -124,12 +126,11 @@ export default function SatinAlPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [productType, setProductType] = useState<ProductType>('annual');
   const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [acceptedContract, setAcceptedContract] = useState(false);
-  const [termsContent, setTermsContent] = useState<LegalPage | null>(null);
-  const [contractContent, setContractContent] = useState<LegalPage | null>(null);
+  const [legalConsents, setLegalConsents] = useState<Record<string, boolean>>({});
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalPreview, setLegalPreview] = useState<{ title: string; content: string } | null>(null);
+  const [legalPreviewLoading, setLegalPreviewLoading] = useState(false);
   const [showPaytrModal, setShowPaytrModal] = useState(false);
   const [paytrToken, setPaytrToken] = useState<string | null>(null);
   const [checkoutSummary, setCheckoutSummary] = useState<{
@@ -150,18 +151,11 @@ export default function SatinAlPage() {
     async function init() {
       setLoading(true);
       try {
-        const [me, productRes, terms, contract] = await Promise.all([
-          fetchAuthMe(),
-          fetchPublicProduct(),
-          loadLegalContentByApiSlug('on-bilgilendirme', content),
-          loadLegalContentByApiSlug('mesafeli-satis-sozlesmesi', content),
-        ]);
+        const [me, productRes] = await Promise.all([fetchAuthMe(), fetchPublicProduct()]);
         if (cancelled) return;
         setIsAuthenticated(Boolean(me.success && me.data));
         if (productRes.success && productRes.data) setProduct(productRes.data);
         else setProduct(null);
-        if (terms) setTermsContent({ title: terms.title, content: terms.content });
-        if (contract) setContractContent({ title: contract.title, content: contract.content });
         setError(null);
       } catch {
         if (!cancelled) {
@@ -246,10 +240,32 @@ export default function SatinAlPage() {
     DEFAULT_INVOICE_RECEIPT,
   );
 
+  const allLegalAccepted = REQUIRED_LEGAL_TYPES.every((type) => legalConsents[type]);
+
+  const openLegalPreview = async (type: string) => {
+    setShowLegalModal(true);
+    setLegalPreviewLoading(true);
+    setLegalPreview(null);
+    try {
+      const data = await fetchLegalTemplatePreview(type, {
+        productType,
+        amountKurus: Math.round(selectedTotal * 100),
+      });
+      if (data) {
+        setLegalPreview({ title: data.title, content: data.content });
+      } else {
+        setLegalPreview({ title: LEGAL_CONSENT_LABELS[type] || type, content: 'İçerik yüklenemedi.' });
+      }
+    } catch {
+      setLegalPreview({ title: LEGAL_CONSENT_LABELS[type] || type, content: 'İçerik yüklenemedi.' });
+    } finally {
+      setLegalPreviewLoading(false);
+    }
+  };
+
   const handlePurchase = () => {
-    if (!acceptedTerms || !acceptedContract) {
-      const msg =
-        'Lütfen ön bilgilendirme koşulları ile mesafeli satış sözleşmesini onaylayın.';
+    if (!allLegalAccepted) {
+      const msg = 'Lütfen tüm yasal metinleri okuyup onaylayın.';
       showToast(msg, 'warning');
       setError(msg);
       return;
@@ -271,6 +287,9 @@ export default function SatinAlPage() {
         billingInfo,
         campaignId: campaign?.id,
         authenticated: !useGuest,
+        legalConsents: Object.fromEntries(
+          REQUIRED_LEGAL_TYPES.map((type) => [type, Boolean(legalConsents[type])]),
+        ),
       });
       const token = data.token ?? data.data?.token;
       if (data.success && token) {
@@ -408,42 +427,38 @@ export default function SatinAlPage() {
               </div>
 
               <div className="mt-6 space-y-3 text-sm">
-                <label className="flex cursor-pointer items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600"
-                  />
-                  <span className="text-slate-700">
-                    <button
-                      type="button"
-                      className="font-semibold text-sky-700 underline-offset-2 hover:underline"
-                      onClick={() => setShowLegalModal(true)}
-                    >
-                      Ön bilgilendirme koşullarını
-                    </button>{' '}
-                    okudum ve kabul ediyorum.
-                  </span>
-                </label>
-                <label className="flex cursor-pointer items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={acceptedContract}
-                    onChange={(e) => setAcceptedContract(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600"
-                  />
-                  <span className="text-slate-700">
-                    <button
-                      type="button"
-                      className="font-semibold text-sky-700 underline-offset-2 hover:underline"
-                      onClick={() => setShowLegalModal(true)}
-                    >
-                      Mesafeli satış sözleşmesini
-                    </button>{' '}
-                    okudum ve kabul ediyorum.
-                  </span>
-                </label>
+                {REQUIRED_LEGAL_TYPES.map((type) => {
+                  const label = LEGAL_CONSENT_LABELS[type];
+                  const isWithdrawal = type === 'WITHDRAWAL_EXCEPTION';
+                  return (
+                    <label key={type} className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(legalConsents[type])}
+                        onChange={(e) =>
+                          setLegalConsents((prev) => ({ ...prev, [type]: e.target.checked }))
+                        }
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600"
+                      />
+                      <span className="text-slate-700">
+                        {isWithdrawal ? (
+                          label
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="font-semibold text-sky-700 underline-offset-2 hover:underline"
+                              onClick={() => void openLegalPreview(type)}
+                            >
+                              {label}
+                            </button>
+                            {type === 'KVKK' ? "'ni okudum." : "'nu okudum ve onaylıyorum."}
+                          </>
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
 
               {error && (
@@ -553,42 +568,40 @@ export default function SatinAlPage() {
         <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
           <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-              <h2 className="text-lg font-bold text-slate-900">Yasal metinler</h2>
+              <h2 className="text-lg font-bold text-slate-900">
+                {legalPreview?.title ?? 'Yasal metin'}
+              </h2>
               <button
                 type="button"
-                onClick={() => setShowLegalModal(false)}
+                onClick={() => {
+                  setShowLegalModal(false);
+                  setLegalPreview(null);
+                }}
                 className="rounded-lg p-2 hover:bg-slate-100"
                 aria-label="Kapat"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="grid gap-6 overflow-y-auto p-6 md:grid-cols-2">
-              <article>
-                <h3 className="font-bold text-slate-900">
-                  {termsContent?.title ?? 'Ön bilgilendirme'}
-                </h3>
-                <div
-                  className="prose prose-sm mt-3 max-w-none text-slate-700"
-                  dangerouslySetInnerHTML={{
-                    __html: termsContent?.content ?? '<p>İçerik yükleniyor…</p>',
-                  }}
-                />
-              </article>
-              <article>
-                <h3 className="font-bold text-slate-900">
-                  {contractContent?.title ?? 'Mesafeli satış sözleşmesi'}
-                </h3>
-                <div
-                  className="prose prose-sm mt-3 max-w-none text-slate-700"
-                  dangerouslySetInnerHTML={{
-                    __html: contractContent?.content ?? '<p>İçerik yükleniyor…</p>',
-                  }}
-                />
-              </article>
+            <div className="overflow-y-auto p-6">
+              {legalPreviewLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                </div>
+              ) : (
+                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">
+                  {legalPreview?.content ?? 'İçerik yükleniyor…'}
+                </pre>
+              )}
             </div>
             <div className="border-t border-slate-200 px-6 py-4">
-              <Button variant="primary" onClick={() => setShowLegalModal(false)}>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setShowLegalModal(false);
+                  setLegalPreview(null);
+                }}
+              >
                 Kapat
               </Button>
             </div>
