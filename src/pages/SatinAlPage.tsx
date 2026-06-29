@@ -8,6 +8,7 @@ import {
   Lock,
   Loader2,
   Sparkles,
+  Gift,
   X,
   FileText,
   Users,
@@ -15,6 +16,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { BillingInfoModal, type BillingFormData } from '@/components/checkout/BillingInfoModal';
+import { AnnualGiftPromoSection } from '@/components/checkout/AnnualGiftPromoSection';
 import { ProductGallery } from '@/components/checkout/ProductGallery';
 import { Button } from '@/components/ui/Button';
 import { showToast } from '@/components/ui/toast';
@@ -32,6 +34,7 @@ import {
   LEGAL_CONSENT_LABELS,
   REQUIRED_LEGAL_TYPES,
 } from '@/lib/legalApi';
+import { ANNUAL_GIFT_BADGE_LINES } from '@/lib/annualGiftPromo';
 
 const MONTHLY_FALLBACK_TL = 2000;
 const ANNUAL_FALLBACK_TL = 20000;
@@ -220,6 +223,8 @@ export default function SatinAlPage() {
   const selectedTotal =
     productType === 'monthly' ? pricing.monthly : pricing.annual;
 
+  const isAnnualPlan = productType === 'annual';
+
   const galleryImages = getSatinAlDisplayImages(product?.imageUrl);
   const productName = product?.name ?? 'Bilirkişi Hesaplama Programı';
   const productDesc =
@@ -381,6 +386,7 @@ export default function SatinAlPage() {
                   const active = productType === type;
                   const price = type === 'monthly' ? pricing.monthly : pricing.annual;
                   const base = type === 'monthly' ? pricing.monthlyBase : pricing.annualBase;
+                  const isAnnualCard = type === 'annual';
                   return (
                     <button
                       key={type}
@@ -395,6 +401,15 @@ export default function SatinAlPage() {
                       <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                         {type === 'monthly' ? 'Aylık' : 'Yıllık'}
                       </p>
+                      {isAnnualCard && (
+                        <span className="mt-2 inline-flex w-full items-start gap-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-[10px] font-bold leading-tight text-white shadow-sm sm:text-[11px]">
+                          <Gift className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+                          <span className="text-left">
+                            <span className="block">{ANNUAL_GIFT_BADGE_LINES[0]}</span>
+                            <span className="block">{ANNUAL_GIFT_BADGE_LINES[1]}</span>
+                          </span>
+                        </span>
+                      )}
                       <p className="mt-2 text-2xl font-bold text-slate-900">
                         {formatPriceTL(price)}
                       </p>
@@ -490,6 +505,8 @@ export default function SatinAlPage() {
             </div>
           </div>
         </div>
+
+        {isAnnualPlan && <AnnualGiftPromoSection />}
 
         {product?.longDescription && (
           <div className="mt-12 rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-md sm:p-8">

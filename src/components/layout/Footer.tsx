@@ -1,7 +1,14 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Instagram, Mail, MapPin, Phone, Youtube } from 'lucide-react';
 import { useContentBundle } from '@/app/ContentProvider';
 import { FOOTER_LEGAL_LINKS } from '@/data/legalPages';
+import { config } from '@/lib/config';
+
+const FOOTER_SOCIAL_LINKS = [
+  { href: config.FACEBOOK_URL, label: 'Facebook', Icon: Facebook },
+  { href: config.INSTAGRAM_URL, label: 'Instagram', Icon: Instagram },
+  { href: config.YOUTUBE_URL, label: 'YouTube', Icon: Youtube },
+] as const;
 
 export function Footer() {
   const { content } = useContentBundle();
@@ -14,6 +21,20 @@ export function Footer() {
         <div>
           <p className="text-xl font-bold text-white">{footer.siteName}</p>
           <p className="mt-3 text-sm leading-relaxed text-slate-300">{footer.tagline}</p>
+          <div className="mt-4 flex items-center gap-3">
+            {FOOTER_SOCIAL_LINKS.map(({ href, label, Icon }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-600 bg-slate-800/60 text-slate-300 transition hover:border-emerald-500/50 hover:bg-slate-800 hover:text-white"
+              >
+                <Icon className="h-4 w-4" aria-hidden />
+              </a>
+            ))}
+          </div>
         </div>
 
         <div>

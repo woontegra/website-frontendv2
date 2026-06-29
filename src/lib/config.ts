@@ -16,6 +16,8 @@ export const config = {
   PAYMENT_MONTHLY_URL: 'https://www.example.com/odeme-aylik',
   PAYMENT_YEARLY_URL: 'https://www.example.com/odeme-yillik',
   YOUTUBE_URL: 'https://www.youtube.com/@bilirkisihesap',
+  FACEBOOK_URL: 'https://www.facebook.com/bilirkisihesap',
+  INSTAGRAM_URL: 'https://www.instagram.com/bilirkisihesap',
   /** Baro paket kartı fiyatlandırma sayfasında (anlaşma sonrası true). */
   SHOW_BARO_PRICING_PLAN: false,
   siteName: 'Bilirkişi Hesap',
