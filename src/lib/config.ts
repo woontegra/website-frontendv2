@@ -12,7 +12,7 @@ function resolveApiBaseUrl(): string {
 export const config = {
   /** Dev: Vite proxy. Prod: boş + vercel.json /api rewrite; isteğe bağlı VITE_API_BASE_URL */
   API_BASE_URL: resolveApiBaseUrl(),
-  PANEL_LOGIN_URL: 'https://panel.example.com/giris',
+  PANEL_LOGIN_URL: 'https://panel.bilirkisihesap.com/',
   PAYMENT_MONTHLY_URL: 'https://www.example.com/odeme-aylik',
   PAYMENT_YEARLY_URL: 'https://www.example.com/odeme-yillik',
   YOUTUBE_URL: 'https://www.youtube.com/@bilirkisihesap',

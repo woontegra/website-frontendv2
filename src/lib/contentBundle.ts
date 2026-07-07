@@ -835,7 +835,8 @@ function mapApiCtaButtons(
     .map((row) => {
       const code = row.code?.trim() ?? '';
       const label = row.label?.trim() ?? '';
-      const href = row.linkUrl?.trim() ?? '';
+      const rawHref = row.linkUrl?.trim() ?? '';
+      const href = code === 'hero_login' ? config.PANEL_LOGIN_URL : rawHref;
       if (!code || !label || !href) return null;
       return {
         code,
@@ -873,14 +874,10 @@ export function resolvePanelLoginCta(content: ContentBundleView): {
   external: boolean;
 } {
   const loginCta = resolveHomepageHeroCtaButtons(content).find((b) => b.code === 'hero_login');
-  const href =
-    loginCta?.href?.trim() ||
-    content.contact.setting?.panelLoginUrl?.trim() ||
-    config.PANEL_LOGIN_URL;
   return {
-    href,
+    href: config.PANEL_LOGIN_URL,
     label: loginCta?.label ?? 'Programa Giriş',
-    external: loginCta?.ctaExternal ?? isExternalNavHref(href),
+    external: true,
   };
 }
 
