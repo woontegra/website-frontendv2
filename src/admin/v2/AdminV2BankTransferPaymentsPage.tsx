@@ -265,8 +265,28 @@ export function AdminV2BankTransferPaymentsPage() {
       await load();
     } catch (e) {
       showToast(bankTransferApiErrorMessage(e), 'error');
+      await load();
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const openApproveModal = async (merchantOid: string, currentStatus: string) => {
+    if (currentStatus !== 'bank_transfer_pending') {
+      showToast(`Bu ödeme bekleyen durumda değil (${statusLabel(currentStatus)}).`, 'warning');
+      await load();
+      return;
+    }
+    try {
+      const detail = await fetchAdminBankTransferPaymentDetail(merchantOid);
+      if (detail.status !== 'bank_transfer_pending') {
+        showToast(`Bu ödeme artık onaylanamaz (${statusLabel(detail.status)}).`, 'warning');
+        await load();
+        return;
+      }
+      setApproveOid(merchantOid);
+    } catch (e) {
+      showToast(bankTransferApiErrorMessage(e), 'error');
     }
   };
 
@@ -407,8 +427,9 @@ export function AdminV2BankTransferPaymentsPage() {
                           <>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 text-emerald-700 hover:underline"
-                              onClick={() => setApproveOid(row.merchantOid)}
+                              className="inline-flex items-center gap-1 text-emerald-700 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                              disabled={actionLoading}
+                              onClick={() => void openApproveModal(row.merchantOid, row.status)}
                             >
                               <Check className="h-4 w-4" /> Onayla
                             </button>

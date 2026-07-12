@@ -222,7 +222,12 @@ export async function rejectAdminBankTransferPayment(
 export function bankTransferApiErrorMessage(error: unknown): string {
   const apiError = error as ApiError;
   if (apiError?.status === 409) {
-    return apiError.message || 'Bu ödeme zaten işlenmiş olabilir.';
+    const body = apiError.body as { message?: string; status?: string } | undefined;
+    const base = body?.message || apiError.message?.replace(/\s*\(HTTP 409\)$/, '') || 'Bu ödeme zaten işlenmiş olabilir.';
+    if (body?.status && body.status !== 'bank_transfer_pending') {
+      return `${base} (Durum: ${body.status})`;
+    }
+    return base;
   }
   if (error instanceof Error) return error.message;
   return 'Beklenmeyen bir hata oluştu';
