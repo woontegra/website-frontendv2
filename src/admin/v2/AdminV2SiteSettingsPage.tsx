@@ -12,18 +12,22 @@ import {
 import {
   fetchGeneralSettings,
   fetchPaymentSettings,
+  fetchBankTransferSettings,
   fetchSmtpSettings,
   fetchTrackingSettings,
   testSmtpSettings,
   updateGeneralSettings,
   updatePaymentSettings,
+  updateBankTransferSettings,
   updateSmtpSettings,
   updateTrackingSettings,
   type GeneralSettings,
   type PaymentSettings,
+  type BankTransferSettings,
   type SmtpSettings,
   type TrackingSettings,
 } from '@/lib/adminSiteSettings';
+import { SectionCard } from '@/admin/ui/SectionCard';
 import { uploadAdminV2Media } from '@/lib/adminV2Media';
 import { generateGeneralMediaAssetKey } from '@/lib/mediaUsageOptions';
 import { showToast } from '@/components/ui/toast';
@@ -244,6 +248,15 @@ function PaytrBildirimUrlNotu() {
 }
 
 function PaymentTab() {
+  return (
+    <div className="space-y-8">
+      <PaytrSettingsSection />
+      <BankTransferSettingsSection />
+    </div>
+  );
+}
+
+function PaytrSettingsSection() {
   const [data, setData] = useState<PaymentSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -259,80 +272,184 @@ function PaymentTab() {
   if (!data) return null;
 
   return (
-    <form
-      className="space-y-4"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setSaving(true);
-        void updatePaymentSettings(data)
-          .then(() => {
-            showToast('Ödeme ayarları kaydedildi', 'success');
-            return fetchPaymentSettings().then(setData);
-          })
-          .catch((err) => showToast(err instanceof Error ? err.message : 'Hata', 'error'))
-          .finally(() => setSaving(false));
-      }}
+    <SectionCard
+      title="PayTR"
+      description="Kredi kartı ödeme altyapısı merchant bilgileri."
+      compact
+      tintedHeader
     >
-      <p className="text-[13px] text-[#5c6b7a]">PayTR merchant bilgileri (eski panel ile aynı API).</p>
-      <PaytrBildirimUrlNotu />
-      <div>
-        <label className={adminLabelClass}>Merchant ID</label>
-        <input
-          className={`${adminInputClass} mt-1.5`}
-          value={data.merchantId}
-          onChange={(e) => setData({ ...data, merchantId: e.target.value })}
-          required
-        />
-      </div>
-      <div>
-        <label className={adminLabelClass}>Merchant Key</label>
-        <input
-          type="password"
-          className={`${adminInputClass} mt-1.5`}
-          value={data.merchantKey}
-          onChange={(e) => setData({ ...data, merchantKey: e.target.value })}
-          placeholder={data.merchantKey === '***' ? 'Değiştirmek için yeni değer' : ''}
-        />
-      </div>
-      <div>
-        <label className={adminLabelClass}>Merchant Salt</label>
-        <input
-          type="password"
-          className={`${adminInputClass} mt-1.5`}
-          value={data.merchantSalt}
-          onChange={(e) => setData({ ...data, merchantSalt: e.target.value })}
-        />
-      </div>
-      <div>
-        <label className={adminLabelClass}>Başarılı URL</label>
-        <input
-          type="url"
-          className={`${adminInputClass} mt-1.5`}
-          value={data.successUrl}
-          onChange={(e) => setData({ ...data, successUrl: e.target.value })}
-        />
-      </div>
-      <div>
-        <label className={adminLabelClass}>Hata URL</label>
-        <input
-          type="url"
-          className={`${adminInputClass} mt-1.5`}
-          value={data.failUrl}
-          onChange={(e) => setData({ ...data, failUrl: e.target.value })}
-        />
-      </div>
-      <label className="flex items-center gap-2 text-[13px]">
-        <input
-          type="checkbox"
-          checked={data.isActive}
-          onChange={(e) => setData({ ...data, isActive: e.target.checked })}
-        />
-        Aktif
-      </label>
-      <div className="flex justify-end pt-2">
-        <SaveButton saving={saving} />
-      </div>
-    </form>
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setSaving(true);
+          void updatePaymentSettings(data)
+            .then(() => {
+              showToast('PayTR ayarları kaydedildi', 'success');
+              return fetchPaymentSettings().then(setData);
+            })
+            .catch((err) => showToast(err instanceof Error ? err.message : 'Hata', 'error'))
+            .finally(() => setSaving(false));
+        }}
+      >
+        <PaytrBildirimUrlNotu />
+        <div>
+          <label className={adminLabelClass}>Merchant ID</label>
+          <input
+            className={`${adminInputClass} mt-1.5`}
+            value={data.merchantId}
+            onChange={(e) => setData({ ...data, merchantId: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <label className={adminLabelClass}>Merchant Key</label>
+          <input
+            type="password"
+            className={`${adminInputClass} mt-1.5`}
+            value={data.merchantKey}
+            onChange={(e) => setData({ ...data, merchantKey: e.target.value })}
+            placeholder={data.merchantKey === '***' ? 'Değiştirmek için yeni değer' : ''}
+          />
+        </div>
+        <div>
+          <label className={adminLabelClass}>Merchant Salt</label>
+          <input
+            type="password"
+            className={`${adminInputClass} mt-1.5`}
+            value={data.merchantSalt}
+            onChange={(e) => setData({ ...data, merchantSalt: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className={adminLabelClass}>Başarılı URL</label>
+          <input
+            type="url"
+            className={`${adminInputClass} mt-1.5`}
+            value={data.successUrl}
+            onChange={(e) => setData({ ...data, successUrl: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className={adminLabelClass}>Hata URL</label>
+          <input
+            type="url"
+            className={`${adminInputClass} mt-1.5`}
+            value={data.failUrl}
+            onChange={(e) => setData({ ...data, failUrl: e.target.value })}
+          />
+        </div>
+        <label className="flex items-center gap-2 text-[13px]">
+          <input
+            type="checkbox"
+            checked={data.isActive}
+            onChange={(e) => setData({ ...data, isActive: e.target.checked })}
+          />
+          Aktif
+        </label>
+        <div className="flex justify-end pt-2">
+          <SaveButton saving={saving} />
+        </div>
+      </form>
+    </SectionCard>
+  );
+}
+
+function BankTransferSettingsSection() {
+  const [data, setData] = useState<BankTransferSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void fetchBankTransferSettings()
+      .then(setData)
+      .catch((e) => showToast(e instanceof Error ? e.message : 'Yüklenemedi', 'error'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <LoaderRow />;
+  if (!data) return null;
+
+  return (
+    <SectionCard
+      title="Havale / EFT Ayarları"
+      description="Satın alma sayfasında havale seçildiğinde gösterilecek banka hesap bilgileri. Henüz kullanıcıya açılmamıştır."
+      compact
+      tintedHeader
+    >
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (data.isActive && (!data.accountHolderName.trim() || !data.iban.trim())) {
+            showToast('Havale/EFT aktifken alıcı adı ve IBAN zorunludur', 'warning');
+            return;
+          }
+          setSaving(true);
+          void updateBankTransferSettings(data)
+            .then(() => {
+              showToast('Havale/EFT ayarları kaydedildi', 'success');
+              return fetchBankTransferSettings().then(setData);
+            })
+            .catch((err) => showToast(err instanceof Error ? err.message : 'Hata', 'error'))
+            .finally(() => setSaving(false));
+        }}
+      >
+        <label className="flex items-center gap-2 text-[13px]">
+          <input
+            type="checkbox"
+            checked={data.isActive}
+            onChange={(e) => setData({ ...data, isActive: e.target.checked })}
+          />
+          Havale/EFT aktif mi?
+        </label>
+        <div>
+          <label className={adminLabelClass}>Banka adı</label>
+          <input
+            className={`${adminInputClass} mt-1.5`}
+            value={data.bankName}
+            onChange={(e) => setData({ ...data, bankName: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className={adminLabelClass}>Alıcı adı</label>
+          <input
+            className={`${adminInputClass} mt-1.5`}
+            value={data.accountHolderName}
+            onChange={(e) => setData({ ...data, accountHolderName: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className={adminLabelClass}>IBAN</label>
+          <input
+            className={`${adminInputClass} mt-1.5 font-mono`}
+            value={data.iban}
+            onChange={(e) => setData({ ...data, iban: e.target.value })}
+            placeholder="TR..."
+          />
+        </div>
+        <div>
+          <label className={adminLabelClass}>Şube bilgisi</label>
+          <input
+            className={`${adminInputClass} mt-1.5`}
+            value={data.branchInfo}
+            onChange={(e) => setData({ ...data, branchInfo: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className={adminLabelClass}>Ödeme talimatı / açıklama metni</label>
+          <textarea
+            rows={4}
+            className={`${adminInputClass} mt-1.5`}
+            value={data.instructions}
+            onChange={(e) => setData({ ...data, instructions: e.target.value })}
+          />
+        </div>
+        <div className="flex justify-end pt-2">
+          <SaveButton saving={saving} />
+        </div>
+      </form>
+    </SectionCard>
   );
 }
 

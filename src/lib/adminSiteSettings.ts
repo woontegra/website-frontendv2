@@ -89,6 +89,40 @@ export async function updatePaymentSettings(data: PaymentSettings): Promise<void
   }
 }
 
+export type BankTransferSettings = {
+  isActive: boolean;
+  bankName: string;
+  accountHolderName: string;
+  iban: string;
+  branchInfo: string;
+  instructions: string;
+};
+
+export async function fetchBankTransferSettings(): Promise<BankTransferSettings> {
+  const json = await apiRequest<ApiEnvelope<BankTransferSettings>>(
+    '/api/admin/bank-transfer-settings',
+    {
+      method: 'GET',
+      headers: authHeaders(),
+    },
+  );
+  if (!json.success || !json.data) {
+    throw new Error(json.message ?? 'Havale/EFT ayarları yüklenemedi');
+  }
+  return json.data;
+}
+
+export async function updateBankTransferSettings(data: BankTransferSettings): Promise<void> {
+  const json = await apiRequest<ApiEnvelope<unknown>>('/api/admin/bank-transfer-settings', {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: data,
+  });
+  if (!json.success) {
+    throw new Error(json.message ?? 'Havale/EFT ayarları kaydedilemedi');
+  }
+}
+
 export type SmtpSettings = {
   host: string;
   port: number;
