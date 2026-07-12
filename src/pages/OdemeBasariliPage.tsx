@@ -46,6 +46,11 @@ function isGuestNoUserManualFailure(res: ApiEnvelope<unknown>): boolean {
   return msg.includes('kullanıcı bulunamadı');
 }
 
+/** Production'da manual-callback çağrılmaz; yalnızca dev veya açık test flag'i. */
+function shouldTryManualCallback(): boolean {
+  return import.meta.env.DEV || import.meta.env.VITE_ENABLE_MANUAL_CALLBACK === 'true';
+}
+
 export default function OdemeBasariliPage() {
   useRedirectPaymentResultFromWebapi();
   const [searchParams] = useSearchParams();
@@ -78,14 +83,16 @@ export default function OdemeBasariliPage() {
       setPhase('checking');
       let manualGuestNoUser = false;
 
-      try {
-        const manual = await confirmPaymentManualCallback(merchantOid);
-        if (cancelled) return;
-        if (manual.success !== true && isGuestNoUserManualFailure(manual)) {
-          manualGuestNoUser = true;
+      if (shouldTryManualCallback()) {
+        try {
+          const manual = await confirmPaymentManualCallback(merchantOid);
+          if (cancelled) return;
+          if (manual.success !== true && isGuestNoUserManualFailure(manual)) {
+            manualGuestNoUser = true;
+          }
+        } catch {
+          /* manual isteği başarısız; public-status ile devam */
         }
-      } catch {
-        /* manual isteği başarısız; public-status ile devam */
       }
 
       let lastData: PublicPaymentStatusData | null = null;
