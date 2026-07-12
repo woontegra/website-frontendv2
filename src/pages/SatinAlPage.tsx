@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useContentBundle } from '@/app/ContentProvider';
 import {
   Check,
@@ -24,7 +24,9 @@ import { getSatinAlDisplayImages } from '@/lib/marketingProductImages';
 import {
   fetchAuthMe,
   fetchCampaignById,
+  fetchBankTransferAvailability,
   fetchPublicProduct,
+  requestBankTransferOrder,
   requestPaytrToken,
   type Campaign,
   type PublicProduct,
@@ -70,6 +72,7 @@ function pickTrustParagraph(value: string | undefined | null, fallback: string):
 }
 
 type ProductType = 'monthly' | 'annual';
+type PaymentMethod = 'card' | 'bank_transfer';
 
 function toKurus(v: unknown): number | null {
   if (v == null) return null;
@@ -119,6 +122,7 @@ function formatBillingForApi(data: BillingFormData): Record<string, unknown> {
 }
 
 export default function SatinAlPage() {
+  const navigate = useNavigate();
   const { content } = useContentBundle();
   const [searchParams] = useSearchParams();
   const [product, setProduct] = useState<PublicProduct | null>(null);
@@ -128,6 +132,8 @@ export default function SatinAlPage() {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [productType, setProductType] = useState<ProductType>('annual');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [bankTransferActive, setBankTransferActive] = useState(false);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [legalConsents, setLegalConsents] = useState<Record<string, boolean>>({});
   const [showBillingModal, setShowBillingModal] = useState(false);
@@ -154,11 +160,16 @@ export default function SatinAlPage() {
     async function init() {
       setLoading(true);
       try {
-        const [me, productRes] = await Promise.all([fetchAuthMe(), fetchPublicProduct()]);
+        const [me, productRes, bankAvailability] = await Promise.all([
+          fetchAuthMe(),
+          fetchPublicProduct(),
+          fetchBankTransferAvailability(),
+        ]);
         if (cancelled) return;
         setIsAuthenticated(Boolean(me.success && me.data));
         if (productRes.success && productRes.data) setProduct(productRes.data);
         else setProduct(null);
+        setBankTransferActive(bankAvailability.isActive);
         setError(null);
       } catch {
         if (!cancelled) {
@@ -285,6 +296,34 @@ export default function SatinAlPage() {
       setError(null);
       const periodForApi = productType === 'annual' ? 1 : 0;
       const billingInfo = formatBillingForApi(billing);
+      const legalConsentsPayload = Object.fromEntries(
+        REQUIRED_LEGAL_TYPES.map((type) => [type, Boolean(legalConsents[type])]),
+      );
+
+      if (paymentMethod === 'bank_transfer') {
+        if (!bankTransferActive) {
+          const msg = 'Havale/EFT ödeme yöntemi şu anda aktif değil.';
+          showToast(msg, 'error');
+          setError(msg);
+          return;
+        }
+
+        const order = await requestBankTransferOrder({
+          subscriptionPeriod: periodForApi,
+          productType,
+          billingInfo,
+          campaignId: campaign?.id,
+          legalConsents: legalConsentsPayload,
+        });
+
+        setShowBillingModal(false);
+        navigate(
+          `/odeme-beklemede?merchant_oid=${encodeURIComponent(order.merchantOid)}`,
+          { state: { bankTransferOrder: order } },
+        );
+        return;
+      }
+
       const useGuest = !isAuthenticated;
       const data = await requestPaytrToken({
         subscriptionPeriod: periodForApi,
@@ -292,9 +331,7 @@ export default function SatinAlPage() {
         billingInfo,
         campaignId: campaign?.id,
         authenticated: !useGuest,
-        legalConsents: Object.fromEntries(
-          REQUIRED_LEGAL_TYPES.map((type) => [type, Boolean(legalConsents[type])]),
-        ),
+        legalConsents: legalConsentsPayload,
       });
       const token = data.token ?? data.data?.token;
       if (data.success && token) {
@@ -476,6 +513,49 @@ export default function SatinAlPage() {
                 })}
               </div>
 
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <p className="text-sm font-semibold text-slate-900">Ödeme yöntemi</p>
+                <div className="mt-3 space-y-2">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      checked={paymentMethod === 'card'}
+                      onChange={() => setPaymentMethod('card')}
+                      className="mt-1 h-4 w-4 border-slate-300 text-emerald-600"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-slate-900">Kredi / Banka Kartı</span>
+                      <span className="block text-xs text-slate-500">PayTR güvenli ödeme</span>
+                    </span>
+                  </label>
+                  <label
+                    className={`flex items-start gap-3 rounded-lg border border-slate-200 p-3 ${
+                      bankTransferActive
+                        ? 'cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50'
+                        : 'cursor-not-allowed bg-slate-50 opacity-70'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      checked={paymentMethod === 'bank_transfer'}
+                      onChange={() => bankTransferActive && setPaymentMethod('bank_transfer')}
+                      disabled={!bankTransferActive}
+                      className="mt-1 h-4 w-4 border-slate-300 text-emerald-600 disabled:cursor-not-allowed"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-slate-900">Havale / EFT</span>
+                      <span className="block text-xs text-slate-500">
+                        {bankTransferActive
+                          ? 'Ödeme admin onayından sonra aktif olur'
+                          : 'Havale/EFT şu anda aktif değil'}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
               {error && (
                 <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
                   {error}
@@ -493,6 +573,8 @@ export default function SatinAlPage() {
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" /> Hazırlanıyor…
                   </>
+                ) : paymentMethod === 'bank_transfer' ? (
+                  'Havale/EFT siparişi oluştur'
                 ) : (
                   'Güvenli ödeme ile satın al'
                 )}
@@ -500,7 +582,9 @@ export default function SatinAlPage() {
 
               <p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
                 <Lock className="h-3.5 w-3.5" />
-                256-bit SSL ile korumalı ödeme
+                {paymentMethod === 'bank_transfer'
+                  ? 'Havale/EFT ödemesi admin onayından sonra aboneliğinizi aktif eder'
+                  : '256-bit SSL ile korumalı ödeme'}
               </p>
             </div>
           </div>

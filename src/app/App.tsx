@@ -37,6 +37,7 @@ import NotFoundPage from '@/pages/NotFoundPage';
 import CalculationLandingPage from '@/pages/CalculationLandingPage';
 import SatinAlPage from '@/pages/SatinAlPage';
 import OdemeBasariliPage from '@/pages/OdemeBasariliPage';
+import OdemeBeklemedePage from '@/pages/OdemeBeklemedePage';
 import OdemeBasarisizPage from '@/pages/OdemeBasarisizPage';
 import CampaignRedirectPage from '@/pages/CampaignRedirectPage';
 import LegalDocumentPage from '@/pages/LegalDocumentPage';
@@ -107,6 +108,7 @@ export default function App() {
       />
 
       <Route path="odeme-basarili" element={<OdemeBasariliPage />} />
+      <Route path="odeme-beklemede" element={<OdemeBeklemedePage />} />
       <Route path="odeme-basarisiz" element={<OdemeBasarisizPage />} />
 
       <Route element={<SiteLayout />}>

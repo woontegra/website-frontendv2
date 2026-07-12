@@ -223,3 +223,93 @@ export async function requestPaytrToken(params: {
     headers: authHeaders(),
   });
 }
+
+export type BankTransferAvailability = {
+  isActive: boolean;
+};
+
+export async function fetchBankTransferAvailability(): Promise<BankTransferAvailability> {
+  const res = await fetch(resolveApiUrl('/api/payment/bank-transfer-availability'), {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+  });
+  const json = (await res.json()) as ApiEnvelope<BankTransferAvailability> & {
+    isActive?: boolean;
+  };
+  if (json.success && typeof json.isActive === 'boolean') {
+    return { isActive: json.isActive };
+  }
+  if (json.success && json.data) {
+    return json.data;
+  }
+  return { isActive: false };
+}
+
+export type BankTransferOrderBankInfo = {
+  bankName: string;
+  accountHolderName: string;
+  iban: string;
+  branchInfo: string;
+  instructions: string;
+  reference: string;
+};
+
+export type BankTransferOrderResponse = {
+  merchantOid: string;
+  paymentMethod: string;
+  status: string;
+  amount: number;
+  amountFormatted: string;
+  bankTransfer: BankTransferOrderBankInfo;
+};
+
+export async function requestBankTransferOrder(params: {
+  subscriptionPeriod: number;
+  productType: 'monthly' | 'annual';
+  billingInfo: Record<string, unknown>;
+  campaignId?: string;
+  legalConsents?: Record<string, boolean>;
+  customerNote?: string;
+}): Promise<BankTransferOrderResponse> {
+  const body = {
+    subscriptionPeriod: params.subscriptionPeriod,
+    productType: params.productType,
+    billingInfo: params.billingInfo,
+    ...(params.campaignId && { campaignId: params.campaignId }),
+    ...(params.legalConsents && { legalConsents: params.legalConsents }),
+    ...(params.customerNote?.trim() && { customerNote: params.customerNote.trim() }),
+  };
+  const json = await apiRequest<ApiEnvelope<BankTransferOrderResponse> & BankTransferOrderResponse>(
+    '/api/payment/bank-transfer-order',
+    {
+      method: 'POST',
+      body,
+    },
+  );
+  if (!json.success) {
+    throw new Error(json.message ?? 'Havale/EFT siparişi oluşturulamadı');
+  }
+  if (json.merchantOid && json.bankTransfer) {
+    return json as BankTransferOrderResponse;
+  }
+  if (json.data) {
+    return json.data;
+  }
+  throw new Error(json.message ?? 'Havale/EFT siparişi oluşturulamadı');
+}
+
+export async function fetchPublicBankTransferOrder(
+  merchantOid: string,
+): Promise<BankTransferOrderResponse | null> {
+  const res = await fetch(
+    resolveApiUrl(`/api/payment/bank-transfer-order/${encodeURIComponent(merchantOid)}`),
+    { method: 'GET', headers: { Accept: 'application/json' } },
+  );
+  const json = (await res.json()) as ApiEnvelope<BankTransferOrderResponse> &
+    BankTransferOrderResponse;
+  if (!res.ok || !json.success) return null;
+  if (json.merchantOid && json.bankTransfer) {
+    return json as BankTransferOrderResponse;
+  }
+  return json.data ?? null;
+}
