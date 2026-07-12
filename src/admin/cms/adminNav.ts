@@ -16,6 +16,7 @@ import {
   Wrench,
   PanelBottom,
   Archive,
+  Landmark,
 } from 'lucide-react';
 
 export type CmsNavItem = {
@@ -68,6 +69,12 @@ export const cmsNavItems: CmsNavItem[] = [
     label: 'Sözleşme Arşivi',
     icon: Archive,
     description: 'Onaylanan sözleşme paketleri ve PDF arşivi',
+  },
+  {
+    to: '/admin/v2/bank-transfer-payments',
+    label: 'Havale Ödemeleri',
+    icon: Landmark,
+    description: 'Havale/EFT ile oluşturulan ödemeleri onayla veya reddet',
   },
   {
     to: '/admin/v2/settings',
@@ -133,6 +140,7 @@ const routeTitles: { match: (path: string) => boolean; title: string }[] = [
   { match: (p) => p === '/admin/v2/campaigns', title: 'Kampanyalar' },
   { match: (p) => p === '/admin/v2/purchase', title: 'Satın Al Sayfası' },
   { match: (p) => p.startsWith('/admin/v2/legal-archive'), title: 'Sözleşme Arşivi' },
+  { match: (p) => p.startsWith('/admin/v2/bank-transfer-payments'), title: 'Havale Ödemeleri' },
   { match: (p) => p === '/admin/v2/settings', title: 'Site Ayarları' },
   {
     match: (p) => p === '/admin/v2/demo' || p === '/admin/v2/demo-page',
