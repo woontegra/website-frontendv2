@@ -17,6 +17,7 @@ import {
   PanelBottom,
   Archive,
   Landmark,
+  Receipt,
 } from 'lucide-react';
 
 export type CmsNavItem = {
@@ -69,6 +70,12 @@ export const cmsNavItems: CmsNavItem[] = [
     label: 'Sözleşme Arşivi',
     icon: Archive,
     description: 'Onaylanan sözleşme paketleri ve PDF arşivi',
+  },
+  {
+    to: '/admin/v2/orders',
+    label: 'Siparişler',
+    icon: Receipt,
+    description: 'Tüm ödeme kayıtları — kart ve havale (salt okunur)',
   },
   {
     to: '/admin/v2/bank-transfer-payments',
@@ -140,6 +147,7 @@ const routeTitles: { match: (path: string) => boolean; title: string }[] = [
   { match: (p) => p === '/admin/v2/campaigns', title: 'Kampanyalar' },
   { match: (p) => p === '/admin/v2/purchase', title: 'Satın Al Sayfası' },
   { match: (p) => p.startsWith('/admin/v2/legal-archive'), title: 'Sözleşme Arşivi' },
+  { match: (p) => p.startsWith('/admin/v2/orders'), title: 'Siparişler' },
   { match: (p) => p.startsWith('/admin/v2/bank-transfer-payments'), title: 'Havale Ödemeleri' },
   { match: (p) => p === '/admin/v2/settings', title: 'Site Ayarları' },
   {
