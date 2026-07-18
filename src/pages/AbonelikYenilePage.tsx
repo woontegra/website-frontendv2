@@ -65,6 +65,48 @@ function formatCampaignEnd(value: string | null): string {
   return value ? dateFormatter.format(new Date(value)) : 'Süresiz';
 }
 
+function formatPackageLabel(value: string): string {
+  const normalized = value.trim().toLocaleLowerCase('tr-TR');
+  const exactLabels: Record<string, string> = {
+    annual: 'Yıllık',
+    yearly: 'Yıllık',
+    monthly: 'Aylık',
+    '2_year': '2 Yıllık',
+    two_year: '2 Yıllık',
+    '3_year': '3 Yıllık',
+    three_year: '3 Yıllık',
+  };
+  if (exactLabels[normalized]) return exactLabels[normalized];
+
+  const tokens = normalized.split(/[\s_-]+/).filter(Boolean);
+  const duration =
+    tokens.includes('monthly')
+      ? 'Aylık'
+      : tokens.includes('annual') || tokens.includes('yearly')
+        ? 'Yıllık'
+        : (tokens.includes('2') || tokens.includes('two')) && tokens.includes('year')
+          ? '2 Yıllık'
+          : (tokens.includes('3') || tokens.includes('three')) && tokens.includes('year')
+            ? '3 Yıllık'
+            : null;
+  const technicalTokens = new Set([
+    'annual',
+    'yearly',
+    'monthly',
+    'year',
+    '2',
+    'two',
+    '3',
+    'three',
+  ]);
+  const packageName = tokens
+    .filter((token) => !technicalTokens.has(token))
+    .map((token) => token.charAt(0).toLocaleUpperCase('tr-TR') + token.slice(1))
+    .join(' ');
+
+  return [duration, packageName].filter(Boolean).join(' ') || 'Paket bilgisi';
+}
+
 function formatBillingForApi(data: BillingFormData): RenewalBillingInfo {
   const isCorporate = data.invoiceType === 'corporate';
   const fullName = (isCorporate ? data.companyName : data.fullName).trim();
@@ -568,10 +610,15 @@ export default function AbonelikYenilePage() {
                 {[
                   ['Ad Soyad', customer.maskedName],
                   ['E-posta', customer.maskedEmail],
-                  ['Mevcut Paket', customer.currentPackage ?? 'Bilgi bulunamadı'],
+                  [
+                    'Mevcut Paket',
+                    customer.currentPackage
+                      ? formatPackageLabel(customer.currentPackage)
+                      : 'Bilgi bulunamadı',
+                  ],
                   ['Abonelik Bitiş Tarihi', formatSubscriptionEnd(customer.subscriptionEndsAt)],
                   ['Baro', customer.barAssociationName ?? 'Bağlı baro yok'],
-                  ['Yenileme Süresi', customer.renewalQuote.periodLabel],
+                  ['Yenileme Süresi', formatPackageLabel(customer.renewalQuote.periodLabel)],
                   ['Normal Fiyat', formatKurus(customer.renewalQuote.normalPriceKurus)],
                 ].map(([label, value]) => (
                   <div key={label} className="grid gap-1 py-4 sm:grid-cols-2 sm:gap-6">
