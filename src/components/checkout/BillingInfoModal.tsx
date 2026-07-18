@@ -22,6 +22,7 @@ type BillingInfoModalProps = {
   onClose: () => void;
   onSubmit: (data: BillingFormData) => void;
   processing: boolean;
+  lockedAccountEmail?: string | null;
 };
 
 const inputClass =
@@ -47,16 +48,22 @@ function digitsOnly(value: string, maxLen?: number): string {
   return maxLen != null ? d.slice(0, maxLen) : d;
 }
 
-export function BillingInfoModal({ open, onClose, onSubmit, processing }: BillingInfoModalProps) {
+export function BillingInfoModal({
+  open,
+  onClose,
+  onSubmit,
+  processing,
+  lockedAccountEmail,
+}: BillingInfoModalProps) {
   const [form, setForm] = useState<BillingFormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof BillingFormData, string>>>({});
 
   useEffect(() => {
     if (open) {
-      setForm(initialForm);
+      setForm({ ...initialForm, email: lockedAccountEmail ?? '' });
       setErrors({});
     }
-  }, [open]);
+  }, [lockedAccountEmail, open]);
 
   const districtOptions = useMemo(() => getDistrictsForProvinceName(form.city), [form.city]);
 
@@ -226,11 +233,16 @@ export function BillingInfoModal({ open, onClose, onSubmit, processing }: Billin
               className={inputClass}
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              disabled={processing}
+              disabled={processing || Boolean(lockedAccountEmail)}
+              readOnly={Boolean(lockedAccountEmail)}
               autoComplete="email"
             />
             {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-            <p className="mt-1 text-xs text-slate-500">Panel giriş bilgileri bu adrese gönderilir.</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {lockedAccountEmail
+                ? 'Yenilenecek hesabın e-posta adresi değiştirilemez.'
+                : 'Panel giriş bilgileri bu adrese gönderilir.'}
+            </p>
           </div>
 
           <div>

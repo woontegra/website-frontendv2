@@ -89,12 +89,95 @@ export type Campaign = {
   id: string;
   name: string;
   slug?: string;
+  publicCode?: string | null;
   discountRate: number;
   usageLimit?: number;
   usageCount: number;
   isActive: boolean;
+  startsAt?: string;
   expiresAt?: string;
+  type?: 'GENERAL' | 'BAR_ASSOCIATION';
 };
+
+export type CheckoutProductType = 'monthly' | 'annual';
+
+export type PublicQuoteCampaign = {
+  publicCode: string | null;
+  name: string | null;
+  discountRate: number;
+  campaignType: 'GENERAL' | 'BAR_ASSOCIATION' | null;
+  barAssociationKey: string | null;
+  barAssociationName: string | null;
+};
+
+export type ValidCheckoutQuote = {
+  valid: true;
+  reason: null;
+  normalPrice: number;
+  packageDiscount: number;
+  campaignDiscount: number;
+  finalPrice: number;
+  currency: 'TRY';
+  campaign: PublicQuoteCampaign | null;
+};
+
+export type InvalidCheckoutQuote = {
+  valid: false;
+  reason: string;
+  normalPrice: null;
+  packageDiscount: null;
+  campaignDiscount: null;
+  finalPrice: null;
+  currency: 'TRY';
+  campaign: PublicQuoteCampaign | null;
+};
+
+export type CheckoutQuote = ValidCheckoutQuote | InvalidCheckoutQuote;
+
+export type CampaignQuoteResponse = {
+  valid: boolean;
+  reason?: string | null;
+  campaign?: PublicQuoteCampaign | null;
+  quote?: CheckoutQuote | null;
+};
+
+export type RenewalOption = {
+  productType: CheckoutProductType;
+  subscriptionPeriod: number;
+  label?: string;
+  quote?: CheckoutQuote | null;
+  campaign?: PublicQuoteCampaign | null;
+};
+
+export type RenewalContext = {
+  valid: boolean;
+  reason?: string | null;
+  accountEmail?: string | null;
+  targetEmail?: string | null;
+  options: RenewalOption[];
+  selectedOption?: RenewalOption | null;
+  quote?: CheckoutQuote | null;
+};
+
+const CAMPAIGN_PUBLIC_PATH = '/api/campaigns';
+const CAMPAIGN_QUOTE_PATH = `${CAMPAIGN_PUBLIC_PATH}/quote`;
+const RENEWAL_CONTEXT_PATH = '/api/payment/renewal/resolve';
+const RENEWAL_QUOTE_PATH = '/api/payment/renewal/quote';
+
+function explicitApiReason(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object' || !('body' in error)) return undefined;
+  const body = (error as { body?: unknown }).body;
+  if (!body || typeof body !== 'object') return undefined;
+  const record = body as Record<string, unknown>;
+  const data =
+    record.data && typeof record.data === 'object'
+      ? (record.data as Record<string, unknown>)
+      : undefined;
+  for (const value of [record.reason, record.reasonCode, record.code, data?.reason, data?.reasonCode]) {
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+  return undefined;
+}
 
 export async function fetchCampaignById(id: string): Promise<Campaign | null> {
   try {
@@ -106,6 +189,54 @@ export async function fetchCampaignById(id: string): Promise<Campaign | null> {
   } catch {
     return null;
   }
+}
+
+export async function fetchCampaignQuote(params: {
+  campaignCode: string;
+  productType: CheckoutProductType;
+  subscriptionPeriod: number;
+}): Promise<CampaignQuoteResponse> {
+  try {
+    const json = await apiRequest<ApiEnvelope<CampaignQuoteResponse> & CampaignQuoteResponse>(
+      CAMPAIGN_QUOTE_PATH,
+      {
+        method: 'POST',
+        body: {
+          campaignPublicCode: params.campaignCode,
+          productType: params.productType,
+          subscriptionPeriod: params.subscriptionPeriod,
+        },
+      },
+    );
+    return json.data ?? json;
+  } catch (error) {
+    const reason = explicitApiReason(error);
+    if (reason) return { valid: false, reason };
+    throw error;
+  }
+}
+
+export async function fetchRenewalContext(renewalToken: string): Promise<RenewalContext> {
+  const json = await apiRequest<ApiEnvelope<RenewalContext> & RenewalContext>(
+    RENEWAL_CONTEXT_PATH,
+    {
+      method: 'POST',
+      body: { renewalToken },
+    },
+  );
+  return json.data ?? json;
+}
+
+export async function fetchRenewalQuote(params: {
+  renewalToken: string;
+  productType: CheckoutProductType;
+  subscriptionPeriod: number;
+}): Promise<RenewalContext> {
+  const json = await apiRequest<ApiEnvelope<RenewalContext> & RenewalContext>(RENEWAL_QUOTE_PATH, {
+    method: 'POST',
+    body: params,
+  });
+  return json.data ?? json;
 }
 
 export type PaytrTokenResponse = ApiEnvelope<{ token?: string }> & { token?: string };
@@ -203,9 +334,11 @@ export async function fetchPaymentPublicStatus(merchantOid: string): Promise<{
 
 export async function requestPaytrToken(params: {
   subscriptionPeriod: number;
-  productType: 'monthly' | 'annual';
+  productType: CheckoutProductType;
   billingInfo?: Record<string, unknown>;
   campaignId?: string;
+  campaignCode?: string;
+  renewalToken?: string;
   authenticated: boolean;
   legalConsents?: Record<string, boolean>;
 }): Promise<PaytrTokenResponse> {
@@ -213,7 +346,11 @@ export async function requestPaytrToken(params: {
     subscriptionPeriod: params.subscriptionPeriod,
     product_type: params.productType,
     ...(params.billingInfo && { billingInfo: params.billingInfo }),
-    ...(params.campaignId && { campaignId: params.campaignId }),
+    ...(!params.renewalToken &&
+      (params.campaignCode || params.campaignId) && {
+        campaignId: params.campaignCode || params.campaignId,
+      }),
+    ...(params.renewalToken && { renewalToken: params.renewalToken }),
     ...(params.legalConsents && { legalConsents: params.legalConsents }),
   };
   const path = params.authenticated ? '/api/payment/paytr-token' : '/api/payment/paytr-token-guest';
@@ -265,9 +402,11 @@ export type BankTransferOrderResponse = {
 
 export async function requestBankTransferOrder(params: {
   subscriptionPeriod: number;
-  productType: 'monthly' | 'annual';
+  productType: CheckoutProductType;
   billingInfo: Record<string, unknown>;
   campaignId?: string;
+  campaignCode?: string;
+  renewalToken?: string;
   legalConsents?: Record<string, boolean>;
   customerNote?: string;
 }): Promise<BankTransferOrderResponse> {
@@ -275,7 +414,11 @@ export async function requestBankTransferOrder(params: {
     subscriptionPeriod: params.subscriptionPeriod,
     productType: params.productType,
     billingInfo: params.billingInfo,
-    ...(params.campaignId && { campaignId: params.campaignId }),
+    ...(!params.renewalToken &&
+      (params.campaignCode || params.campaignId) && {
+        campaignId: params.campaignCode || params.campaignId,
+      }),
+    ...(params.renewalToken && { renewalToken: params.renewalToken }),
     ...(params.legalConsents && { legalConsents: params.legalConsents }),
     ...(params.customerNote?.trim() && { customerNote: params.customerNote.trim() }),
   };

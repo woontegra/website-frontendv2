@@ -29,24 +29,47 @@ import {
   campaignPublicLink,
   createAdminCampaign,
   deleteAdminCampaign,
+  fetchAdminBarAssociations,
   fetchAdminCampaigns,
   updateAdminCampaign,
+  type AdminBarAssociation,
   type AdminCampaign,
+  type CampaignProductType,
+  type CampaignType,
 } from '@/lib/adminCampaigns';
 
 type FormData = {
   name: string;
   discountRate: string;
   usageLimit: string;
+  startsAt: string;
   expiresAt: string;
+  isActive: boolean;
+  campaignType: CampaignType;
+  barAssociationKey: string;
+  appliesToNewPurchase: boolean;
+  appliesToRenewal: boolean;
+  eligibleProductTypes: CampaignProductType[];
+  eligiblePeriods: number[];
 };
 
 const emptyForm: FormData = {
   name: '',
   discountRate: '',
   usageLimit: '',
+  startsAt: '',
   expiresAt: '',
+  isActive: true,
+  campaignType: 'GENERAL',
+  barAssociationKey: '',
+  appliesToNewPurchase: true,
+  appliesToRenewal: false,
+  eligibleProductTypes: ['monthly', 'annual'],
+  eligiblePeriods: [1, 2, 3],
 };
+
+const barAssociationCampaignsEnabled =
+  import.meta.env.VITE_BAR_ASSOCIATION_CAMPAIGNS_ENABLED === 'true';
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
@@ -56,12 +79,13 @@ function formatDate(value?: string | null): string {
 export function AdminV2CampaignsPage() {
   const { tokenPresent } = useAdminToken();
   const [campaigns, setCampaigns] = useState<AdminCampaign[]>([]);
+  const [barAssociations, setBarAssociations] = useState<AdminBarAssociation[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<AdminCampaign | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
-  const [createdCampaignId, setCreatedCampaignId] = useState<string | null>(null);
+  const [createdCampaign, setCreatedCampaign] = useState<AdminCampaign | null>(null);
 
   const load = useCallback(async () => {
     if (!tokenPresent) {
@@ -84,11 +108,20 @@ export function AdminV2CampaignsPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!tokenPresent || !barAssociationCampaignsEnabled) return;
+    void fetchAdminBarAssociations()
+      .then(setBarAssociations)
+      .catch((e) =>
+        showToast(e instanceof Error ? e.message : 'Baro seçenekleri yüklenemedi', 'error'),
+      );
+  }, [tokenPresent]);
+
   const resetForm = () => {
     setForm(emptyForm);
     setEditing(null);
     setShowForm(false);
-    setCreatedCampaignId(null);
+    setCreatedCampaign(null);
   };
 
   const openCreate = () => {
@@ -102,9 +135,17 @@ export function AdminV2CampaignsPage() {
       name: c.name,
       discountRate: String(c.discountRate),
       usageLimit: c.usageLimit != null ? String(c.usageLimit) : '',
+      startsAt: c.startsAt ? new Date(c.startsAt).toISOString().split('T')[0] : '',
       expiresAt: c.expiresAt ? new Date(c.expiresAt).toISOString().split('T')[0] : '',
+      isActive: c.isActive,
+      campaignType: c.campaignType ?? 'GENERAL',
+      barAssociationKey: c.barAssociationKey ?? '',
+      appliesToNewPurchase: c.appliesToNewPurchase ?? true,
+      appliesToRenewal: c.appliesToRenewal ?? false,
+      eligibleProductTypes: c.eligibleProductTypes ?? ['monthly', 'annual'],
+      eligiblePeriods: c.eligiblePeriods ?? [1, 2, 3],
     });
-    setCreatedCampaignId(null);
+    setCreatedCampaign(null);
     setShowForm(true);
   };
 
@@ -120,7 +161,7 @@ export function AdminV2CampaignsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.discountRate.trim()) {
-      showToast('Baro adı ve indirim oranı zorunludur', 'warning');
+      showToast('Kampanya adı ve indirim oranı zorunludur', 'warning');
       return;
     }
     const discountRate = parseInt(form.discountRate, 10);
@@ -128,12 +169,36 @@ export function AdminV2CampaignsPage() {
       showToast('İndirim oranı 0–100 arasında olmalıdır', 'warning');
       return;
     }
+    if (form.campaignType === 'BAR_ASSOCIATION' && !form.barAssociationKey) {
+      showToast('Baro seçimi zorunludur', 'warning');
+      return;
+    }
+    if (form.eligibleProductTypes.length === 0) {
+      showToast('En az bir paket seçilmelidir', 'warning');
+      return;
+    }
+    if (
+      form.eligibleProductTypes.includes('annual') &&
+      form.eligiblePeriods.length === 0
+    ) {
+      showToast('Yıllık paket için en az bir dönem seçilmelidir', 'warning');
+      return;
+    }
 
     const payload = {
       name: form.name.trim(),
       discountRate,
-      ...(form.usageLimit.trim() ? { usageLimit: parseInt(form.usageLimit, 10) } : {}),
-      ...(form.expiresAt ? { expiresAt: form.expiresAt } : {}),
+      usageLimit: form.usageLimit.trim() ? parseInt(form.usageLimit, 10) : null,
+      startsAt: form.startsAt || null,
+      expiresAt: form.expiresAt || null,
+      isActive: form.isActive,
+      campaignType: form.campaignType,
+      barAssociationKey:
+        form.campaignType === 'BAR_ASSOCIATION' ? form.barAssociationKey : null,
+      appliesToNewPurchase: form.appliesToNewPurchase,
+      appliesToRenewal: form.appliesToRenewal,
+      eligibleProductTypes: form.eligibleProductTypes,
+      eligiblePeriods: form.eligiblePeriods,
     };
 
     setSubmitting(true);
@@ -143,7 +208,7 @@ export function AdminV2CampaignsPage() {
         showToast('Kampanya güncellendi', 'success');
       } else {
         const { campaign } = await createAdminCampaign(payload);
-        setCreatedCampaignId(campaign.id);
+        setCreatedCampaign(campaign);
         showToast('Kampanya oluşturuldu', 'success');
       }
       await load();
@@ -242,15 +307,53 @@ export function AdminV2CampaignsPage() {
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={adminLabelClass}>Baro / kampanya adı *</label>
+                <label className={adminLabelClass}>Kampanya adı *</label>
                 <input
                   className={`${adminInputClass} mt-1.5`}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Örn: Ankara Barosu"
+                  placeholder="Örn: Yaz kampanyası"
                   required
                 />
               </div>
+              <div>
+                <label className={adminLabelClass}>Kampanya türü</label>
+                <select
+                  className={`${adminInputClass} mt-1.5`}
+                  value={form.campaignType}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      campaignType: e.target.value as CampaignType,
+                      barAssociationKey:
+                        e.target.value === 'BAR_ASSOCIATION' ? form.barAssociationKey : '',
+                    })
+                  }
+                >
+                  <option value="GENERAL">Genel</option>
+                  {barAssociationCampaignsEnabled && (
+                    <option value="BAR_ASSOCIATION">Baro</option>
+                  )}
+                </select>
+              </div>
+              {form.campaignType === 'BAR_ASSOCIATION' && (
+                <div>
+                  <label className={adminLabelClass}>Baro *</label>
+                  <select
+                    className={`${adminInputClass} mt-1.5`}
+                    value={form.barAssociationKey}
+                    onChange={(e) => setForm({ ...form, barAssociationKey: e.target.value })}
+                    required
+                  >
+                    <option value="">Baro seçin</option>
+                    {barAssociations.map((bar) => (
+                      <option key={bar.key} value={bar.key}>
+                        {bar.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className={adminLabelClass}>İndirim oranı (%) *</label>
                 <input
@@ -275,6 +378,15 @@ export function AdminV2CampaignsPage() {
                 />
               </div>
               <div>
+                <label className={adminLabelClass}>Başlangıç tarihi</label>
+                <input
+                  type="date"
+                  className={`${adminInputClass} mt-1.5`}
+                  value={form.startsAt}
+                  onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
+                />
+              </div>
+              <div>
                 <label className={adminLabelClass}>Bitiş tarihi</label>
                 <input
                   type="date"
@@ -282,6 +394,91 @@ export function AdminV2CampaignsPage() {
                   value={form.expiresAt}
                   onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
                 />
+              </div>
+              <div>
+                <label className={adminLabelClass}>Public code</label>
+                <input
+                  className={`${adminInputClass} mt-1.5 bg-slate-50`}
+                  value={editing?.publicCode ?? 'Otomatik oluşturulur'}
+                  readOnly
+                  disabled={!editing?.publicCode}
+                />
+              </div>
+            </div>
+            <div className={`${adminMutedPanelClass} grid gap-4 px-4 py-3 sm:grid-cols-2`}>
+              <div>
+                <p className={adminLabelClass}>Uygulama alanı</p>
+                <label className="mt-2 flex items-center gap-2 text-[13px] text-[#334155]">
+                  <input
+                    type="checkbox"
+                    checked={form.appliesToNewPurchase}
+                    onChange={(e) =>
+                      setForm({ ...form, appliesToNewPurchase: e.target.checked })
+                    }
+                  />
+                  Yeni satın alma
+                </label>
+                <label className="mt-2 flex items-center gap-2 text-[13px] text-[#334155]">
+                  <input
+                    type="checkbox"
+                    checked={form.appliesToRenewal}
+                    onChange={(e) => setForm({ ...form, appliesToRenewal: e.target.checked })}
+                  />
+                  Yenileme
+                </label>
+                <label className="mt-2 flex items-center gap-2 text-[13px] text-[#334155]">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  />
+                  Aktif
+                </label>
+              </div>
+              <div>
+                <p className={adminLabelClass}>Uygun paketler / dönemler</p>
+                {(['monthly', 'annual'] as const).map((type) => (
+                  <label key={type} className="mt-2 flex items-center gap-2 text-[13px] text-[#334155]">
+                    <input
+                      type="checkbox"
+                      checked={form.eligibleProductTypes.includes(type)}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          eligibleProductTypes: e.target.checked
+                            ? [...form.eligibleProductTypes, type]
+                            : form.eligibleProductTypes.filter((value) => value !== type),
+                        })
+                      }
+                    />
+                    {type === 'monthly' ? 'Aylık' : 'Yıllık'}
+                  </label>
+                ))}
+                {form.eligibleProductTypes.includes('annual') && (
+                  <>
+                    <p className={`${adminLabelClass} mt-4`}>Yıllık dönemler</p>
+                    {[1, 2, 3].map((period) => (
+                      <label
+                        key={period}
+                        className="mt-2 flex items-center gap-2 text-[13px] text-[#334155]"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.eligiblePeriods.includes(period)}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              eligiblePeriods: e.target.checked
+                                ? [...form.eligiblePeriods, period]
+                                : form.eligiblePeriods.filter((value) => value !== period),
+                            })
+                          }
+                        />
+                        {period} yıl
+                      </label>
+                    ))}
+                  </>
+                )}
               </div>
             </div>
             <div className="flex flex-wrap justify-end gap-2">
@@ -301,16 +498,16 @@ export function AdminV2CampaignsPage() {
                 {editing ? 'Güncelle' : 'Oluştur'}
               </button>
             </div>
-            {createdCampaignId && (
+            {createdCampaign && (
               <div className={`${adminMutedPanelClass} space-y-2 px-4 py-3`}>
                 <p className="text-[13px] font-semibold text-[#1e2a3a]">Paylaşım linkleri</p>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="min-w-0 break-all font-mono text-[12px] text-[#5c6b7a]">
-                    Kısa: {campaignPublicLink(createdCampaignId)}
+                    Kısa: {campaignPublicLink(createdCampaign)}
                   </p>
                   <button
                     type="button"
-                    onClick={() => void copyText(campaignPublicLink(createdCampaignId))}
+                    onClick={() => void copyText(campaignPublicLink(createdCampaign))}
                     className="shrink-0 rounded-lg border border-[#dbe4ea] bg-white px-2 py-1 text-[12px]"
                   >
                     Kopyala
@@ -318,11 +515,11 @@ export function AdminV2CampaignsPage() {
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="min-w-0 break-all font-mono text-[12px] text-[#5c6b7a]">
-                    Satın al: {campaignCheckoutLink(createdCampaignId)}
+                    Satın al: {campaignCheckoutLink(createdCampaign)}
                   </p>
                   <button
                     type="button"
-                    onClick={() => void copyText(campaignCheckoutLink(createdCampaignId))}
+                    onClick={() => void copyText(campaignCheckoutLink(createdCampaign))}
                     className="shrink-0 rounded-lg border border-[#dbe4ea] bg-white px-2 py-1 text-[12px]"
                   >
                     Kopyala
@@ -369,11 +566,18 @@ export function AdminV2CampaignsPage() {
                         <Percent className="h-4 w-4 text-[#0f5c56]" />
                         <span className="font-medium text-[#1e2a3a]">{c.name}</span>
                       </div>
+                      <p className="mt-1 text-[11px] text-[#64748b]">
+                        {c.campaignType === 'BAR_ASSOCIATION'
+                          ? c.barAssociationNameSnapshot || c.barAssociationKey || 'Baro kampanyası'
+                          : 'Genel kampanya'}
+                        {' · '}
+                        Kod: {c.publicCode || c.id}
+                      </p>
                       <div className="mt-1 flex gap-1">
                         <button
                           type="button"
                           title="Kısa link"
-                          onClick={() => void copyText(campaignPublicLink(c.id))}
+                          onClick={() => void copyText(campaignPublicLink(c))}
                           className="rounded p-1 text-[#5c6b7a] hover:bg-white"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
@@ -381,7 +585,7 @@ export function AdminV2CampaignsPage() {
                         <button
                           type="button"
                           title="Satın al linki"
-                          onClick={() => void copyText(campaignCheckoutLink(c.id))}
+                          onClick={() => void copyText(campaignCheckoutLink(c))}
                           className="rounded p-1 text-[#5c6b7a] hover:bg-white"
                         >
                           <Copy className="h-3.5 w-3.5" />

@@ -12,7 +12,6 @@ import {
   X,
   FileText,
   Users,
-  Percent,
   UserPlus,
 } from 'lucide-react';
 import { BillingInfoModal, type BillingFormData } from '@/components/checkout/BillingInfoModal';
@@ -23,13 +22,17 @@ import { showToast } from '@/components/ui/toast';
 import { getSatinAlDisplayImages } from '@/lib/marketingProductImages';
 import {
   fetchAuthMe,
-  fetchCampaignById,
   fetchBankTransferAvailability,
+  fetchCampaignQuote,
   fetchPublicProduct,
+  fetchRenewalContext,
+  fetchRenewalQuote,
   requestBankTransferOrder,
   requestPaytrToken,
-  type Campaign,
+  type CheckoutQuote,
   type PublicProduct,
+  type PublicQuoteCampaign,
+  type RenewalContext,
 } from '@/lib/storeApi';
 import {
   fetchLegalTemplatePreview,
@@ -40,6 +43,8 @@ import { ANNUAL_GIFT_BADGE_LINES } from '@/lib/annualGiftPromo';
 
 const MONTHLY_FALLBACK_TL = 2000;
 const ANNUAL_FALLBACK_TL = 20000;
+const subscriptionRenewalEnabled =
+  import.meta.env.VITE_SUBSCRIPTION_RENEWAL_ENABLED === 'true';
 
 const DEFAULT_FEATURES = [
   '40+ farklı hesaplama türü',
@@ -84,6 +89,35 @@ function formatPriceTL(amount: number): string {
   const parts = amount.toFixed(2).split('.');
   const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   return `${intPart},${parts[1]} TL`;
+}
+
+function quoteAmountTL(amount: number): number {
+  return amount;
+}
+
+function campaignReasonMessage(reason?: string | null): string {
+  const normalized = reason?.trim().toUpperCase() ?? '';
+  if (normalized.includes('EXPIRED') || normalized.includes('SÜRESİ')) {
+    return 'Bu kampanyanın süresi dolmuş. Güncel normal fiyatla devam edebilirsiniz.';
+  }
+  if (normalized.includes('LIMIT')) {
+    return 'Bu kampanyanın kullanım limiti dolmuş. Güncel normal fiyatla devam edebilirsiniz.';
+  }
+  if (normalized.includes('INACTIVE') || normalized.includes('NOT_ACTIVE')) {
+    return 'Bu kampanya aktif değil. Güncel normal fiyatla devam edebilirsiniz.';
+  }
+  if (normalized.includes('NOT_FOUND')) {
+    return 'Kampanya bulunamadı. Güncel normal fiyatla devam edebilirsiniz.';
+  }
+  if (normalized.includes('NOT_STARTED')) {
+    return 'Bu kampanya henüz başlamamış. Güncel normal fiyatla devam edebilirsiniz.';
+  }
+  if (normalized.includes('NOT_ELIGIBLE') || normalized.includes('NOT_APPLICABLE')) {
+    return 'Bu kampanya seçilen paket veya işlem için geçerli değil. Güncel normal fiyatla devam edebilirsiniz.';
+  }
+  return reason
+    ? `Kampanya uygulanamadı: ${reason}. Güncel normal fiyatla devam edebilirsiniz.`
+    : 'Kampanya geçerli değil. Güncel normal fiyatla devam edebilirsiniz.';
 }
 
 function composeBillingAddressLine(data: BillingFormData): string {
@@ -132,9 +166,22 @@ export default function SatinAlPage() {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [productType, setProductType] = useState<ProductType>('annual');
+  const [subscriptionPeriod, setSubscriptionPeriod] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [bankTransferActive, setBankTransferActive] = useState(false);
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [campaign, setCampaign] = useState<PublicQuoteCampaign | null>(null);
+  const [backendQuote, setBackendQuote] = useState<CheckoutQuote | null>(null);
+  const [campaignNotice, setCampaignNotice] = useState<string | null>(null);
+  const [campaignValidating, setCampaignValidating] = useState(
+    Boolean(searchParams.get('c')?.trim()),
+  );
+  const [validatedCampaignCode, setValidatedCampaignCode] = useState<string | null>(null);
+  const [validatedCampaignSelection, setValidatedCampaignSelection] = useState<string | null>(
+    null,
+  );
+  const [campaignValidationAttempt, setCampaignValidationAttempt] = useState<string | null>(null);
+  const [renewalContext, setRenewalContext] = useState<RenewalContext | null>(null);
+  const [renewalLoading, setRenewalLoading] = useState(false);
   const [legalConsents, setLegalConsents] = useState<Record<string, boolean>>({});
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
@@ -147,11 +194,20 @@ export default function SatinAlPage() {
     totalTL: number;
     periodLabel: string;
   } | null>(null);
+  const campaignCode = searchParams.get('c')?.trim() || undefined;
+  const renewalToken = searchParams.get('renew')?.trim() || undefined;
+  const renewalEmail = renewalContext?.accountEmail ?? renewalContext?.targetEmail ?? null;
 
   useEffect(() => {
     const plan = searchParams.get('plan');
-    if (plan === 'pro-monthly') setProductType('monthly');
-    if (plan === 'pro-yearly') setProductType('annual');
+    if (plan === 'pro-monthly') {
+      setProductType('monthly');
+      setSubscriptionPeriod(0);
+    }
+    if (plan === 'pro-yearly') {
+      setProductType('annual');
+      setSubscriptionPeriod(1);
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -190,23 +246,162 @@ export default function SatinAlPage() {
   }, [content]);
 
   useEffect(() => {
-    const campaignId = searchParams.get('c');
-    if (!campaignId) {
-      setCampaign(null);
+    if (!renewalToken) {
+      setRenewalContext(null);
       return;
     }
     let cancelled = false;
-    void fetchCampaignById(campaignId).then((data) => {
-      if (cancelled || !data) return;
-      if (!data.isActive) return;
-      if (data.expiresAt && new Date(data.expiresAt) < new Date()) return;
-      if (data.usageLimit != null && data.usageCount >= data.usageLimit) return;
-      setCampaign(data);
-    });
+    setRenewalLoading(true);
+    void fetchRenewalContext(renewalToken)
+      .then((context) => {
+        if (cancelled) return;
+        const selected = context.selectedOption;
+        const selectedIsAvailable = Boolean(
+          selected
+          && context.options?.some(
+            (option) =>
+              option.productType === selected.productType
+              && option.subscriptionPeriod === selected.subscriptionPeriod,
+          ),
+        );
+        if (!selected || !selectedIsAvailable) {
+          setRenewalContext({
+            ...context,
+            valid: false,
+            reason: 'Seçilen yenileme seçeneği artık kullanılamıyor',
+            options: [],
+            selectedOption: null,
+          });
+          setBackendQuote(null);
+          setCampaign(null);
+          return;
+        }
+        setRenewalContext({ ...context, options: [selected] });
+        setBackendQuote(context.quote?.valid ? context.quote : null);
+        setCampaign(context.quote?.campaign ?? null);
+        setProductType(selected.productType);
+        setSubscriptionPeriod(selected.subscriptionPeriod);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setRenewalContext({
+            valid: false,
+            reason: err instanceof Error ? err.message : 'Yenileme bağlantısı doğrulanamadı',
+            options: [],
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRenewalLoading(false);
+      });
     return () => {
       cancelled = true;
     };
-  }, [searchParams]);
+  }, [renewalToken]);
+
+  useEffect(() => {
+    if (renewalToken) {
+      setValidatedCampaignCode(null);
+      setValidatedCampaignSelection(null);
+      setCampaignValidationAttempt(null);
+      setCampaignValidating(false);
+      return;
+    }
+    if (!campaignCode) {
+      setCampaign(null);
+      setBackendQuote(null);
+      setCampaignNotice(null);
+      setValidatedCampaignCode(null);
+      setValidatedCampaignSelection(null);
+      setCampaignValidationAttempt(null);
+      setCampaignValidating(false);
+      return;
+    }
+    let cancelled = false;
+    const selectionKey = `${productType}:${subscriptionPeriod}`;
+    const validationAttempt = `${campaignCode}:${selectionKey}`;
+    setCampaignValidating(true);
+    setValidatedCampaignCode(null);
+    setValidatedCampaignSelection(null);
+    setCampaignValidationAttempt(null);
+    void fetchCampaignQuote({
+      campaignCode,
+      productType,
+      subscriptionPeriod,
+    })
+      .then((result) => {
+        if (cancelled) return;
+        if (result.valid && result.quote?.valid) {
+          setCampaign(result.campaign ?? result.quote.campaign ?? null);
+          setBackendQuote(result.quote);
+          setCampaignNotice(null);
+          setValidatedCampaignCode(campaignCode);
+          setValidatedCampaignSelection(selectionKey);
+          setCampaignValidationAttempt(validationAttempt);
+        } else {
+          setCampaign(null);
+          setBackendQuote(null);
+          setValidatedCampaignCode(null);
+          setValidatedCampaignSelection(null);
+          setCampaignValidationAttempt(validationAttempt);
+          setCampaignNotice(campaignReasonMessage(result.reason ?? result.quote?.reason));
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setCampaign(null);
+        setBackendQuote(null);
+        setValidatedCampaignCode(null);
+        setValidatedCampaignSelection(null);
+        setCampaignValidationAttempt(validationAttempt);
+        setCampaignNotice(
+          campaignReasonMessage(err instanceof Error ? err.message : 'Kampanya doğrulanamadı'),
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setCampaignValidating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [campaignCode, productType, renewalToken, subscriptionPeriod]);
+
+  useEffect(() => {
+    if (!renewalToken || !renewalContext?.valid) return;
+    let cancelled = false;
+    void fetchRenewalQuote({
+      renewalToken,
+      productType,
+      subscriptionPeriod,
+    })
+      .then((context) => {
+        if (cancelled) return;
+        setRenewalContext((previous) => ({ ...context, options: context.options ?? previous?.options ?? [] }));
+        setBackendQuote(context.quote?.valid ? context.quote : null);
+        setCampaign(context.quote?.campaign ?? null);
+        setCampaignNotice(null);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setBackendQuote(null);
+          setCampaignNotice(err instanceof Error ? err.message : 'Yenileme fiyatı alınamadı');
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [productType, renewalContext?.valid, renewalToken, subscriptionPeriod]);
+
+  useEffect(() => {
+    if (!campaignCode) {
+      setCampaign(null);
+      setCampaignNotice(null);
+      setValidatedCampaignCode(null);
+      setValidatedCampaignSelection(null);
+      setCampaignValidationAttempt(null);
+      setCampaignValidating(false);
+    }
+  }, [campaignCode]);
 
   const pricing = useMemo(() => {
     const monthlyKurus = product
@@ -219,22 +414,46 @@ export default function SatinAlPage() {
     const annualBase =
       annualKurus != null && annualKurus > 0 ? annualKurus / 100 : ANNUAL_FALLBACK_TL;
 
-    const applyCampaign = (base: number) =>
-      campaign ? base * (1 - campaign.discountRate / 100) : base;
-
     return {
-      monthly: applyCampaign(monthlyBase),
-      annual: applyCampaign(annualBase),
+      monthly: monthlyBase,
+      annual: annualBase,
       monthlyBase,
       annualBase,
-      hasCampaign: Boolean(campaign),
+      hasCampaign: Boolean(campaign && backendQuote?.valid),
     };
-  }, [product, campaign]);
+  }, [backendQuote?.valid, campaign, product]);
 
   const selectedTotal =
-    productType === 'monthly' ? pricing.monthly : pricing.annual;
+    backendQuote?.valid
+      ? quoteAmountTL(backendQuote.finalPrice)
+      : productType === 'monthly'
+        ? pricing.monthly
+        : pricing.annual;
 
   const isAnnualPlan = productType === 'annual';
+  const renewalSelectedOption = renewalContext?.selectedOption ?? null;
+  const displayedProductTypes: ProductType[] =
+    renewalToken && renewalSelectedOption
+      ? [renewalSelectedOption.productType]
+      : ['monthly', 'annual'];
+  const currentCampaignSelection = `${productType}:${subscriptionPeriod}`;
+  const currentCampaignValidationAttempt = campaignCode
+    ? `${campaignCode}:${currentCampaignSelection}`
+    : null;
+  const campaignValidationPending = Boolean(
+    !renewalToken
+    && campaignCode
+    && (
+      campaignValidating
+      || campaignValidationAttempt !== currentCampaignValidationAttempt
+    ),
+  );
+  const checkoutCampaignCode =
+    !renewalToken
+    && validatedCampaignCode === campaignCode
+    && validatedCampaignSelection === currentCampaignSelection
+      ? validatedCampaignCode
+      : undefined;
 
   const galleryImages = getSatinAlDisplayImages(product?.imageUrl);
   const productName = product?.name ?? 'Bilirkişi Hesaplama Programı';
@@ -280,6 +499,24 @@ export default function SatinAlPage() {
   };
 
   const handlePurchase = () => {
+    if (renewalToken && !subscriptionRenewalEnabled) {
+      const msg = 'Abonelik yenileme ödemesi şu anda devre dışı.';
+      showToast(msg, 'warning');
+      setError(msg);
+      return;
+    }
+    if (renewalToken && (!renewalContext?.valid || !backendQuote?.valid)) {
+      const msg = renewalContext?.reason || 'Yenileme bağlantısı veya fiyatı geçerli değil.';
+      showToast(msg, 'error');
+      setError(msg);
+      return;
+    }
+    if (campaignValidationPending) {
+      const msg = 'Kampanya doğrulaması tamamlanana kadar lütfen bekleyin.';
+      showToast(msg, 'warning');
+      setError(msg);
+      return;
+    }
     if (!allLegalAccepted) {
       const msg = 'Lütfen tüm yasal metinleri okuyup onaylayın.';
       showToast(msg, 'warning');
@@ -294,8 +531,13 @@ export default function SatinAlPage() {
     try {
       setProcessing(true);
       setError(null);
-      const periodForApi = productType === 'annual' ? 1 : 0;
+      const periodForApi = renewalToken
+        ? subscriptionPeriod
+        : productType === 'annual'
+          ? 1
+          : 0;
       const billingInfo = formatBillingForApi(billing);
+      if (renewalEmail) billingInfo.email = renewalEmail;
       const legalConsentsPayload = Object.fromEntries(
         REQUIRED_LEGAL_TYPES.map((type) => [type, Boolean(legalConsents[type])]),
       );
@@ -312,7 +554,8 @@ export default function SatinAlPage() {
           subscriptionPeriod: periodForApi,
           productType,
           billingInfo,
-          campaignId: campaign?.id,
+          campaignCode: checkoutCampaignCode,
+          renewalToken,
           legalConsents: legalConsentsPayload,
         });
 
@@ -329,7 +572,8 @@ export default function SatinAlPage() {
         subscriptionPeriod: periodForApi,
         productType,
         billingInfo,
-        campaignId: campaign?.id,
+        campaignCode: checkoutCampaignCode,
+        renewalToken,
         authenticated: !useGuest,
         legalConsents: legalConsentsPayload,
       });
@@ -358,7 +602,7 @@ export default function SatinAlPage() {
     }
   };
 
-  if (loading || checkingAuth) {
+  if (loading || checkingAuth || renewalLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
@@ -404,6 +648,34 @@ export default function SatinAlPage() {
               </div>
             </div>
           )}
+          {renewalToken && (
+            <div className="mt-6 max-w-xl rounded-xl border border-sky-300/50 bg-sky-500/15 px-5 py-4">
+              <p className="font-bold text-sky-50">Abonelik yenileme</p>
+              {renewalEmail && (
+                <p className="mt-1 text-sm text-sky-100">
+                  Yenilenecek hesap: <span className="font-semibold">{renewalEmail}</span>
+                </p>
+              )}
+              {!subscriptionRenewalEnabled && (
+                <p className="mt-2 text-sm font-semibold text-amber-200">
+                  Yenileme ödemeleri şu anda devre dışı.
+                </p>
+              )}
+              {renewalContext && !renewalContext.valid && (
+                <p className="mt-2 text-sm font-semibold text-red-200">
+                  {renewalContext.reason || 'Yenileme bağlantısı geçerli değil.'}
+                </p>
+              )}
+            </div>
+          )}
+          {campaignNotice && (
+            <div
+              className="mt-6 max-w-xl rounded-xl border border-amber-300/60 bg-amber-500/15 px-5 py-4 text-sm font-semibold text-amber-50"
+              role="alert"
+            >
+              {campaignNotice}
+            </div>
+          )}
         </div>
       </section>
 
@@ -418,22 +690,32 @@ export default function SatinAlPage() {
               <h2 className="text-xl font-bold text-slate-900">Paket seçimi</h2>
               <p className="mt-1 text-sm text-slate-600">Aylık veya yıllık abonelik</p>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                {(['monthly', 'annual'] as const).map((type) => {
+              <div className={`mt-5 grid gap-3 ${renewalToken ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                {displayedProductTypes.map((type) => {
                   const active = productType === type;
-                  const price = type === 'monthly' ? pricing.monthly : pricing.annual;
+                  const price =
+                    active && backendQuote?.valid
+                      ? quoteAmountTL(backendQuote.finalPrice)
+                      : type === 'monthly'
+                        ? pricing.monthly
+                        : pricing.annual;
                   const base = type === 'monthly' ? pricing.monthlyBase : pricing.annualBase;
                   const isAnnualCard = type === 'annual';
                   return (
                     <button
                       key={type}
                       type="button"
-                      onClick={() => setProductType(type)}
+                      onClick={() => {
+                        if (renewalToken) return;
+                        setProductType(type);
+                        setSubscriptionPeriod(type === 'annual' ? 1 : 0);
+                      }}
+                      disabled={Boolean(renewalToken)}
                       className={`rounded-xl border-2 p-4 text-left transition-all ${
                         active
                           ? 'border-emerald-500 bg-emerald-50 shadow-md'
                           : 'border-slate-200 bg-slate-50 hover:border-slate-300'
-                      }`}
+                      } disabled:cursor-not-allowed disabled:opacity-40`}
                     >
                       <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                         {type === 'monthly' ? 'Aylık' : 'Yıllık'}
@@ -464,16 +746,35 @@ export default function SatinAlPage() {
               </div>
 
               <div className="mt-6 space-y-2 border-t border-slate-100 pt-6 text-sm">
-                <div className="flex justify-between text-slate-600">
-                  <span>Ara toplam (KDV dahil)</span>
-                  <span className="font-semibold text-slate-900">
-                    {formatPriceTL(selectedTotal)}
-                  </span>
-                </div>
-                {pricing.hasCampaign && (
-                  <div className="flex items-center gap-1.5 text-emerald-700">
-                    <Percent className="h-4 w-4" />
-                    <span>Kampanya indirimi uygulandı</span>
+                {backendQuote?.valid ? (
+                  <>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Normal fiyat</span>
+                      <span>{formatPriceTL(quoteAmountTL(backendQuote.normalPrice))}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Paket indirimi</span>
+                      <span>-{formatPriceTL(quoteAmountTL(backendQuote.packageDiscount))}</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-700">
+                      <span>Kampanya / baro indirimi</span>
+                      <span>-{formatPriceTL(quoteAmountTL(backendQuote.campaignDiscount))}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900">
+                      <span>Son fiyat (KDV dahil)</span>
+                      <span>{formatPriceTL(quoteAmountTL(backendQuote.finalPrice))}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-emerald-700">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Fiyat backend tarafından doğrulandı</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Ara toplam (KDV dahil)</span>
+                    <span className="font-semibold text-slate-900">
+                      {formatPriceTL(selectedTotal)}
+                    </span>
                   </div>
                 )}
               </div>
@@ -567,11 +868,24 @@ export default function SatinAlPage() {
                 size="lg"
                 className="mt-6 w-full"
                 onClick={handlePurchase}
-                disabled={processing}
+                disabled={
+                  processing ||
+                  campaignValidationPending ||
+                  Boolean(
+                    renewalToken &&
+                      (!subscriptionRenewalEnabled ||
+                        !renewalContext?.valid ||
+                        !backendQuote?.valid),
+                  )
+                }
               >
                 {processing ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" /> Hazırlanıyor…
+                  </>
+                ) : campaignValidationPending ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" /> Kampanya doğrulanıyor…
                   </>
                 ) : paymentMethod === 'bank_transfer' ? (
                   'Havale/EFT siparişi oluştur'
@@ -663,6 +977,7 @@ export default function SatinAlPage() {
         onClose={() => !processing && setShowBillingModal(false)}
         onSubmit={(data) => void processPayment(data)}
         processing={processing}
+        lockedAccountEmail={renewalToken ? renewalEmail : null}
       />
 
       {showLegalModal && (

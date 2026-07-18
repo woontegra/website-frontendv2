@@ -42,6 +42,7 @@ import OdemeBeklemedePage from '@/pages/OdemeBeklemedePage';
 import OdemeBasarisizPage from '@/pages/OdemeBasarisizPage';
 import CampaignRedirectPage from '@/pages/CampaignRedirectPage';
 import LegalDocumentPage from '@/pages/LegalDocumentPage';
+import AbonelikYenilePage from '@/pages/AbonelikYenilePage';
 import { LEGAL_PAGES, type LegalPageKey } from '@/data/legalPages';
 import { calculationPageSlugs } from '@/data/calculationPages';
 import { calculationModulePathRedirects } from '@/data/calculationModulePaths';
@@ -122,6 +123,7 @@ export default function App() {
         <Route path="demo-talep" element={<DemoRequestPage />} />
         <Route path="iletisim" element={<ContactPage />} />
         <Route path="sss" element={<FaqPage />} />
+        <Route path="abonelik-yenile" element={<AbonelikYenilePage />} />
         {LEGAL_PAGES.map((page) => (
           <Route
             key={page.path}
