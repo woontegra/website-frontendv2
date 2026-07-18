@@ -766,7 +766,7 @@ export default function SatinAlPage() {
                     </div>
                     <div className="flex items-center gap-1.5 text-emerald-700">
                       <CheckCircle className="h-4 w-4" />
-                      <span>Fiyat backend tarafından doğrulandı</span>
+                      <span>Fiyat sistem tarafından güvenli şekilde hesaplandı</span>
                     </div>
                   </>
                 ) : (

@@ -29,13 +29,18 @@ import {
   fetchBankTransferAvailability,
   fetchCustomerCodeRenewalStatus,
   initiateCustomerCodeRenewalPayment,
+  resolveRenewalSession,
   validateCustomerCode,
   type RenewalBankTransferOrder,
   type CustomerCodeSummary,
   type RenewalBillingInfo,
   type RenewalPaymentState,
 } from '@/lib/customerCodeApi';
-import { LEGAL_CONSENT_LABELS, REQUIRED_LEGAL_TYPES } from '@/lib/legalApi';
+import {
+  fetchLegalTemplatePreview,
+  LEGAL_CONSENT_LABELS,
+  REQUIRED_LEGAL_TYPES,
+} from '@/lib/legalApi';
 import { usePageSeo } from '@/lib/pageSeo';
 
 const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
@@ -144,12 +149,18 @@ export default function AbonelikYenilePage() {
   const { content } = useContentBundle();
   const [searchParams] = useSearchParams();
   const initialUrlCustomer = useRef(searchParams.get('customer') ?? '');
+  const initialRenewalToken = useRef(searchParams.get('renew') ?? '');
+  const sessionRenewal = Boolean(initialRenewalToken.current.trim());
   const [customerCode, setCustomerCode] = useState(initialUrlCustomer.current);
   const [customer, setCustomer] = useState<CustomerCodeSummary | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [legalConsents, setLegalConsents] = useState<Record<string, boolean>>({});
   const [showBillingModal, setShowBillingModal] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalPreview, setLegalPreview] =
+    useState<{ title: string; content: string } | null>(null);
+  const [legalPreviewLoading, setLegalPreviewLoading] = useState(false);
   const [paymentState, setPaymentState] = useState<PaymentViewState>('IDLE');
   const [paymentError, setPaymentError] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PAYTR');
@@ -175,6 +186,8 @@ export default function AbonelikYenilePage() {
     paymentController.current = null;
     setLegalConsents({});
     setShowBillingModal(false);
+    setShowLegalModal(false);
+    setLegalPreview(null);
     setPaymentState('IDLE');
     setPaymentError('');
     setPaymentMethod('PAYTR');
@@ -227,6 +240,47 @@ export default function AbonelikYenilePage() {
       if (requestId === requestSequence.current) {
         setLoading(false);
       }
+    }
+  }, [resetPayment]);
+
+  const runSessionValidation = useCallback(async (rawToken: string) => {
+    const renewalToken = rawToken.trim();
+    resetPayment();
+    setCustomer(null);
+    setError('');
+
+    if (!renewalToken) {
+      setError('Yenileme bağlantısı geçersiz.');
+      return;
+    }
+
+    activeController.current?.abort();
+    const controller = new AbortController();
+    activeController.current = controller;
+    const requestId = ++requestSequence.current;
+    setLoading(true);
+
+    try {
+      const result = await resolveRenewalSession(renewalToken, controller.signal);
+      if (requestId !== requestSequence.current || controller.signal.aborted) return;
+      setCustomer(result);
+      try {
+        const availability = await fetchBankTransferAvailability(controller.signal);
+        if (requestId !== requestSequence.current || controller.signal.aborted) return;
+        setBankTransferAvailable(availability.isActive);
+      } catch {
+        if (controller.signal.aborted) return;
+        setBankTransferAvailable(false);
+      }
+    } catch (sessionError) {
+      if (requestId !== requestSequence.current || controller.signal.aborted) return;
+      setError(
+        sessionError instanceof Error
+          ? sessionError.message
+          : 'Yenileme bağlantısı doğrulanamadı. Lütfen panelden yeniden deneyin.',
+      );
+    } finally {
+      if (requestId === requestSequence.current) setLoading(false);
     }
   }, [resetPayment]);
 
@@ -288,7 +342,9 @@ export default function AbonelikYenilePage() {
           setMerchantOid(null);
           setPaymentError(
             status.state === 'PAYMENT_FAILED'
-              ? 'Ödeme tamamlanamadı. Yeniden denemek için müşteri kodunuzu tekrar doğrulayın.'
+              ? sessionRenewal
+                ? 'Ödeme tamamlanamadı. Yeniden denemek için panelden yeni bir yenileme bağlantısı oluşturun.'
+                : 'Ödeme tamamlanamadı. Yeniden denemek için müşteri kodunuzu tekrar doğrulayın.'
               : 'Ödeme alındı ancak abonelik yenilenemedi. Destek ekibiyle iletişime geçin; tekrar ödeme yapmadan önce yeni bir doğrulama gerekebilir.',
           );
           return;
@@ -306,10 +362,12 @@ export default function AbonelikYenilePage() {
       controller.abort();
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [chargedAmountKurus, customer, merchantOid, paymentState]);
+  }, [chargedAmountKurus, customer, merchantOid, paymentState, sessionRenewal]);
 
   useEffect(() => {
-    if (initialUrlCustomer.current.trim()) {
+    if (initialRenewalToken.current.trim()) {
+      void runSessionValidation(initialRenewalToken.current);
+    } else if (initialUrlCustomer.current.trim()) {
       void runValidation(initialUrlCustomer.current);
     }
 
@@ -318,7 +376,7 @@ export default function AbonelikYenilePage() {
       activeController.current?.abort();
       paymentController.current?.abort();
     };
-  }, [runValidation]);
+  }, [runSessionValidation, runValidation]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     requestSequence.current += 1;
@@ -349,7 +407,9 @@ export default function AbonelikYenilePage() {
     setPaymentError('');
     if (!customer || !checkoutAvailable) {
       setPaymentError(
-        'Ödeme oturumunun süresi doldu. Müşteri kodunuzu yeniden doğrulayın.',
+        sessionRenewal
+          ? 'Ödeme oturumunun süresi doldu. Panelden yeni bir yenileme bağlantısı oluşturun.'
+          : 'Ödeme oturumunun süresi doldu. Müşteri kodunuzu yeniden doğrulayın.',
       );
       setCustomer(null);
       setLegalConsents({});
@@ -362,6 +422,34 @@ export default function AbonelikYenilePage() {
     setShowBillingModal(true);
   };
 
+  const openLegalPreview = async (type: string) => {
+    if (!customer) return;
+    setShowLegalModal(true);
+    setLegalPreviewLoading(true);
+    setLegalPreview(null);
+    try {
+      const data = await fetchLegalTemplatePreview(type, {
+        productType: customer.selectedProductType,
+        amountKurus: customer.renewalQuote.finalPriceKurus,
+      });
+      setLegalPreview(
+        data
+          ? { title: data.title, content: data.content }
+          : {
+              title: LEGAL_CONSENT_LABELS[type] || type,
+              content: 'İçerik yüklenemedi.',
+            },
+      );
+    } catch {
+      setLegalPreview({
+        title: LEGAL_CONSENT_LABELS[type] || type,
+        content: 'İçerik yüklenemedi.',
+      });
+    } finally {
+      setLegalPreviewLoading(false);
+    }
+  };
+
   const processPayment = async (billing: BillingFormData) => {
     if (
       !customer ||
@@ -372,7 +460,9 @@ export default function AbonelikYenilePage() {
       setCustomer(null);
       setLegalConsents({});
       setPaymentError(
-        'Ödeme oturumu geçersiz veya süresi dolmuş. Müşteri kodunuzu yeniden doğrulayın.',
+        sessionRenewal
+          ? 'Ödeme oturumu geçersiz veya süresi dolmuş. Panelden yeni bir yenileme bağlantısı oluşturun.'
+          : 'Ödeme oturumu geçersiz veya süresi dolmuş. Müşteri kodunuzu yeniden doğrulayın.',
       );
       return;
     }
@@ -392,6 +482,8 @@ export default function AbonelikYenilePage() {
       if (paymentMethod === 'BANK_TRANSFER') {
         const order = await createCustomerCodeRenewalBankTransferOrder({
           checkoutToken: customer.checkoutToken,
+          productType: customer.selectedProductType,
+          subscriptionPeriod: customer.selectedSubscriptionPeriod,
           billingInfo,
           legalConsents: acceptedLegalConsents,
           signal: controller.signal,
@@ -422,6 +514,8 @@ export default function AbonelikYenilePage() {
 
       const payment = await initiateCustomerCodeRenewalPayment({
         checkoutToken: customer.checkoutToken,
+        productType: customer.selectedProductType,
+        subscriptionPeriod: customer.selectedSubscriptionPeriod,
         billingInfo,
         legalConsents: acceptedLegalConsents,
         signal: controller.signal,
@@ -463,7 +557,9 @@ export default function AbonelikYenilePage() {
       setLegalConsents({});
       setPaymentState('PAYMENT_FAILED');
       setPaymentError(
-        `${message} Müşteri kodunuzu yeniden doğrulayıp tekrar deneyin.`,
+        sessionRenewal
+          ? `${message} Panelden yeni bir yenileme bağlantısı oluşturup tekrar deneyin.`
+          : `${message} Müşteri kodunuzu yeniden doğrulayıp tekrar deneyin.`,
       );
     }
   };
@@ -480,17 +576,20 @@ export default function AbonelikYenilePage() {
             Abonelik Yenile
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-200">
-            Müşteri kodunuzu doğrulayarak mevcut abonelik bilgilerinizi görüntüleyin.
+            {sessionRenewal
+              ? 'Panelde seçtiğiniz yenileme paketi güvenli şekilde doğrulanıyor.'
+              : 'Müşteri kodunuzu doğrulayarak mevcut abonelik bilgilerinizi görüntüleyin.'}
           </p>
         </div>
       </section>
 
       <section className="bg-slate-100 py-14 lg:py-20">
         <div className="container-page max-w-3xl">
-          <form
-            onSubmit={handleSubmit}
-            className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-lg sm:p-8"
-          >
+          {!sessionRenewal && (
+            <form
+              onSubmit={handleSubmit}
+              className="rounded-2xl border-2 border-slate-200 bg-white p-6 shadow-lg sm:p-8"
+            >
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 h-7 w-7 shrink-0 text-emerald-600" />
               <div>
@@ -553,7 +652,31 @@ export default function AbonelikYenilePage() {
                 Müşteri kodu doğrulanıyor.
               </p>
             )}
-          </form>
+            </form>
+          )}
+
+          {sessionRenewal && (loading || error) && (
+            <section className="rounded-2xl border-2 border-slate-200 bg-white p-6 text-center shadow-lg sm:p-8">
+              {loading ? (
+                <div role="status" className="flex items-center justify-center gap-3 font-semibold text-slate-800">
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  Yenileme bağlantısı doğrulanıyor…
+                </div>
+              ) : (
+                <>
+                  <p role="alert" className="font-semibold text-red-700">{error}</p>
+                  <Button
+                    type="button"
+                    variant="accent"
+                    className="mt-5"
+                    onClick={() => void runSessionValidation(initialRenewalToken.current)}
+                  >
+                    Tekrar Dene
+                  </Button>
+                </>
+              )}
+            </section>
+          )}
 
           {paymentState === 'COMPLETED' && newSubscriptionEndsAt && (
             <section
@@ -652,6 +775,9 @@ export default function AbonelikYenilePage() {
                   </dd>
                 </div>
               </dl>
+              <p className="mt-4 text-center text-sm font-semibold text-emerald-700">
+                Fiyat sistem tarafından güvenli şekilde hesaplandı.
+              </p>
               {!customer.renewalQuote.campaignApplied && (
                 <p className="mt-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-center font-bold text-amber-900">
                   Güncel normal fiyat uygulanacaktır.
@@ -713,7 +839,17 @@ export default function AbonelikYenilePage() {
                         className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600"
                       />
                       <span className="leading-relaxed text-slate-700">
-                        {LEGAL_CONSENT_LABELS[type]}
+                        {type === 'WITHDRAWAL_EXCEPTION' ? (
+                          LEGAL_CONSENT_LABELS[type]
+                        ) : (
+                          <button
+                            type="button"
+                            className="font-semibold text-sky-700 underline-offset-2 hover:underline"
+                            onClick={() => void openLegalPreview(type)}
+                          >
+                            {LEGAL_CONSENT_LABELS[type]}
+                          </button>
+                        )}
                         {type === 'WITHDRAWAL_EXCEPTION'
                           ? ''
                           : type === 'KVKK'
@@ -727,8 +863,9 @@ export default function AbonelikYenilePage() {
 
               {!checkoutAvailable && (
                 <p className="mt-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-                  Ödeme oturumunun süresi doldu. Devam etmek için müşteri kodunuzu yeniden
-                  doğrulayın.
+                  {sessionRenewal
+                    ? 'Ödeme oturumunun süresi doldu. Panelden yeni bir yenileme bağlantısı oluşturun.'
+                    : 'Ödeme oturumunun süresi doldu. Devam etmek için müşteri kodunuzu yeniden doğrulayın.'}
                 </p>
               )}
 
@@ -807,7 +944,54 @@ export default function AbonelikYenilePage() {
         onClose={() => paymentState !== 'STARTING' && setShowBillingModal(false)}
         onSubmit={(data) => void processPayment(data)}
         processing={paymentState === 'STARTING'}
+        lockedAccountEmail={sessionRenewal ? customer?.accountEmail : null}
+        purpose="renewal"
       />
+
+      {showLegalModal && (
+        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <h2 className="text-lg font-bold text-slate-900">
+                {legalPreview?.title ?? 'Yasal metin'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLegalModal(false);
+                  setLegalPreview(null);
+                }}
+                className="rounded-lg p-2 hover:bg-slate-100"
+                aria-label="Kapat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6">
+              {legalPreviewLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                </div>
+              ) : (
+                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-700">
+                  {legalPreview?.content ?? 'İçerik yükleniyor…'}
+                </pre>
+              )}
+            </div>
+            <div className="border-t border-slate-200 px-6 py-4">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setShowLegalModal(false);
+                  setLegalPreview(null);
+                }}
+              >
+                Kapat
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {paytrToken && (
         <div

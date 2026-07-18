@@ -13,6 +13,7 @@ export type RenewalQuote = {
 };
 
 export type CustomerCodeSummary = {
+  accountEmail: string | null;
   maskedName: string;
   maskedEmail: string;
   currentPackage: string | null;
@@ -20,6 +21,8 @@ export type CustomerCodeSummary = {
   barAssociationName: string | null;
   checkoutToken: string;
   checkoutExpiresAt: string;
+  selectedProductType: 'monthly' | 'annual';
+  selectedSubscriptionPeriod: number;
   renewalQuote: RenewalQuote;
 };
 
@@ -250,9 +253,21 @@ function parseSuccessResponse(value: unknown): CustomerCodeSummary {
   if (subscriptionEndsAt && Number.isNaN(Date.parse(subscriptionEndsAt))) {
     throw new CustomerCodeValidationError('Sunucudan geçersiz abonelik tarihi alındı.');
   }
+  const selectedProductType = value.data.selectedProductType;
+  const selectedSubscriptionPeriod = value.data.selectedSubscriptionPeriod;
+  if (
+    (selectedProductType !== 'monthly' && selectedProductType !== 'annual') ||
+    !Number.isInteger(selectedSubscriptionPeriod) ||
+    (selectedProductType === 'monthly' && selectedSubscriptionPeriod !== 0) ||
+    (selectedProductType === 'annual' &&
+      ![1, 2, 3].includes(selectedSubscriptionPeriod as number))
+  ) {
+    throw new CustomerCodeValidationError('Sunucudan geçersiz paket seçimi alındı.');
+  }
 
   // Only copy the public display fields; any unexpected response fields are discarded.
   return {
+    accountEmail: readOptionalString(value.data, 'accountEmail'),
     maskedName: readRequiredString(value.data, 'maskedName'),
     maskedEmail: readRequiredString(value.data, 'maskedEmail'),
     currentPackage: readOptionalString(value.data, 'currentPackage'),
@@ -260,6 +275,8 @@ function parseSuccessResponse(value: unknown): CustomerCodeSummary {
     barAssociationName: readOptionalString(value.data, 'barAssociationName'),
     checkoutToken: readOpaqueToken(value.data, 'checkoutToken', 32, 200),
     checkoutExpiresAt: readIsoDate(value.data, 'checkoutExpiresAt'),
+    selectedProductType,
+    selectedSubscriptionPeriod: selectedSubscriptionPeriod as number,
     renewalQuote: parseRenewalQuote(value.data.renewalQuote),
   };
 }
@@ -299,6 +316,29 @@ export async function validateCustomerCode(
   }
 }
 
+export async function resolveRenewalSession(
+  renewalToken: string,
+  signal?: AbortSignal,
+): Promise<CustomerCodeSummary> {
+  const response = await apiRequest<unknown>('/api/payment/renewal/resolve', {
+    method: 'POST',
+    body: { renewalToken },
+    signal,
+  });
+  if (!isRecord(response)) {
+    throw new CustomerCodeValidationError('Yenileme oturumu doğrulanamadı.');
+  }
+  const data = isRecord(response.data) ? response.data : response;
+  return parseSuccessResponse({
+    success: response.success === true,
+    data: {
+      ...data,
+      valid: data.valid === true,
+      checkoutToken: renewalToken,
+    },
+  });
+}
+
 function parseRenewalPayment(value: unknown): RenewalPayment {
   if (!isRecord(value) || value.success !== true) {
     throw new CustomerCodeValidationError('Ödeme başlatılamadı. Lütfen tekrar deneyin.');
@@ -323,6 +363,8 @@ function parseRenewalPayment(value: unknown): RenewalPayment {
 
 export async function initiateCustomerCodeRenewalPayment(params: {
   checkoutToken: string;
+  productType: 'monthly' | 'annual';
+  subscriptionPeriod: number;
   billingInfo: RenewalBillingInfo;
   legalConsents: Record<string, boolean>;
   signal?: AbortSignal;
@@ -331,8 +373,8 @@ export async function initiateCustomerCodeRenewalPayment(params: {
     method: 'POST',
     body: {
       renewalToken: params.checkoutToken,
-      product_type: 'annual',
-      subscriptionPeriod: 1,
+      product_type: params.productType,
+      subscriptionPeriod: params.subscriptionPeriod,
       billingInfo: params.billingInfo,
       legalConsents: params.legalConsents,
     },
@@ -392,6 +434,8 @@ function parseRenewalBankTransferOrder(value: unknown): RenewalBankTransferOrder
 
 export async function createCustomerCodeRenewalBankTransferOrder(params: {
   checkoutToken: string;
+  productType: 'monthly' | 'annual';
+  subscriptionPeriod: number;
   billingInfo: RenewalBillingInfo;
   legalConsents: Record<string, boolean>;
   signal?: AbortSignal;
@@ -400,8 +444,8 @@ export async function createCustomerCodeRenewalBankTransferOrder(params: {
     method: 'POST',
     body: {
       renewalToken: params.checkoutToken,
-      product_type: 'annual',
-      subscriptionPeriod: 1,
+      product_type: params.productType,
+      subscriptionPeriod: params.subscriptionPeriod,
       billingInfo: params.billingInfo,
       legalConsents: params.legalConsents,
     },

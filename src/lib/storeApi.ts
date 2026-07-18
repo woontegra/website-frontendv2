@@ -154,6 +154,14 @@ export type RenewalContext = {
   reason?: string | null;
   accountEmail?: string | null;
   targetEmail?: string | null;
+  maskedName?: string | null;
+  maskedEmail?: string | null;
+  currentPackage?: string | null;
+  subscriptionEndsAt?: string | null;
+  barAssociationName?: string | null;
+  checkoutExpiresAt?: string | null;
+  selectedProductType?: CheckoutProductType | null;
+  selectedSubscriptionPeriod?: number | null;
   options: RenewalOption[];
   selectedOption?: RenewalOption | null;
   quote?: CheckoutQuote | null;

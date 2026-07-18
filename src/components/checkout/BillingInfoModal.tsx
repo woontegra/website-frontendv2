@@ -23,6 +23,7 @@ type BillingInfoModalProps = {
   onSubmit: (data: BillingFormData) => void;
   processing: boolean;
   lockedAccountEmail?: string | null;
+  purpose?: 'purchase' | 'renewal';
 };
 
 const inputClass =
@@ -54,6 +55,7 @@ export function BillingInfoModal({
   onSubmit,
   processing,
   lockedAccountEmail,
+  purpose = 'purchase',
 }: BillingInfoModalProps) {
   const [form, setForm] = useState<BillingFormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof BillingFormData, string>>>({});
@@ -241,7 +243,9 @@ export function BillingInfoModal({
             <p className="mt-1 text-xs text-slate-500">
               {lockedAccountEmail
                 ? 'Yenilenecek hesabın e-posta adresi değiştirilemez.'
-                : 'Panel giriş bilgileri bu adrese gönderilir.'}
+                : purpose === 'renewal'
+                  ? 'Yenileme bilgilendirmeleri bu adrese gönderilir.'
+                  : 'Panel giriş bilgileri bu adrese gönderilir.'}
             </p>
           </div>
 
@@ -334,7 +338,9 @@ export function BillingInfoModal({
           </div>
 
           <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-            Ödeme sonrası panel giriş bilgileriniz e-posta ile iletilecektir.
+            {purpose === 'renewal'
+              ? 'Ödeme sonucu ve abonelik yenileme bilgileri e-posta ile iletilecektir.'
+              : 'Ödeme sonrası panel giriş bilgileriniz e-posta ile iletilecektir.'}
           </div>
           <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={processing}>
