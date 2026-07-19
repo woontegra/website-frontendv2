@@ -167,6 +167,26 @@ export type RenewalContext = {
   quote?: CheckoutQuote | null;
 };
 
+function isSupportedRenewalOption(option: RenewalOption | null | undefined): option is RenewalOption {
+  return Boolean(
+    option
+    && (
+      (option.productType === 'monthly' && option.subscriptionPeriod === 0)
+      || (option.productType === 'annual' && option.subscriptionPeriod === 1)
+    ),
+  );
+}
+
+function withoutUnsupportedRenewalOptions(context: RenewalContext): RenewalContext {
+  return {
+    ...context,
+    options: (context.options ?? []).filter(isSupportedRenewalOption),
+    selectedOption: isSupportedRenewalOption(context.selectedOption)
+      ? context.selectedOption
+      : null,
+  };
+}
+
 const CAMPAIGN_PUBLIC_PATH = '/api/campaigns';
 const CAMPAIGN_QUOTE_PATH = `${CAMPAIGN_PUBLIC_PATH}/quote`;
 const RENEWAL_CONTEXT_PATH = '/api/payment/renewal/resolve';
@@ -232,7 +252,7 @@ export async function fetchRenewalContext(renewalToken: string): Promise<Renewal
       body: { renewalToken },
     },
   );
-  return json.data ?? json;
+  return withoutUnsupportedRenewalOptions(json.data ?? json);
 }
 
 export async function fetchRenewalQuote(params: {
@@ -244,7 +264,7 @@ export async function fetchRenewalQuote(params: {
     method: 'POST',
     body: params,
   });
-  return json.data ?? json;
+  return withoutUnsupportedRenewalOptions(json.data ?? json);
 }
 
 export type PaytrTokenResponse = ApiEnvelope<{ token?: string; testMode?: boolean }> & {

@@ -300,8 +300,7 @@ function parseSuccessResponse(value: unknown): CustomerCodeSummary {
     (selectedProductType !== 'monthly' && selectedProductType !== 'annual') ||
     !Number.isInteger(selectedSubscriptionPeriod) ||
     (selectedProductType === 'monthly' && selectedSubscriptionPeriod !== 0) ||
-    (selectedProductType === 'annual' &&
-      ![1, 2, 3].includes(selectedSubscriptionPeriod as number))
+    (selectedProductType === 'annual' && selectedSubscriptionPeriod !== 1)
   ) {
     throw new CustomerCodeValidationError('Sunucudan geçersiz paket seçimi alındı.');
   }

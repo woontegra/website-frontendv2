@@ -84,10 +84,6 @@ function formatPackageLabel(value: string): string {
     annual: 'Yıllık',
     yearly: 'Yıllık',
     monthly: 'Aylık',
-    '2_year': '2 Yıllık',
-    two_year: '2 Yıllık',
-    '3_year': '3 Yıllık',
-    three_year: '3 Yıllık',
   };
   if (exactLabels[normalized]) return exactLabels[normalized];
 
@@ -97,11 +93,7 @@ function formatPackageLabel(value: string): string {
       ? 'Aylık'
       : tokens.includes('annual') || tokens.includes('yearly')
         ? 'Yıllık'
-        : (tokens.includes('2') || tokens.includes('two')) && tokens.includes('year')
-          ? '2 Yıllık'
-          : (tokens.includes('3') || tokens.includes('three')) && tokens.includes('year')
-            ? '3 Yıllık'
-            : null;
+        : null;
   const technicalTokens = new Set([
     'annual',
     'yearly',
