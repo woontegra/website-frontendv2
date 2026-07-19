@@ -78,6 +78,11 @@ function formatDate(value?: string | null): string {
   return new Date(value).toLocaleDateString('tr-TR');
 }
 
+/** Canonical share URL: /k/{publicCode} — same in create success and edit form. */
+function campaignShareUrl(campaign: Pick<AdminCampaign, 'id' | 'publicCode'>): string {
+  return campaignPublicLink(campaign);
+}
+
 export function AdminV2CampaignsPage() {
   const { tokenPresent } = useAdminToken();
   const [campaigns, setCampaigns] = useState<AdminCampaign[]>([]);
@@ -413,15 +418,53 @@ export function AdminV2CampaignsPage() {
                   onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
                 />
               </div>
-              <div>
-                <label className={adminLabelClass}>Public code</label>
-                <input
-                  className={`${adminInputClass} mt-1.5 bg-slate-50`}
-                  value={editing?.publicCode ?? 'Otomatik oluşturulur'}
-                  readOnly
-                  disabled={!editing?.publicCode}
-                />
-              </div>
+              {(editing || createdCampaign) && (
+                <div className="sm:col-span-2">
+                  <label className={adminLabelClass}>Kampanya Bağlantısı</label>
+                  <div className="mt-1.5 flex flex-wrap items-stretch gap-2">
+                    <input
+                      className={`${adminInputClass} min-w-0 flex-1 bg-slate-50 font-mono text-[12px]`}
+                      value={campaignShareUrl((editing ?? createdCampaign)!)}
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void copyText(campaignShareUrl((editing ?? createdCampaign)!))
+                      }
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#dbe4ea] bg-white px-3 py-2 text-[13px] font-medium text-[#1e2a3a] hover:bg-[#f7faf9]"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      Kopyala
+                    </button>
+                    <a
+                      href={campaignShareUrl((editing ?? createdCampaign)!)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#dbe4ea] bg-white px-3 py-2 text-[13px] font-medium text-[#1e2a3a] hover:bg-[#f7faf9]"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Yeni sekmede aç
+                    </a>
+                  </div>
+                  {(editing ?? createdCampaign)?.publicCode && (
+                    <p className="mt-1.5 text-[11px] text-[#64748b]">
+                      Kod: {(editing ?? createdCampaign)!.publicCode}
+                    </p>
+                  )}
+                </div>
+              )}
+              {!editing && !createdCampaign && (
+                <div className="sm:col-span-2">
+                  <label className={adminLabelClass}>Kampanya Bağlantısı</label>
+                  <input
+                    className={`${adminInputClass} mt-1.5 bg-slate-50`}
+                    value="Kampanya oluşturulunca otomatik atanır"
+                    readOnly
+                    disabled
+                  />
+                </div>
+              )}
             </div>
             <div className={`${adminMutedPanelClass} grid gap-4 px-4 py-3 sm:grid-cols-2`}>
               <div>
@@ -516,35 +559,6 @@ export function AdminV2CampaignsPage() {
                 {editing ? 'Güncelle' : 'Oluştur'}
               </button>
             </div>
-            {createdCampaign && (
-              <div className={`${adminMutedPanelClass} space-y-2 px-4 py-3`}>
-                <p className="text-[13px] font-semibold text-[#1e2a3a]">Paylaşım linkleri</p>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="min-w-0 break-all font-mono text-[12px] text-[#5c6b7a]">
-                    Kısa: {campaignPublicLink(createdCampaign)}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void copyText(campaignPublicLink(createdCampaign))}
-                    className="shrink-0 rounded-lg border border-[#dbe4ea] bg-white px-2 py-1 text-[12px]"
-                  >
-                    Kopyala
-                  </button>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="min-w-0 break-all font-mono text-[12px] text-[#5c6b7a]">
-                    Satın al: {campaignCheckoutLink(createdCampaign)}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void copyText(campaignCheckoutLink(createdCampaign))}
-                    className="shrink-0 rounded-lg border border-[#dbe4ea] bg-white px-2 py-1 text-[12px]"
-                  >
-                    Kopyala
-                  </button>
-                </div>
-              </div>
-            )}
           </form>
         </SectionCard>
       )}
