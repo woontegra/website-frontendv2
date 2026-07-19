@@ -144,6 +144,10 @@ const routeTitles: { match: (path: string) => boolean; title: string }[] = [
   { match: (p) => p === '/admin/v2/homepage', title: 'Ana Sayfa Yönetimi' },
   { match: (p) => p === '/admin/v2/calculations', title: 'Hesaplama Sayfaları' },
   { match: (p) => p === '/admin/v2/pricing', title: 'Fiyatlandırma' },
+  {
+    match: (p) => p === '/admin/v2/campaigns/performance',
+    title: 'Baro Kampanya Performansı',
+  },
   { match: (p) => p === '/admin/v2/campaigns', title: 'Kampanyalar' },
   { match: (p) => p === '/admin/v2/purchase', title: 'Satın Al Sayfası' },
   { match: (p) => p.startsWith('/admin/v2/legal-archive'), title: 'Sözleşme Arşivi' },

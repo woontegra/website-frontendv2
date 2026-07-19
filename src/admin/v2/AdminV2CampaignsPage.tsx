@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Plus,
   Edit2,
@@ -13,6 +14,7 @@ import {
   ToggleRight,
   Loader2,
   RefreshCw,
+  BarChart3,
 } from 'lucide-react';
 import { SectionCard } from '@/admin/ui/SectionCard';
 import {
@@ -266,6 +268,13 @@ export function AdminV2CampaignsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            to="/admin/v2/campaigns/performance"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#b8d6d2] bg-[#eff8f6] px-4 py-2 text-[13px] font-medium text-[#0f5c56] hover:bg-[#e5f3f0]"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Baro Kampanya Performansı
+          </Link>
           <button
             type="button"
             onClick={() => void load()}

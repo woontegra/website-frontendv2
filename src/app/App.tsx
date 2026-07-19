@@ -13,6 +13,7 @@ import { AdminV2SiteSettingsPage } from '@/admin/v2/AdminV2SiteSettingsPage';
 import { AdminV2ModulesPage } from '@/admin/v2/AdminV2ModulesPage';
 import { AdminV2PricingPage } from '@/admin/v2/AdminV2PricingPage';
 import { AdminV2CampaignsPage } from '@/admin/v2/AdminV2CampaignsPage';
+import { AdminV2BarCampaignPerformancePage } from '@/admin/v2/AdminV2BarCampaignPerformancePage';
 import { AdminV2PurchasePage } from '@/admin/v2/AdminV2PurchasePage';
 import { AdminV2LegalArchivePage } from '@/admin/v2/AdminV2LegalArchivePage';
 import { AdminV2BankTransferPaymentsPage } from '@/admin/v2/AdminV2BankTransferPaymentsPage';
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="calculations" element={<AdminV2ModulesPage />} />
         <Route path="pricing" element={<AdminV2PricingPage />} />
         <Route path="campaigns" element={<AdminV2CampaignsPage />} />
+        <Route path="campaigns/performance" element={<AdminV2BarCampaignPerformancePage />} />
         <Route path="purchase" element={<AdminV2PurchasePage />} />
         <Route path="legal-archive" element={<AdminV2LegalArchivePage />} />
         <Route path="legal-archive/:id" element={<AdminV2LegalArchivePage />} />
