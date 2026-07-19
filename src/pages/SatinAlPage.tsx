@@ -171,15 +171,19 @@ export default function SatinAlPage() {
   const [bankTransferActive, setBankTransferActive] = useState(false);
   const [campaign, setCampaign] = useState<PublicQuoteCampaign | null>(null);
   const [backendQuote, setBackendQuote] = useState<CheckoutQuote | null>(null);
+  const [packageQuotes, setPackageQuotes] = useState<{
+    monthly: CheckoutQuote | null;
+    annual: CheckoutQuote | null;
+  }>({ monthly: null, annual: null });
+  const [packageQuoteReasons, setPackageQuoteReasons] = useState<{
+    monthly: string | null;
+    annual: string | null;
+  }>({ monthly: null, annual: null });
   const [campaignNotice, setCampaignNotice] = useState<string | null>(null);
   const [campaignValidating, setCampaignValidating] = useState(
     Boolean(searchParams.get('c')?.trim()),
   );
   const [validatedCampaignCode, setValidatedCampaignCode] = useState<string | null>(null);
-  const [validatedCampaignSelection, setValidatedCampaignSelection] = useState<string | null>(
-    null,
-  );
-  const [campaignValidationAttempt, setCampaignValidationAttempt] = useState<string | null>(null);
   const [renewalContext, setRenewalContext] = useState<RenewalContext | null>(null);
   const [renewalLoading, setRenewalLoading] = useState(false);
   const [legalConsents, setLegalConsents] = useState<Record<string, boolean>>({});
@@ -303,58 +307,71 @@ export default function SatinAlPage() {
   useEffect(() => {
     if (renewalToken) {
       setValidatedCampaignCode(null);
-      setValidatedCampaignSelection(null);
-      setCampaignValidationAttempt(null);
+      setPackageQuotes({ monthly: null, annual: null });
+      setPackageQuoteReasons({ monthly: null, annual: null });
       setCampaignValidating(false);
       return;
     }
     if (!campaignCode) {
       setCampaign(null);
       setBackendQuote(null);
+      setPackageQuotes({ monthly: null, annual: null });
+      setPackageQuoteReasons({ monthly: null, annual: null });
       setCampaignNotice(null);
       setValidatedCampaignCode(null);
-      setValidatedCampaignSelection(null);
-      setCampaignValidationAttempt(null);
       setCampaignValidating(false);
       return;
     }
     let cancelled = false;
-    const selectionKey = `${productType}:${subscriptionPeriod}`;
-    const validationAttempt = `${campaignCode}:${selectionKey}`;
     setCampaignValidating(true);
     setValidatedCampaignCode(null);
-    setValidatedCampaignSelection(null);
-    setCampaignValidationAttempt(null);
-    void fetchCampaignQuote({
-      campaignCode,
-      productType,
-      subscriptionPeriod,
-    })
-      .then((result) => {
+    setPackageQuotes({ monthly: null, annual: null });
+    setPackageQuoteReasons({ monthly: null, annual: null });
+    void Promise.all([
+      fetchCampaignQuote({
+        campaignCode,
+        productType: 'monthly',
+        subscriptionPeriod: 0,
+      }),
+      fetchCampaignQuote({
+        campaignCode,
+        productType: 'annual',
+        subscriptionPeriod: 1,
+      }),
+    ])
+      .then(([monthlyResult, annualResult]) => {
         if (cancelled) return;
-        if (result.valid && result.quote?.valid) {
-          setCampaign(result.campaign ?? result.quote.campaign ?? null);
-          setBackendQuote(result.quote);
-          setCampaignNotice(null);
-          setValidatedCampaignCode(campaignCode);
-          setValidatedCampaignSelection(selectionKey);
-          setCampaignValidationAttempt(validationAttempt);
-        } else {
-          setCampaign(null);
-          setBackendQuote(null);
-          setValidatedCampaignCode(null);
-          setValidatedCampaignSelection(null);
-          setCampaignValidationAttempt(validationAttempt);
-          setCampaignNotice(campaignReasonMessage(result.reason ?? result.quote?.reason));
-        }
+        const monthlyQuote =
+          monthlyResult.valid && monthlyResult.quote?.valid ? monthlyResult.quote : null;
+        const annualQuote =
+          annualResult.valid && annualResult.quote?.valid ? annualResult.quote : null;
+        setPackageQuotes({ monthly: monthlyQuote, annual: annualQuote });
+        setPackageQuoteReasons({
+          monthly: monthlyQuote
+            ? null
+            : monthlyResult.reason ?? monthlyResult.quote?.reason ?? null,
+          annual: annualQuote
+            ? null
+            : annualResult.reason ?? annualResult.quote?.reason ?? null,
+        });
+        const campaignMeta =
+          monthlyQuote?.campaign
+          ?? monthlyResult.campaign
+          ?? annualQuote?.campaign
+          ?? annualResult.campaign
+          ?? null;
+        setCampaign(monthlyQuote || annualQuote ? campaignMeta : null);
+        setValidatedCampaignCode(campaignCode);
       })
       .catch((err) => {
         if (cancelled) return;
         setCampaign(null);
-        setBackendQuote(null);
+        setPackageQuotes({ monthly: null, annual: null });
+        setPackageQuoteReasons({
+          monthly: err instanceof Error ? err.message : 'Kampanya doğrulanamadı',
+          annual: err instanceof Error ? err.message : 'Kampanya doğrulanamadı',
+        });
         setValidatedCampaignCode(null);
-        setValidatedCampaignSelection(null);
-        setCampaignValidationAttempt(validationAttempt);
         setCampaignNotice(
           campaignReasonMessage(err instanceof Error ? err.message : 'Kampanya doğrulanamadı'),
         );
@@ -365,7 +382,37 @@ export default function SatinAlPage() {
     return () => {
       cancelled = true;
     };
-  }, [campaignCode, productType, renewalToken, subscriptionPeriod]);
+  }, [campaignCode, renewalToken]);
+
+  useEffect(() => {
+    if (renewalToken || !campaignCode || campaignValidating) return;
+    if (validatedCampaignCode !== campaignCode) return;
+    const selectedPackageQuote =
+      productType === 'monthly' ? packageQuotes.monthly : packageQuotes.annual;
+    const selectedReason =
+      productType === 'monthly' ? packageQuoteReasons.monthly : packageQuoteReasons.annual;
+    if (selectedPackageQuote?.valid) {
+      setBackendQuote(selectedPackageQuote);
+      if (selectedPackageQuote.campaign) setCampaign(selectedPackageQuote.campaign);
+      setCampaignNotice(null);
+      return;
+    }
+    setBackendQuote(null);
+    if (!packageQuotes.monthly?.valid && !packageQuotes.annual?.valid) {
+      setCampaign(null);
+    }
+    setCampaignNotice(campaignReasonMessage(selectedReason));
+  }, [
+    campaignCode,
+    campaignValidating,
+    packageQuoteReasons.annual,
+    packageQuoteReasons.monthly,
+    packageQuotes.annual,
+    packageQuotes.monthly,
+    productType,
+    renewalToken,
+    validatedCampaignCode,
+  ]);
 
   useEffect(() => {
     if (!renewalToken || !renewalContext?.valid) return;
@@ -398,8 +445,8 @@ export default function SatinAlPage() {
       setCampaign(null);
       setCampaignNotice(null);
       setValidatedCampaignCode(null);
-      setValidatedCampaignSelection(null);
-      setCampaignValidationAttempt(null);
+      setPackageQuotes({ monthly: null, annual: null });
+      setPackageQuoteReasons({ monthly: null, annual: null });
       setCampaignValidating(false);
     }
   }, [campaignCode]);
@@ -420,13 +467,19 @@ export default function SatinAlPage() {
       annual: annualBase,
       monthlyBase,
       annualBase,
-      hasCampaign: Boolean(campaign && backendQuote?.valid),
     };
-  }, [backendQuote?.valid, campaign, product]);
+  }, [product]);
+
+  const selectedQuote =
+    renewalToken
+      ? backendQuote
+      : productType === 'monthly'
+        ? packageQuotes.monthly
+        : packageQuotes.annual;
 
   const selectedTotal =
-    backendQuote?.valid
-      ? quoteAmountTL(backendQuote.finalPrice)
+    selectedQuote?.valid
+      ? quoteAmountTL(selectedQuote.finalPrice)
       : productType === 'monthly'
         ? pricing.monthly
         : pricing.annual;
@@ -437,22 +490,15 @@ export default function SatinAlPage() {
     renewalToken && renewalSelectedOption
       ? [renewalSelectedOption.productType]
       : ['monthly', 'annual'];
-  const currentCampaignSelection = `${productType}:${subscriptionPeriod}`;
-  const currentCampaignValidationAttempt = campaignCode
-    ? `${campaignCode}:${currentCampaignSelection}`
-    : null;
   const campaignValidationPending = Boolean(
     !renewalToken
     && campaignCode
-    && (
-      campaignValidating
-      || campaignValidationAttempt !== currentCampaignValidationAttempt
-    ),
+    && (campaignValidating || validatedCampaignCode !== campaignCode),
   );
   const checkoutCampaignCode =
     !renewalToken
     && validatedCampaignCode === campaignCode
-    && validatedCampaignSelection === currentCampaignSelection
+    && selectedQuote?.valid
       ? validatedCampaignCode
       : undefined;
 
@@ -696,13 +742,20 @@ export default function SatinAlPage() {
               <div className={`mt-5 grid gap-3 ${renewalToken ? 'grid-cols-1' : 'grid-cols-2'}`}>
                 {displayedProductTypes.map((type) => {
                   const active = productType === type;
-                  const price =
-                    active && backendQuote?.valid
-                      ? quoteAmountTL(backendQuote.finalPrice)
-                      : type === 'monthly'
-                        ? pricing.monthly
-                        : pricing.annual;
-                  const base = type === 'monthly' ? pricing.monthlyBase : pricing.annualBase;
+                  const cardQuote = renewalToken
+                    ? backendQuote
+                    : type === 'monthly'
+                      ? packageQuotes.monthly
+                      : packageQuotes.annual;
+                  const catalogPrice = type === 'monthly' ? pricing.monthly : pricing.annual;
+                  const price = cardQuote?.valid
+                    ? quoteAmountTL(cardQuote.finalPrice)
+                    : catalogPrice;
+                  const strikethroughPrice =
+                    cardQuote?.valid
+                    && cardQuote.normalPrice > cardQuote.finalPrice
+                      ? quoteAmountTL(cardQuote.normalPrice)
+                      : null;
                   const isAnnualCard = type === 'annual';
                   return (
                     <button
@@ -735,9 +788,9 @@ export default function SatinAlPage() {
                       <p className="mt-2 text-2xl font-bold text-slate-900">
                         {formatPriceTL(price)}
                       </p>
-                      {pricing.hasCampaign && base > price && (
+                      {strikethroughPrice != null && (
                         <p className="mt-1 text-xs text-slate-500 line-through">
-                          {formatPriceTL(base)}
+                          {formatPriceTL(strikethroughPrice)}
                         </p>
                       )}
                       <p className="mt-1 text-xs text-slate-500">
@@ -749,23 +802,23 @@ export default function SatinAlPage() {
               </div>
 
               <div className="mt-6 space-y-2 border-t border-slate-100 pt-6 text-sm">
-                {backendQuote?.valid ? (
+                {selectedQuote?.valid ? (
                   <>
                     <div className="flex justify-between text-slate-600">
                       <span>Normal fiyat</span>
-                      <span>{formatPriceTL(quoteAmountTL(backendQuote.normalPrice))}</span>
+                      <span>{formatPriceTL(quoteAmountTL(selectedQuote.normalPrice))}</span>
                     </div>
                     <div className="flex justify-between text-slate-600">
                       <span>Paket indirimi</span>
-                      <span>-{formatPriceTL(quoteAmountTL(backendQuote.packageDiscount))}</span>
+                      <span>-{formatPriceTL(quoteAmountTL(selectedQuote.packageDiscount))}</span>
                     </div>
                     <div className="flex justify-between text-emerald-700">
                       <span>Kampanya / baro indirimi</span>
-                      <span>-{formatPriceTL(quoteAmountTL(backendQuote.campaignDiscount))}</span>
+                      <span>-{formatPriceTL(quoteAmountTL(selectedQuote.campaignDiscount))}</span>
                     </div>
                     <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900">
                       <span>Son fiyat (KDV dahil)</span>
-                      <span>{formatPriceTL(quoteAmountTL(backendQuote.finalPrice))}</span>
+                      <span>{formatPriceTL(quoteAmountTL(selectedQuote.finalPrice))}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-emerald-700">
                       <CheckCircle className="h-4 w-4" />
