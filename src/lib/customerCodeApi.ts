@@ -23,6 +23,8 @@ export type CustomerCodeSummary = {
   checkoutExpiresAt: string;
   selectedProductType: 'monthly' | 'annual';
   selectedSubscriptionPeriod: number;
+  hasCompleteBillingInfo: boolean;
+  billingInfo: StoredRenewalBillingInfo | null;
   renewalQuote: RenewalQuote;
 };
 
@@ -41,6 +43,8 @@ export type RenewalBillingInfo = {
   taxNumber?: string;
   taxOffice?: string;
 };
+
+export type StoredRenewalBillingInfo = Omit<RenewalBillingInfo, 'email'>;
 
 export type RenewalPayment = {
   token: string;
@@ -167,6 +171,41 @@ function readBankTransferString(
   return field;
 }
 
+function parseStoredBillingInfo(value: unknown): StoredRenewalBillingInfo | null {
+  if (value === null || value === undefined) return null;
+  if (!isRecord(value)) {
+    throw new CustomerCodeValidationError('Sunucudan geçersiz fatura bilgisi alındı.');
+  }
+  const invoiceType = value.invoiceType;
+  if (invoiceType !== 'individual' && invoiceType !== 'corporate') {
+    throw new CustomerCodeValidationError('Sunucudan geçersiz fatura bilgisi alındı.');
+  }
+  const readText = (key: string): string => {
+    const field = value[key];
+    if (typeof field !== 'string') {
+      throw new CustomerCodeValidationError('Sunucudan geçersiz fatura bilgisi alındı.');
+    }
+    return field;
+  };
+
+  return {
+    invoiceType,
+    fullName: readText('fullName'),
+    name: readText('name'),
+    phone: readText('phone'),
+    city: readText('city'),
+    district: readText('district'),
+    openAddress: readText('openAddress'),
+    address: readText('address'),
+    ...(typeof value.identityNumber === 'string'
+      ? { identityNumber: value.identityNumber }
+      : {}),
+    ...(typeof value.companyName === 'string' ? { companyName: value.companyName } : {}),
+    ...(typeof value.taxNumber === 'string' ? { taxNumber: value.taxNumber } : {}),
+    ...(typeof value.taxOffice === 'string' ? { taxOffice: value.taxOffice } : {}),
+  };
+}
+
 function parseRenewalQuote(value: unknown): RenewalQuote {
   if (!isRecord(value)) {
     throw new CustomerCodeValidationError('Sunucudan geçersiz yenileme teklifi alındı.');
@@ -256,6 +295,7 @@ function parseSuccessResponse(value: unknown): CustomerCodeSummary {
   }
   const selectedProductType = value.data.selectedProductType;
   const selectedSubscriptionPeriod = value.data.selectedSubscriptionPeriod;
+  const hasCompleteBillingInfo = value.data.hasCompleteBillingInfo === true;
   if (
     (selectedProductType !== 'monthly' && selectedProductType !== 'annual') ||
     !Number.isInteger(selectedSubscriptionPeriod) ||
@@ -278,6 +318,8 @@ function parseSuccessResponse(value: unknown): CustomerCodeSummary {
     checkoutExpiresAt: readIsoDate(value.data, 'checkoutExpiresAt'),
     selectedProductType,
     selectedSubscriptionPeriod: selectedSubscriptionPeriod as number,
+    hasCompleteBillingInfo,
+    billingInfo: parseStoredBillingInfo(value.data.billingInfo),
     renewalQuote: parseRenewalQuote(value.data.renewalQuote),
   };
 }
@@ -367,7 +409,7 @@ export async function initiateCustomerCodeRenewalPayment(params: {
   checkoutToken: string;
   productType: 'monthly' | 'annual';
   subscriptionPeriod: number;
-  billingInfo: RenewalBillingInfo;
+  billingInfo?: RenewalBillingInfo;
   legalConsents: Record<string, boolean>;
   signal?: AbortSignal;
 }): Promise<RenewalPayment> {
@@ -377,7 +419,7 @@ export async function initiateCustomerCodeRenewalPayment(params: {
       renewalToken: params.checkoutToken,
       product_type: params.productType,
       subscriptionPeriod: params.subscriptionPeriod,
-      billingInfo: params.billingInfo,
+      ...(params.billingInfo ? { billingInfo: params.billingInfo } : {}),
       legalConsents: params.legalConsents,
     },
     signal: params.signal,
@@ -438,7 +480,7 @@ export async function createCustomerCodeRenewalBankTransferOrder(params: {
   checkoutToken: string;
   productType: 'monthly' | 'annual';
   subscriptionPeriod: number;
-  billingInfo: RenewalBillingInfo;
+  billingInfo?: RenewalBillingInfo;
   legalConsents: Record<string, boolean>;
   signal?: AbortSignal;
 }): Promise<RenewalBankTransferOrder> {
@@ -448,7 +490,7 @@ export async function createCustomerCodeRenewalBankTransferOrder(params: {
       renewalToken: params.checkoutToken,
       product_type: params.productType,
       subscriptionPeriod: params.subscriptionPeriod,
-      billingInfo: params.billingInfo,
+      ...(params.billingInfo ? { billingInfo: params.billingInfo } : {}),
       legalConsents: params.legalConsents,
     },
     signal: params.signal,

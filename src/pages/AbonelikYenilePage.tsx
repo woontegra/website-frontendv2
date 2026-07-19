@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -146,6 +147,24 @@ function formatBillingForApi(data: BillingFormData): RenewalBillingInfo {
   return billingInfo;
 }
 
+function storedBillingToForm(customer: CustomerCodeSummary | null): BillingFormData | null {
+  const billing = customer?.billingInfo;
+  if (!customer || !billing) return null;
+  return {
+    invoiceType: billing.invoiceType,
+    fullName: billing.invoiceType === 'individual' ? billing.fullName : '',
+    email: customer.accountEmail ?? customer.maskedEmail,
+    phone: billing.phone,
+    identityNumber: billing.identityNumber ?? '',
+    companyName: billing.companyName ?? '',
+    taxNumber: billing.taxNumber ?? '',
+    taxOffice: billing.taxOffice ?? '',
+    city: billing.city,
+    district: billing.district,
+    address: billing.openAddress,
+  };
+}
+
 type PaymentViewState = RenewalPaymentState | 'IDLE' | 'STARTING';
 type PaymentMethod = 'PAYTR' | 'BANK_TRANSFER';
 
@@ -164,6 +183,8 @@ export default function AbonelikYenilePage() {
   const [loading, setLoading] = useState(false);
   const [legalConsents, setLegalConsents] = useState<Record<string, boolean>>({});
   const [showBillingModal, setShowBillingModal] = useState(false);
+  const [billingOverride, setBillingOverride] = useState<BillingFormData | null>(null);
+  const [editingBilling, setEditingBilling] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
   const [legalPreview, setLegalPreview] =
     useState<{ title: string; content: string } | null>(null);
@@ -195,6 +216,8 @@ export default function AbonelikYenilePage() {
     paymentController.current = null;
     setLegalConsents({});
     setShowBillingModal(false);
+    setBillingOverride(null);
+    setEditingBilling(false);
     setShowLegalModal(false);
     setLegalPreview(null);
     setPaymentState('IDLE');
@@ -228,7 +251,11 @@ export default function AbonelikYenilePage() {
     setLoading(true);
 
     try {
-      const result = await validateCustomerCode(normalizedCode, controller.signal);
+      const validation = await validateCustomerCode(normalizedCode, controller.signal);
+      const result = await resolveRenewalSession(
+        validation.checkoutToken,
+        controller.signal,
+      );
       if (requestId !== requestSequence.current || controller.signal.aborted) return;
       setCustomer(result);
       try {
@@ -412,8 +439,18 @@ export default function AbonelikYenilePage() {
     paymentState === 'PAYMENT_PENDING' ||
     paymentState === 'FULFILLMENT_PENDING';
   const paymentCompleted = paymentState === 'COMPLETED';
+  const billingInitialValues = useMemo(
+    () => billingOverride ?? storedBillingToForm(customer),
+    [billingOverride, customer],
+  );
+  const displayBilling = billingOverride
+    ? formatBillingForApi(billingOverride)
+    : customer?.billingInfo;
+  const hasCompleteBillingInfo = Boolean(
+    billingOverride || (customer?.hasCompleteBillingInfo && customer.billingInfo),
+  );
 
-  const openBilling = () => {
+  const openBilling = (requireLegalConsent = true) => {
     setPaymentError('');
     if (!customer || !checkoutAvailable) {
       setPaymentError(
@@ -425,7 +462,7 @@ export default function AbonelikYenilePage() {
       setLegalConsents({});
       return;
     }
-    if (!allLegalAccepted) {
+    if (requireLegalConsent && !allLegalAccepted) {
       setPaymentError('Devam etmek için tüm yasal onayları kabul edin.');
       return;
     }
@@ -460,7 +497,7 @@ export default function AbonelikYenilePage() {
     }
   };
 
-  const processPayment = async (billing: BillingFormData) => {
+  const processPayment = async (billing?: BillingFormData) => {
     if (paymentStarting.current) return;
     if (
       !customer ||
@@ -489,7 +526,7 @@ export default function AbonelikYenilePage() {
       const acceptedLegalConsents = Object.fromEntries(
         REQUIRED_LEGAL_TYPES.map((type) => [type, true]),
       );
-      const billingInfo = formatBillingForApi(billing);
+      const billingInfo = billing ? formatBillingForApi(billing) : undefined;
 
       if (paymentMethod === 'BANK_TRANSFER') {
         const order = await createCustomerCodeRenewalBankTransferOrder({
@@ -834,6 +871,50 @@ export default function AbonelikYenilePage() {
                 </fieldset>
               )}
 
+              <section className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Fatura bilgileri</h3>
+                    {displayBilling ? (
+                      <div className="mt-2 space-y-1 text-sm text-slate-600">
+                        <p>{displayBilling.fullName || 'Ad / unvan eksik'}</p>
+                        <p>{customer.maskedEmail}</p>
+                        <p>{displayBilling.phone || 'Telefon eksik'}</p>
+                        <p>
+                          {[
+                            displayBilling.openAddress,
+                            displayBilling.district,
+                            displayBilling.city,
+                          ]
+                            .filter(Boolean)
+                            .join(', ') || 'Adres eksik'}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-amber-800">
+                        Ödeme öncesinde fatura bilgilerinizi tamamlamanız gerekiyor.
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingBilling(true);
+                      openBilling(false);
+                    }}
+                    disabled={paymentInProgress || paymentCompleted}
+                    className="shrink-0 text-sm font-semibold text-emerald-700 hover:underline disabled:opacity-50"
+                  >
+                    Değiştir
+                  </button>
+                </div>
+                {!hasCompleteBillingInfo && (
+                  <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+                    Eksik bilgiler ödeme sırasında zorunlu olarak tamamlanacaktır.
+                  </p>
+                )}
+              </section>
+
               <fieldset
                 className={`${bankTransferAvailable ? 'mt-6' : 'mt-7 border-t pt-6'} border-slate-200`}
                 disabled={paymentInProgress || paymentCompleted}
@@ -895,7 +976,16 @@ export default function AbonelikYenilePage() {
                   paymentInProgress ||
                   paymentCompleted
                 }
-                onClick={openBilling}
+                onClick={() => {
+                  if (billingOverride) {
+                    void processPayment(billingOverride);
+                  } else if (hasCompleteBillingInfo) {
+                    void processPayment();
+                  } else {
+                    setEditingBilling(false);
+                    openBilling();
+                  }
+                }}
               >
                 {paymentMethod === 'BANK_TRANSFER' ? (
                   <Landmark className="h-5 w-5" aria-hidden="true" />
@@ -956,13 +1046,31 @@ export default function AbonelikYenilePage() {
 
       <BillingInfoModal
         open={showBillingModal}
-        onClose={() => paymentState !== 'STARTING' && setShowBillingModal(false)}
-        onSubmit={(data) => void processPayment(data)}
+        onClose={() => {
+          if (paymentState !== 'STARTING') {
+            setShowBillingModal(false);
+            setEditingBilling(false);
+          }
+        }}
+        onSubmit={(data) => {
+          if (editingBilling) {
+            setBillingOverride(data);
+            setEditingBilling(false);
+            setShowBillingModal(false);
+            return;
+          }
+          void processPayment(data);
+        }}
         processing={paymentState === 'STARTING'}
-        lockedAccountEmail={sessionRenewal ? customer?.accountEmail : null}
+        lockedAccountEmail={customer?.accountEmail ?? customer?.maskedEmail ?? null}
+        initialValues={billingInitialValues}
         purpose="renewal"
         submitLabel={
-          paymentMethod === 'BANK_TRANSFER' ? 'Havale Siparişini Oluştur' : undefined
+          editingBilling
+            ? 'Bilgileri Kaydet'
+            : paymentMethod === 'BANK_TRANSFER'
+              ? 'Havale Siparişini Oluştur'
+              : undefined
         }
         processingLabel={
           paymentMethod === 'BANK_TRANSFER' ? 'Sipariş oluşturuluyor...' : undefined

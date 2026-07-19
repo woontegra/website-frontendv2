@@ -23,6 +23,7 @@ type BillingInfoModalProps = {
   onSubmit: (data: BillingFormData) => void;
   processing: boolean;
   lockedAccountEmail?: string | null;
+  initialValues?: Partial<BillingFormData> | null;
   purpose?: 'purchase' | 'renewal';
   submitLabel?: string;
   processingLabel?: string;
@@ -57,6 +58,7 @@ export function BillingInfoModal({
   onSubmit,
   processing,
   lockedAccountEmail,
+  initialValues,
   purpose = 'purchase',
   submitLabel = 'Ödemeye geç',
   processingLabel = 'İşleniyor…',
@@ -66,10 +68,14 @@ export function BillingInfoModal({
 
   useEffect(() => {
     if (open) {
-      setForm({ ...initialForm, email: lockedAccountEmail ?? '' });
+      setForm({
+        ...initialForm,
+        ...initialValues,
+        email: lockedAccountEmail ?? initialValues?.email ?? '',
+      });
       setErrors({});
     }
-  }, [lockedAccountEmail, open]);
+  }, [initialValues, lockedAccountEmail, open]);
 
   const districtOptions = useMemo(() => getDistrictsForProvinceName(form.city), [form.city]);
 
