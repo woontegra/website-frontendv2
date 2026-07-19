@@ -94,11 +94,12 @@ export function BillingInfoModal({
     if (!form.district.trim()) next.district = 'İlçe seçimi zorunludur';
     if (!form.address.trim()) next.address = 'Açık adres zorunludur';
 
-    if (form.invoiceType === 'individual') {
-      if (!form.fullName.trim()) next.fullName = 'Ad soyad zorunludur';
-      const tc = form.identityNumber.replace(/\D/g, '');
-      if (tc.length > 0 && tc.length !== 11) next.identityNumber = 'T.C. kimlik numarası 11 hane olmalıdır';
-    } else {
+    if (!form.fullName.trim()) next.fullName = 'Ad soyad zorunludur';
+    const tc = form.identityNumber.replace(/\D/g, '');
+    if (tc.length > 0 && tc.length !== 11) {
+      next.identityNumber = 'T.C. kimlik numarası 11 hane olmalıdır';
+    }
+    if (form.invoiceType === 'corporate') {
       if (!form.companyName.trim()) next.companyName = 'Firma unvanı zorunludur';
       if (!form.taxNumber.trim()) next.taxNumber = 'Vergi numarası zorunludur';
       else if (!/^\d{10,11}$/.test(form.taxNumber.trim()))
@@ -155,7 +156,7 @@ export function BillingInfoModal({
                       invoiceType: type,
                       ...(type === 'individual'
                         ? { companyName: '', taxNumber: '', taxOffice: '' }
-                        : { fullName: '', identityNumber: '' }),
+                          : {}),
                     }));
                   }}
                   className={`rounded-xl border-2 p-4 transition-colors ${
@@ -177,21 +178,19 @@ export function BillingInfoModal({
             </div>
           </div>
 
-          {form.invoiceType === 'individual' ? (
-            <>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Ad soyad *</label>
-                <input
-                  className={inputClass}
-                  value={form.fullName}
-                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                  disabled={processing}
-                  autoComplete="name"
-                />
-                {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
-              </div>
-            </>
-          ) : (
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">Ad soyad *</label>
+            <input
+              className={inputClass}
+              value={form.fullName}
+              onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+              disabled={processing}
+              autoComplete="name"
+            />
+            {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
+          </div>
+
+          {form.invoiceType === 'corporate' && (
             <>
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">Firma unvanı *</label>
@@ -272,27 +271,25 @@ export function BillingInfoModal({
             {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
           </div>
 
-          {form.invoiceType === 'individual' && (
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-slate-700">T.C. kimlik no</label>
-              <input
-                className={inputClass}
-                inputMode="numeric"
-                maxLength={11}
-                value={form.identityNumber}
-                onChange={(e) => setForm({ ...form, identityNumber: digitsOnly(e.target.value, 11) })}
-                disabled={processing}
-                autoComplete="off"
-                placeholder="İsteğe bağlı"
-              />
-              {errors.identityNumber && (
-                <p className="mt-1 text-sm text-red-600">{errors.identityNumber}</p>
-              )}
-              <p className="mt-1 text-xs text-slate-500">
-                Fatura düzenleme sürecinde gerekebileceği için isteğe bağlıdır.
-              </p>
-            </div>
-          )}
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">T.C. kimlik no</label>
+            <input
+              className={inputClass}
+              inputMode="numeric"
+              maxLength={11}
+              value={form.identityNumber}
+              onChange={(e) => setForm({ ...form, identityNumber: digitsOnly(e.target.value, 11) })}
+              disabled={processing}
+              autoComplete="off"
+              placeholder="İsteğe bağlı"
+            />
+            {errors.identityNumber && (
+              <p className="mt-1 text-sm text-red-600">{errors.identityNumber}</p>
+            )}
+            <p className="mt-1 text-xs text-slate-500">
+              Fatura düzenleme sürecinde gerekebileceği için isteğe bağlıdır.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>

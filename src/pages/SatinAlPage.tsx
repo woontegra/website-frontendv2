@@ -129,7 +129,7 @@ function composeBillingAddressLine(data: BillingFormData): string {
 /** Backend `billingInfo.address` PayTR `user_address` için kullanılıyor; il/ilçe birleşik satır. */
 function formatBillingForApi(data: BillingFormData): Record<string, unknown> {
   const isCorp = data.invoiceType === 'corporate';
-  const displayName = isCorp ? data.companyName.trim() : data.fullName.trim();
+  const displayName = data.fullName.trim();
   const combinedAddress = composeBillingAddressLine(data);
   const idDigits = data.identityNumber.replace(/\D/g, '');
 
@@ -145,7 +145,7 @@ function formatBillingForApi(data: BillingFormData): Record<string, unknown> {
     address: combinedAddress,
   };
 
-  if (!isCorp && idDigits) payload.identityNumber = idDigits;
+  if (idDigits) payload.identityNumber = idDigits;
   if (isCorp) {
     payload.companyName = data.companyName.trim();
     payload.taxNumber = data.taxNumber.trim();

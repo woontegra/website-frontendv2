@@ -122,7 +122,7 @@ function formatPackageLabel(value: string): string {
 
 function formatBillingForApi(data: BillingFormData): RenewalBillingInfo {
   const isCorporate = data.invoiceType === 'corporate';
-  const fullName = (isCorporate ? data.companyName : data.fullName).trim();
+  const fullName = data.fullName.trim();
   const openAddress = data.address.trim();
   const location = [data.district.trim(), data.city.trim()].filter(Boolean).join(' / ');
   const billingInfo: RenewalBillingInfo = {
@@ -138,7 +138,7 @@ function formatBillingForApi(data: BillingFormData): RenewalBillingInfo {
   };
 
   const identityNumber = data.identityNumber.replace(/\D/g, '');
-  if (!isCorporate && identityNumber) billingInfo.identityNumber = identityNumber;
+  if (identityNumber) billingInfo.identityNumber = identityNumber;
   if (isCorporate) {
     billingInfo.companyName = data.companyName.trim();
     billingInfo.taxNumber = data.taxNumber.trim();
@@ -152,7 +152,7 @@ function storedBillingToForm(customer: CustomerCodeSummary | null): BillingFormD
   if (!customer || !billing) return null;
   return {
     invoiceType: billing.invoiceType,
-    fullName: billing.invoiceType === 'individual' ? billing.fullName : '',
+    fullName: billing.fullName,
     email: customer.accountEmail ?? customer.maskedEmail,
     phone: billing.phone,
     identityNumber: billing.identityNumber ?? '',
