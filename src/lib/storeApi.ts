@@ -247,7 +247,10 @@ export async function fetchRenewalQuote(params: {
   return json.data ?? json;
 }
 
-export type PaytrTokenResponse = ApiEnvelope<{ token?: string }> & { token?: string };
+export type PaytrTokenResponse = ApiEnvelope<{ token?: string; testMode?: boolean }> & {
+  token?: string;
+  testMode?: boolean;
+};
 
 export type ContactMessagePayload = {
   name: string;

@@ -189,6 +189,7 @@ export default function SatinAlPage() {
   const [legalPreviewLoading, setLegalPreviewLoading] = useState(false);
   const [showPaytrModal, setShowPaytrModal] = useState(false);
   const [paytrToken, setPaytrToken] = useState<string | null>(null);
+  const [paytrTestMode, setPaytrTestMode] = useState(false);
   const [checkoutSummary, setCheckoutSummary] = useState<{
     label: string;
     totalTL: number;
@@ -578,6 +579,7 @@ export default function SatinAlPage() {
         legalConsents: legalConsentsPayload,
       });
       const token = data.token ?? data.data?.token;
+      const testMode = data.testMode ?? data.data?.testMode ?? false;
       if (data.success && token) {
         setCheckoutSummary({
           label: productType === 'monthly' ? 'Aylık abonelik' : 'Yıllık abonelik',
@@ -585,6 +587,7 @@ export default function SatinAlPage() {
           periodLabel: productType === 'monthly' ? '1 ay' : '1 yıl',
         });
         setPaytrToken(token);
+        setPaytrTestMode(testMode);
         setShowPaytrModal(true);
         setShowBillingModal(false);
       } else {
@@ -1043,6 +1046,7 @@ export default function SatinAlPage() {
                 onClick={() => {
                   setShowPaytrModal(false);
                   setPaytrToken(null);
+                  setPaytrTestMode(false);
                   setCheckoutSummary(null);
                 }}
                 className="rounded-lg p-2 hover:bg-slate-100"
@@ -1051,6 +1055,11 @@ export default function SatinAlPage() {
                 <X className="h-5 w-5 text-slate-700" />
               </button>
             </div>
+            {paytrTestMode && (
+              <p className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-center text-sm font-semibold text-amber-900">
+                Test modu açık, gerçek tahsilat yapılmaz
+              </p>
+            )}
             <iframe
               title="PayTR ödeme"
               src={`https://www.paytr.com/odeme/guvenli/${paytrToken}`}

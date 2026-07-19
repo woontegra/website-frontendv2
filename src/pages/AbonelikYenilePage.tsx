@@ -175,6 +175,7 @@ export default function AbonelikYenilePage() {
   const [bankTransferOrder, setBankTransferOrder] =
     useState<RenewalBankTransferOrder | null>(null);
   const [paytrToken, setPaytrToken] = useState<string | null>(null);
+  const [paytrTestMode, setPaytrTestMode] = useState(false);
   const [merchantOid, setMerchantOid] = useState<string | null>(null);
   const [chargedAmountKurus, setChargedAmountKurus] = useState<number | null>(null);
   const [newSubscriptionEndsAt, setNewSubscriptionEndsAt] = useState<string | null>(null);
@@ -202,6 +203,7 @@ export default function AbonelikYenilePage() {
     setBankTransferAvailable(false);
     setBankTransferOrder(null);
     setPaytrToken(null);
+    setPaytrTestMode(false);
     setMerchantOid(null);
     setChargedAmountKurus(null);
     setNewSubscriptionEndsAt(null);
@@ -551,6 +553,7 @@ export default function AbonelikYenilePage() {
       setChargedAmountKurus(payment.chargedAmountKurus);
       setMerchantOid(payment.merchantOid);
       setPaytrToken(payment.token);
+      setPaytrTestMode(payment.testMode);
       setShowBillingModal(false);
       setPaymentState('PAYMENT_PENDING');
     } catch (paymentRequestError) {
@@ -1039,6 +1042,11 @@ export default function AbonelikYenilePage() {
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
+            {paytrTestMode && (
+              <p className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-center text-sm font-semibold text-amber-900">
+                Test modu açık, gerçek tahsilat yapılmaz
+              </p>
+            )}
             <iframe
               title="PayTR ödeme"
               src={`https://www.paytr.com/odeme/guvenli/${paytrToken}`}

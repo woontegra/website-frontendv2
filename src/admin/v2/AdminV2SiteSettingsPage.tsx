@@ -347,6 +347,36 @@ function PaytrSettingsSection() {
           />
           Aktif
         </label>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <label className="flex cursor-pointer items-center justify-between gap-4">
+            <span>
+              <span className="block text-[13px] font-semibold text-slate-900">Test Modu</span>
+              <span className="mt-1 block text-[12px] text-slate-600">
+                PayTR kart işlemlerini test tahsilatı olarak başlatır.
+              </span>
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={data.testMode}
+              onClick={() => setData({ ...data, testMode: !data.testMode })}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                data.testMode ? 'bg-amber-500' : 'bg-slate-300'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                  data.testMode ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </label>
+          {data.testMode && (
+            <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-semibold text-amber-900">
+              Test modu açık, gerçek tahsilat yapılmaz
+            </p>
+          )}
+        </div>
         <div className="flex justify-end pt-2">
           <SaveButton saving={saving} />
         </div>

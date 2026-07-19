@@ -64,6 +64,7 @@ export type PaymentSettings = {
   successUrl: string;
   failUrl: string;
   isActive: boolean;
+  testMode: boolean;
 };
 
 export async function fetchPaymentSettings(): Promise<PaymentSettings> {

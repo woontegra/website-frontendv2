@@ -48,6 +48,7 @@ export type RenewalPayment = {
   chargedAmountKurus: number;
   currency: 'TRY';
   renewalQuote: RenewalQuote;
+  testMode: boolean;
 };
 
 export type BankTransferAvailability = {
@@ -358,6 +359,7 @@ function parseRenewalPayment(value: unknown): RenewalPayment {
     chargedAmountKurus: readNonNegativeInteger(value, 'chargedAmountKurus'),
     currency: value.currency,
     renewalQuote: parseRenewalQuote(value.renewalQuote),
+    testMode: value.testMode === true,
   };
 }
 
