@@ -49,6 +49,13 @@ const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
   year: 'numeric',
 });
 
+const subscriptionDateFormatter = new Intl.DateTimeFormat('tr-TR', {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
 const currencyFormatter = new Intl.NumberFormat('tr-TR', {
   style: 'currency',
   currency: 'TRY',
@@ -59,7 +66,7 @@ const rateFormatter = new Intl.NumberFormat('tr-TR', {
 });
 
 function formatSubscriptionEnd(value: string | null): string {
-  return value ? dateFormatter.format(new Date(value)) : 'Bilgi bulunamadı';
+  return value ? subscriptionDateFormatter.format(new Date(value)) : 'Bilgi bulunamadı';
 }
 
 function formatKurus(value: number): string {
