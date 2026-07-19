@@ -175,6 +175,15 @@ export function AdminV2CampaignsPage() {
       showToast('Baro seçimi zorunludur', 'warning');
       return;
     }
+
+    const campaignType: CampaignType =
+      form.campaignType === 'BAR_ASSOCIATION' || Boolean(form.barAssociationKey.trim())
+        ? 'BAR_ASSOCIATION'
+        : 'GENERAL';
+    if (campaignType === 'BAR_ASSOCIATION' && !form.barAssociationKey.trim()) {
+      showToast('Baro kampanyası için baro seçimi zorunludur', 'warning');
+      return;
+    }
     if (form.eligibleProductTypes.length === 0) {
       showToast('En az bir paket seçilmelidir', 'warning');
       return;
@@ -194,9 +203,9 @@ export function AdminV2CampaignsPage() {
       startsAt: form.startsAt || null,
       expiresAt: form.expiresAt || null,
       isActive: form.isActive,
-      campaignType: form.campaignType,
+      campaignType,
       barAssociationKey:
-        form.campaignType === 'BAR_ASSOCIATION' ? form.barAssociationKey : null,
+        campaignType === 'BAR_ASSOCIATION' ? form.barAssociationKey : null,
       appliesToNewPurchase: form.appliesToNewPurchase,
       appliesToRenewal: form.appliesToRenewal,
       eligibleProductTypes: form.eligibleProductTypes,
