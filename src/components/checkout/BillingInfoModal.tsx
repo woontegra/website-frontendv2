@@ -24,6 +24,8 @@ type BillingInfoModalProps = {
   processing: boolean;
   lockedAccountEmail?: string | null;
   purpose?: 'purchase' | 'renewal';
+  submitLabel?: string;
+  processingLabel?: string;
 };
 
 const inputClass =
@@ -56,6 +58,8 @@ export function BillingInfoModal({
   processing,
   lockedAccountEmail,
   purpose = 'purchase',
+  submitLabel = 'Ödemeye geç',
+  processingLabel = 'İşleniyor…',
 }: BillingInfoModalProps) {
   const [form, setForm] = useState<BillingFormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof BillingFormData, string>>>({});
@@ -349,10 +353,10 @@ export function BillingInfoModal({
             <Button type="submit" variant="accent" className="flex-1" disabled={processing}>
               {processing ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> İşleniyor…
+                  <Loader2 className="h-4 w-4 animate-spin" /> {processingLabel}
                 </>
               ) : (
-                'Ödemeye geç'
+                submitLabel
               )}
             </Button>
           </div>

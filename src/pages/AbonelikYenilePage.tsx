@@ -174,6 +174,7 @@ export default function AbonelikYenilePage() {
   const [clock, setClock] = useState(() => Date.now());
   const activeController = useRef<AbortController | null>(null);
   const paymentController = useRef<AbortController | null>(null);
+  const paymentStarting = useRef(false);
   const requestSequence = useRef(0);
 
   usePageSeo(content, '/abonelik-yenile', {
@@ -451,6 +452,7 @@ export default function AbonelikYenilePage() {
   };
 
   const processPayment = async (billing: BillingFormData) => {
+    if (paymentStarting.current) return;
     if (
       !customer ||
       !allLegalAccepted ||
@@ -467,6 +469,7 @@ export default function AbonelikYenilePage() {
       return;
     }
 
+    paymentStarting.current = true;
     const controller = new AbortController();
     paymentController.current?.abort();
     paymentController.current = controller;
@@ -561,6 +564,8 @@ export default function AbonelikYenilePage() {
           ? `${message} Panelden yeni bir yenileme bağlantısı oluşturup tekrar deneyin.`
           : `${message} Müşteri kodunuzu yeniden doğrulayıp tekrar deneyin.`,
       );
+    } finally {
+      paymentStarting.current = false;
     }
   };
 
@@ -946,6 +951,12 @@ export default function AbonelikYenilePage() {
         processing={paymentState === 'STARTING'}
         lockedAccountEmail={sessionRenewal ? customer?.accountEmail : null}
         purpose="renewal"
+        submitLabel={
+          paymentMethod === 'BANK_TRANSFER' ? 'Havale Siparişini Oluştur' : undefined
+        }
+        processingLabel={
+          paymentMethod === 'BANK_TRANSFER' ? 'Sipariş oluşturuluyor...' : undefined
+        }
       />
 
       {showLegalModal && (
