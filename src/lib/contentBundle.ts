@@ -662,9 +662,12 @@ export function resolveHomepageHeroSlides(
     const mobileResolved = mobileRaw
       ? resolveConfigImageUrl(content, mobileRaw, fallbackUrl).trim()
       : '';
+    // Mobil ölçüler farklıdır; masaüstü görseli mobilde fallback olarak kullanılmaz.
+    const mobileSrc =
+      mobileResolved && !isStaleHeroPlaceholderPath(mobileResolved) ? mobileResolved : '';
     resolved.push({
       src,
-      mobileSrc: mobileResolved && !isStaleHeroPlaceholderPath(mobileResolved) ? mobileResolved : src,
+      mobileSrc,
       alt: slide.alt?.trim() || defaultAlt,
       ...(slide.link?.trim() ? { link: slide.link.trim() } : {}),
     });

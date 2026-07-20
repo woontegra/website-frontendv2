@@ -20,13 +20,15 @@ function SlideImage({
   slide: HeroSlideResolved;
   onError: () => void;
 }) {
+  const hasMobile = Boolean(slide.mobileSrc?.trim());
   // Genişliğe göre ölçeklenir; object-cover kullanılmaz → sağ/sol kırpılmaz.
+  // Mobil görsel yoksa masaüstü kullanılmaz (ölçüler farklı); mobilde slayt gizlenir.
   const image = (
-    <picture className="block w-full max-w-full">
+    <picture className={`block w-full max-w-full ${hasMobile ? '' : 'hidden lg:block'}`}>
       <source media="(min-width: 1024px)" srcSet={slide.src} />
       <img
         key={`${slide.src}-${slide.mobileSrc}`}
-        src={slide.mobileSrc}
+        src={hasMobile ? slide.mobileSrc : slide.src}
         alt={slide.alt}
         className="block h-auto w-full max-w-full"
         loading="eager"

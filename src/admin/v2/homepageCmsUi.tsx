@@ -97,6 +97,7 @@ function HeroImageUploadHint({ variant }: { variant: 'desktop' | 'mobile' }) {
   return (
     <p className="text-[11px] leading-relaxed text-[#8a9aaa]">
       {sizeHint} WebP veya AVIF önerilir; dosya mümkünse 2 MB altında olsun.
+      {variant === 'desktop' ? ' Masaüstü görseli zorunludur; yoksa slayt gösterilmez.' : null}
     </p>
   );
 }
@@ -567,7 +568,7 @@ export function CmsHeroCarouselEditor({
                 </div>
 
                 <div className="flex gap-2 sm:gap-3">
-                  <CmsMediaThumb assets={assets} value={slide.mobileUrl || slide.url} />
+                  <CmsMediaThumb assets={assets} value={slide.mobileUrl} />
                   <div className="min-w-0 flex-1 space-y-2">
                     <p className="text-[12px] font-medium text-[#5c6b7a]">Mobil görseli</p>
                     {!readOnly && onSlidesChange ? (
@@ -577,7 +578,7 @@ export function CmsHeroCarouselEditor({
                           value={slide.mobileUrl}
                           onChange={(e) => updateSlideField(index, { mobileUrl: e.target.value })}
                           disabled={saving}
-                          placeholder="Boş bırakılırsa masaüstü görseli kullanılır"
+                          placeholder="Mobil için ayrı görsel URL’si"
                           className={`${adminInputClass} font-mono text-xs`}
                         />
                         <ActionButton
@@ -590,15 +591,21 @@ export function CmsHeroCarouselEditor({
                           Mobil görsel seç
                         </ActionButton>
                         <HeroImageUploadHint variant="mobile" />
+                        <p className="text-[11px] leading-relaxed text-[#8a9aaa]">
+                          Ölçüler farklıdır; mobil görsel yoksa masaüstü görseli kullanılmaz. Mobilde hero bu slayt için
+                          gösterilmez.
+                        </p>
                         <HeroImageCropWarning
-                          url={slide.mobileUrl || slide.url}
+                          url={slide.mobileUrl}
                           recommendedRatio={HERO_MOBILE_RECOMMENDED_RATIO}
                         />
                       </>
                     ) : slide.mobileUrl ? (
                       <p className="truncate font-mono text-[11px] text-[#5c6b7a]">{slide.mobileUrl}</p>
                     ) : (
-                      <p className="text-[11px] text-[#8a9aaa]">Masaüstü görseli kullanılıyor</p>
+                      <p className="text-[11px] text-amber-700">
+                        Mobil görsel yok — mobilde bu slayt gösterilmez (masaüstü görseli kullanılmaz).
+                      </p>
                     )}
                   </div>
                 </div>
