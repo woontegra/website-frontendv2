@@ -44,8 +44,153 @@ import {
   canShowMediaImagePreview,
   resolveMediaPreviewSrc,
 } from '@/admin/v2/mediaPickerUtils';
+import {
+  HERO_DESKTOP_RECOMMENDED_RATIO,
+  HERO_MOBILE_RECOMMENDED_RATIO,
+  isHeroAspectRatioMismatch,
+  MAX_HERO_DESKTOP_HEIGHT_PX,
+  MAX_HERO_MOBILE_HEIGHT_PX,
+  MIN_HERO_DESKTOP_HEIGHT_PX,
+  MIN_HERO_MOBILE_HEIGHT_PX,
+  type HeroImageFit,
+} from '@/lib/homepageHero';
+
+function HeroImageCropWarning({
+  url,
+  recommendedRatio,
+}: {
+  url: string;
+  recommendedRatio: number;
+}) {
+  const [mismatch, setMismatch] = useState(false);
+
+  useEffect(() => {
+    const src = url.trim();
+    if (!src) {
+      setMismatch(false);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      setMismatch(
+        isHeroAspectRatioMismatch(img.naturalWidth, img.naturalHeight, recommendedRatio),
+      );
+    };
+    img.onerror = () => setMismatch(false);
+    img.src = src;
+  }, [url, recommendedRatio]);
+
+  if (!mismatch) return null;
+
+  return (
+    <p className="text-[11px] font-medium text-amber-700" role="status">
+      Görsel kırpılabilir
+    </p>
+  );
+}
+
+function HeroImageUploadHint({ variant }: { variant: 'desktop' | 'mobile' }) {
+  const sizeHint =
+    variant === 'desktop'
+      ? 'Önerilen 1920×720 px, minimum 1600×600 px.'
+      : 'Önerilen 1080×1350 px, minimum 750×938 px.';
+  return (
+    <p className="text-[11px] leading-relaxed text-[#8a9aaa]">
+      {sizeHint} WebP veya AVIF önerilir; dosya mümkünse 2 MB altında olsun.
+    </p>
+  );
+}
 
 export { adminInputClass as cmsInputClass };
+
+export function CmsHeroLayoutSettings({
+  carouselIntervalMs,
+  heroDesktopHeightPx,
+  heroMobileHeightPx,
+  heroImageFit,
+  onIntervalChange,
+  onDesktopHeightChange,
+  onMobileHeightChange,
+  onImageFitChange,
+  saving,
+}: {
+  carouselIntervalMs: number;
+  heroDesktopHeightPx: number;
+  heroMobileHeightPx: number;
+  heroImageFit: HeroImageFit;
+  onIntervalChange: (intervalMs: number) => void;
+  onDesktopHeightChange: (heightPx: number) => void;
+  onMobileHeightChange: (heightPx: number) => void;
+  onImageFitChange: (fit: HeroImageFit) => void;
+  saving?: boolean;
+}) {
+  return (
+    <div className={`rounded-xl border border-[#dbe4ea] bg-white p-4 ${adminMutedPanelClass}`}>
+      <p className="text-[13px] font-semibold text-[#1e2a3a]">Hero carousel ayarları</p>
+      <p className="mt-1 text-[12px] text-[#5c6b7a]">
+        Yükseklik, yerleşim ve otomatik geçiş — kaydet ile birlikte uygulanır.
+      </p>
+      <FieldGrid className="mt-4 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <FieldGroup label="Masaüstü yüksekliği (px)" hint="400–1000">
+          <input
+            type="number"
+            min={MIN_HERO_DESKTOP_HEIGHT_PX}
+            max={MAX_HERO_DESKTOP_HEIGHT_PX}
+            step={10}
+            value={heroDesktopHeightPx}
+            disabled={saving}
+            onChange={(e) => {
+              const next = Number.parseInt(e.target.value, 10);
+              if (Number.isFinite(next)) onDesktopHeightChange(next);
+            }}
+            className={adminInputClass}
+          />
+        </FieldGroup>
+        <FieldGroup label="Mobil yüksekliği (px)" hint="350–800">
+          <input
+            type="number"
+            min={MIN_HERO_MOBILE_HEIGHT_PX}
+            max={MAX_HERO_MOBILE_HEIGHT_PX}
+            step={10}
+            value={heroMobileHeightPx}
+            disabled={saving}
+            onChange={(e) => {
+              const next = Number.parseInt(e.target.value, 10);
+              if (Number.isFinite(next)) onMobileHeightChange(next);
+            }}
+            className={adminInputClass}
+          />
+        </FieldGroup>
+        <FieldGroup label="Görsel yerleşimi">
+          <select
+            value={heroImageFit}
+            disabled={saving}
+            onChange={(e) => onImageFitChange(e.target.value as HeroImageFit)}
+            className={adminInputClass}
+          >
+            <option value="cover">Alanı Kapla (cover)</option>
+            <option value="contain">Görseli Sığdır (contain)</option>
+          </select>
+        </FieldGroup>
+        <FieldGroup label="Otomatik geçiş (ms)" hint="2000–30000; 2+ aktif görselde">
+          <input
+            type="number"
+            min={2000}
+            max={30000}
+            step={500}
+            value={carouselIntervalMs}
+            disabled={saving}
+            onChange={(e) => {
+              const next = Number.parseInt(e.target.value, 10);
+              if (Number.isFinite(next)) onIntervalChange(next);
+            }}
+            className={adminInputClass}
+          />
+        </FieldGroup>
+      </FieldGrid>
+    </div>
+  );
+}
 
 export function HomepageCmsHeader({ trailing }: { trailing?: ReactNode }) {
   return (
@@ -272,10 +417,8 @@ export function CmsMediaBlock({
 export function CmsHeroCarouselEditor({
   slides,
   heroImageAlt,
-  carouselIntervalMs,
   onSlidesChange,
   onAltChange,
-  onIntervalChange,
   assets,
   onAddSlide,
   readOnly = false,
@@ -287,10 +430,8 @@ export function CmsHeroCarouselEditor({
 }: {
   slides: HeroSlideDraft[];
   heroImageAlt: string;
-  carouselIntervalMs?: number;
   onSlidesChange?: (slides: HeroSlideDraft[]) => void;
   onAltChange?: (alt: string) => void;
-  onIntervalChange?: (intervalMs: number) => void;
   assets: AdminMediaAssetRow[];
   onAddSlide?: (value: string, asset: AdminMediaAssetRow) => void | Promise<void>;
   readOnly?: boolean;
@@ -301,6 +442,7 @@ export function CmsHeroCarouselEditor({
   saving?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [desktopPickerIndex, setDesktopPickerIndex] = useState<number | null>(null);
   const [mobilePickerIndex, setMobilePickerIndex] = useState<number | null>(null);
   const [pasteUrl, setPasteUrl] = useState('');
   const [pasteError, setPasteError] = useState<string | null>(null);
@@ -331,7 +473,7 @@ export function CmsHeroCarouselEditor({
 
   const updateSlideField = (
     index: number,
-    patch: Partial<Pick<HeroSlideDraft, 'alt' | 'link' | 'isActive' | 'mobileUrl'>>,
+    patch: Partial<Pick<HeroSlideDraft, 'alt' | 'link' | 'isActive' | 'mobileUrl' | 'url'>>,
   ) => {
     if (!onSlidesChange) return;
     onSlidesChange(slides.map((slide, i) => (i === index ? { ...slide, ...patch } : slide)));
@@ -376,29 +518,6 @@ export function CmsHeroCarouselEditor({
         </p>
       </div>
 
-      {!readOnly && onIntervalChange && (
-        <FieldGroup label="Otomatik geçiş süresi (ms)" hint="2000–30000 arası; yalnızca 2+ aktif görselde uygulanır">
-          <input
-            type="number"
-            min={2000}
-            max={30000}
-            step={500}
-            value={carouselIntervalMs ?? 5500}
-            disabled={saving}
-            onChange={(e) => {
-              const next = Number.parseInt(e.target.value, 10);
-              if (Number.isFinite(next)) onIntervalChange(next);
-            }}
-            className={`${adminInputClass} max-w-[12rem]`}
-          />
-        </FieldGroup>
-      )}
-      {readOnly && carouselIntervalMs != null && (
-        <p className="text-xs text-slate-600">
-          Otomatik geçiş: <span className="font-medium">{carouselIntervalMs} ms</span>
-        </p>
-      )}
-
       {slides.length === 0 ? (
         <p className="text-sm text-slate-500">Henüz görsel yok. İlk görseli ekleyin.</p>
       ) : (
@@ -424,9 +543,26 @@ export function CmsHeroCarouselEditor({
 
                 <div className="flex gap-2 sm:gap-3">
                   <CmsMediaThumb assets={assets} value={slide.url} />
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 space-y-2">
                     <p className="text-[12px] font-medium text-[#5c6b7a]">Masaüstü görseli</p>
-                    <p className="mt-0.5 truncate font-mono text-[11px] text-[#5c6b7a]">{slide.url}</p>
+                    <p className="truncate font-mono text-[11px] text-[#5c6b7a]">{slide.url}</p>
+                    {!readOnly && onSlidesChange ? (
+                      <>
+                        <ActionButton
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          disabled={pickDisabled || saving}
+                          onClick={() => setDesktopPickerIndex(index)}
+                        >
+                          Masaüstü görsel seç
+                        </ActionButton>
+                        <HeroImageUploadHint variant="desktop" />
+                        <HeroImageCropWarning url={slide.url} recommendedRatio={HERO_DESKTOP_RECOMMENDED_RATIO} />
+                      </>
+                    ) : (
+                      <HeroImageCropWarning url={slide.url} recommendedRatio={HERO_DESKTOP_RECOMMENDED_RATIO} />
+                    )}
                   </div>
                 </div>
 
@@ -453,6 +589,11 @@ export function CmsHeroCarouselEditor({
                         >
                           Mobil görsel seç
                         </ActionButton>
+                        <HeroImageUploadHint variant="mobile" />
+                        <HeroImageCropWarning
+                          url={slide.mobileUrl || slide.url}
+                          recommendedRatio={HERO_MOBILE_RECOMMENDED_RATIO}
+                        />
                       </>
                     ) : slide.mobileUrl ? (
                       <p className="truncate font-mono text-[11px] text-[#5c6b7a]">{slide.mobileUrl}</p>
@@ -541,7 +682,7 @@ export function CmsHeroCarouselEditor({
       {!readOnly && onAddSlide && (
         <>
           <div className="space-y-2 rounded-lg border border-dashed border-[#cfe0db] bg-white/80 p-3">
-            <p className="text-[12px] font-medium text-[#5c6b7a]">Görsel URL’si yapıştır</p>
+            <p className="text-[12px] font-medium text-[#5c6b7a]">Masaüstü görseli — URL yapıştır</p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="url"
@@ -574,7 +715,7 @@ export function CmsHeroCarouselEditor({
               <p className="text-[12px] text-red-700">{pasteError}</p>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
             <ActionButton
               variant="secondary"
               size="sm"
@@ -585,6 +726,10 @@ export function CmsHeroCarouselEditor({
             >
               Görsel ekle
             </ActionButton>
+            <HeroImageUploadHint variant="desktop" />
+            {pasteUrl.trim() ? (
+              <HeroImageCropWarning url={pasteUrl.trim()} recommendedRatio={HERO_DESKTOP_RECOMMENDED_RATIO} />
+            ) : null}
           </div>
           <MediaPickerModal
             open={pickerOpen}
@@ -601,6 +746,23 @@ export function CmsHeroCarouselEditor({
             }}
           />
         </>
+      )}
+
+      {desktopPickerIndex !== null && onSlidesChange && (
+        <MediaPickerModal
+          open={desktopPickerIndex !== null}
+          onClose={() => setDesktopPickerIndex(null)}
+          assets={assets}
+          title="Masaüstü hero görseli seç"
+          enableUpload={enableUpload}
+          autoSelectAfterUpload
+          uploadUsageLabel={uploadUsageLabel}
+          onAssetUploaded={onAssetUploaded}
+          onSelect={(_asset, value) => {
+            updateSlideField(desktopPickerIndex, { url: value });
+            setDesktopPickerIndex(null);
+          }}
+        />
       )}
 
       {mobilePickerIndex !== null && onSlidesChange && (

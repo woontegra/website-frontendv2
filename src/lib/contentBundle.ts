@@ -31,7 +31,9 @@ import {
   heroImageAltFromConfig,
   isStaleHeroPlaceholderPath,
   parseCarouselIntervalMs,
+  parseHeroCarouselLayout,
   parseHeroSlidesFromConfig,
+  type HeroCarouselLayout,
   type HeroSlideResolved,
 } from './homepageHero';
 import { resolvePublicAssetUrl } from './resolvePublicAssetUrl';
@@ -682,6 +684,11 @@ export function resolveHomepageHeroSlides(
 export function resolveHomepageHeroCarouselInterval(content: ContentBundleView): number {
   const cfg = getHomepageSection(content, 'hero')?.config ?? null;
   return parseCarouselIntervalMs(cfg);
+}
+
+export function resolveHomepageHeroCarouselLayout(content: ContentBundleView): HeroCarouselLayout {
+  const cfg = getHomepageSection(content, 'hero')?.config ?? null;
+  return parseHeroCarouselLayout(cfg);
 }
 
 const DEFAULT_HERO_EYEBROW =

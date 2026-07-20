@@ -19,6 +19,25 @@ export const DEFAULT_CAROUSEL_INTERVAL_MS = 5500;
 export const MIN_CAROUSEL_INTERVAL_MS = 2000;
 export const MAX_CAROUSEL_INTERVAL_MS = 30000;
 
+export const DEFAULT_HERO_DESKTOP_HEIGHT_PX = 650;
+export const MIN_HERO_DESKTOP_HEIGHT_PX = 400;
+export const MAX_HERO_DESKTOP_HEIGHT_PX = 1000;
+
+export const DEFAULT_HERO_MOBILE_HEIGHT_PX = 520;
+export const MIN_HERO_MOBILE_HEIGHT_PX = 350;
+export const MAX_HERO_MOBILE_HEIGHT_PX = 800;
+
+export const HERO_DESKTOP_RECOMMENDED_RATIO = 1920 / 720;
+export const HERO_MOBILE_RECOMMENDED_RATIO = 1080 / 1350;
+
+export type HeroImageFit = 'cover' | 'contain';
+
+export type HeroCarouselLayout = {
+  desktopHeightPx: number;
+  mobileHeightPx: number;
+  imageFit: HeroImageFit;
+};
+
 /** Seed / placeholder — dosya yok, carousel'de atlanır */
 export function isStaleHeroPlaceholderPath(url: string): boolean {
   const u = url.trim().toLowerCase();
@@ -122,6 +141,65 @@ export function parseCarouselIntervalMs(
   );
 }
 
+function clampHeroHeight(
+  raw: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  const value = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
+export function parseHeroDesktopHeightPx(cfg: Record<string, unknown> | null | undefined): number {
+  return clampHeroHeight(
+    cfg?.heroDesktopHeightPx ?? cfg?.desktopHeightPx,
+    DEFAULT_HERO_DESKTOP_HEIGHT_PX,
+    MIN_HERO_DESKTOP_HEIGHT_PX,
+    MAX_HERO_DESKTOP_HEIGHT_PX,
+  );
+}
+
+export function parseHeroMobileHeightPx(cfg: Record<string, unknown> | null | undefined): number {
+  return clampHeroHeight(
+    cfg?.heroMobileHeightPx ?? cfg?.mobileHeightPx,
+    DEFAULT_HERO_MOBILE_HEIGHT_PX,
+    MIN_HERO_MOBILE_HEIGHT_PX,
+    MAX_HERO_MOBILE_HEIGHT_PX,
+  );
+}
+
+export function parseHeroImageFit(cfg: Record<string, unknown> | null | undefined): HeroImageFit {
+  const raw = cfg?.heroImageFit ?? cfg?.imageFit;
+  if (raw === 'contain') return 'contain';
+  return 'cover';
+}
+
+export function parseHeroCarouselLayout(
+  cfg: Record<string, unknown> | null | undefined,
+): HeroCarouselLayout {
+  return {
+    desktopHeightPx: parseHeroDesktopHeightPx(cfg),
+    mobileHeightPx: parseHeroMobileHeightPx(cfg),
+    imageFit: parseHeroImageFit(cfg),
+  };
+}
+
+/** Önerilen en-boy oranından belirgin sapmada kırpılma uyarısı */
+export function isHeroAspectRatioMismatch(
+  width: number,
+  height: number,
+  recommendedRatio: number,
+  tolerance = 0.12,
+): boolean {
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return false;
+  }
+  const ratio = width / height;
+  return Math.abs(ratio - recommendedRatio) / recommendedRatio > tolerance;
+}
+
 export function heroImageAltFromConfig(
   cfg: Record<string, unknown> | null | undefined,
   fallback: string,
@@ -138,8 +216,21 @@ export function buildHeroConfigPayload(
   heroImageAlt: string,
   fallbackImage: string,
   fallbackAlt: string,
-  carouselIntervalMs: number = DEFAULT_CAROUSEL_INTERVAL_MS,
+  options: {
+    carouselIntervalMs?: number;
+    desktopHeightPx?: number;
+    mobileHeightPx?: number;
+    imageFit?: HeroImageFit;
+  } = {},
 ): Record<string, unknown> {
+  const carouselIntervalMs = parseCarouselIntervalMs({
+    carouselIntervalMs: options.carouselIntervalMs,
+  });
+  const layout = parseHeroCarouselLayout({
+    heroDesktopHeightPx: options.desktopHeightPx,
+    heroMobileHeightPx: options.mobileHeightPx,
+    heroImageFit: options.imageFit,
+  });
   const cleaned = sortHeroSlideInputs(
     slides
       .map((slide, index) => ({
@@ -169,7 +260,10 @@ export function buildHeroConfigPayload(
     })),
     heroImage: firstActive,
     heroImageAlt: heroImageAlt.trim() || fallbackAlt,
-    carouselIntervalMs: parseCarouselIntervalMs({ carouselIntervalMs }),
+    carouselIntervalMs,
+    heroDesktopHeightPx: layout.desktopHeightPx,
+    heroMobileHeightPx: layout.mobileHeightPx,
+    heroImageFit: layout.imageFit,
   };
 }
 

@@ -1,28 +1,33 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { HeroSlideResolved } from '@/lib/homepageHero';
+import type { HeroCarouselLayout, HeroImageFit, HeroSlideResolved } from '@/lib/homepageHero';
 import { DEFAULT_CAROUSEL_INTERVAL_MS } from '@/lib/homepageHero';
 
 type HeroCarouselProps = {
   slides: HeroSlideResolved[];
   intervalMs?: number;
+  layout?: HeroCarouselLayout;
 };
 
 function SlideImage({
   slide,
+  imageFit,
   onError,
 }: {
   slide: HeroSlideResolved;
+  imageFit: HeroImageFit;
   onError: () => void;
 }) {
+  const fitClass = imageFit === 'contain' ? 'object-contain' : 'object-cover';
+
   const image = (
     <picture className="absolute inset-0 block h-full w-full">
       <source media="(min-width: 1024px)" srcSet={slide.src} />
       <img
-        key={`${slide.src}-${slide.mobileSrc}`}
+        key={`${slide.src}-${slide.mobileSrc}-${imageFit}`}
         src={slide.mobileSrc}
         alt={slide.alt}
-        className="block h-full w-full object-cover object-center"
+        className={`block h-full w-full ${fitClass} object-center`}
         loading="eager"
         decoding="async"
         onError={onError}
@@ -48,11 +53,18 @@ function SlideImage({
   return <div className="absolute inset-0">{image}</div>;
 }
 
-export function HeroCarousel({ slides, intervalMs = DEFAULT_CAROUSEL_INTERVAL_MS }: HeroCarouselProps) {
+export function HeroCarousel({
+  slides,
+  intervalMs = DEFAULT_CAROUSEL_INTERVAL_MS,
+  layout,
+}: HeroCarouselProps) {
   const [index, setIndex] = useState(0);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const count = slides.length;
   const safeInterval = Number.isFinite(intervalMs) && intervalMs >= 2000 ? intervalMs : DEFAULT_CAROUSEL_INTERVAL_MS;
+  const desktopHeightPx = layout?.desktopHeightPx ?? 650;
+  const mobileHeightPx = layout?.mobileHeightPx ?? 520;
+  const imageFit = layout?.imageFit ?? 'cover';
 
   const go = useCallback(
     (next: number) => {
@@ -86,15 +98,18 @@ export function HeroCarousel({ slides, intervalMs = DEFAULT_CAROUSEL_INTERVAL_MS
   return (
     <div className="relative w-full max-w-full overflow-hidden">
       <div
-        className="relative w-full overflow-hidden
-          aspect-[21/9] min-h-[140px]
-          sm:min-h-[180px]
-          md:min-h-[240px]
-          lg:min-h-[300px]
-          xl:min-h-[360px]"
+        className="hero-carousel-viewport relative w-full overflow-hidden"
+        style={{
+          ['--hero-h-mobile' as string]: `${mobileHeightPx}px`,
+          ['--hero-h-desktop' as string]: `${desktopHeightPx}px`,
+        }}
       >
         {!showFailed ? (
-          <SlideImage slide={current} onError={() => setFailedSrc(current.src)} />
+          <SlideImage
+            slide={current}
+            imageFit={imageFit}
+            onError={() => setFailedSrc(current.src)}
+          />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-200 px-4 text-center text-sm text-slate-500">
             Görsel yüklenemedi

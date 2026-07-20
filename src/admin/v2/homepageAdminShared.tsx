@@ -21,7 +21,9 @@ import {
   buildHeroConfigPayload,
   DEFAULT_CAROUSEL_INTERVAL_MS,
   parseCarouselIntervalMs,
+  parseHeroCarouselLayout,
   parseHeroSlidesFromConfig,
+  type HeroImageFit,
   type HeroSlideInput,
 } from '@/lib/homepageHero';
 
@@ -43,6 +45,9 @@ export type SectionDraft = {
   heroImage: string;
   heroImageAlt: string;
   carouselIntervalMs: number;
+  heroDesktopHeightPx: number;
+  heroMobileHeightPx: number;
+  heroImageFit: HeroImageFit;
   benefitsText: string;
   sortOrder: string;
   isActive: boolean;
@@ -69,6 +74,7 @@ export function draftFromSection(section: AdminHomepageSectionRow): SectionDraft
       : typeof cfg.image === 'string'
         ? cfg.image
         : '';
+  const heroLayout = parseHeroCarouselLayout(cfg);
   return {
     title: section.title ?? '',
     eyebrow: section.eyebrow ?? '',
@@ -78,9 +84,50 @@ export function draftFromSection(section: AdminHomepageSectionRow): SectionDraft
     heroImage: heroImages.find((slide) => slide.isActive)?.url || heroImages[0]?.url || legacyImage,
     heroImageAlt: typeof cfg.heroImageAlt === 'string' ? cfg.heroImageAlt : '',
     carouselIntervalMs: parseCarouselIntervalMs(cfg),
+    heroDesktopHeightPx: heroLayout.desktopHeightPx,
+    heroMobileHeightPx: heroLayout.mobileHeightPx,
+    heroImageFit: heroLayout.imageFit,
     benefitsText: benefits,
     sortOrder: String(section.sortOrder),
     isActive: section.isActive,
+  };
+}
+
+/** Ana Sayfa Yönetimi metin kaydında hero görsel/carousel alanlarını DB’den korur. */
+export function withPreservedHeroImageFields(
+  draft: SectionDraft,
+  existing: Record<string, unknown> | null | undefined,
+): SectionDraft {
+  if (!existing) return draft;
+
+  const heroSlides = parseHeroSlidesFromConfig(existing, { includeInactive: true });
+  const heroImages: HeroSlideDraft[] = heroSlides.map((s, index) => ({
+    url: s.url,
+    mobileUrl: s.mobileUrl ?? '',
+    alt: s.alt ?? '',
+    link: s.link ?? '',
+    isActive: s.isActive !== false,
+    sortOrder: typeof s.sortOrder === 'number' ? s.sortOrder : index,
+  }));
+  const legacyImage =
+    typeof existing.heroImage === 'string'
+      ? existing.heroImage
+      : typeof existing.image === 'string'
+        ? existing.image
+        : '';
+  const heroLayout = parseHeroCarouselLayout(existing);
+
+  return {
+    ...draft,
+    heroImages,
+    heroImage:
+      heroImages.find((slide) => slide.isActive)?.url || heroImages[0]?.url || legacyImage || draft.heroImage,
+    heroImageAlt:
+      typeof existing.heroImageAlt === 'string' ? existing.heroImageAlt : draft.heroImageAlt,
+    carouselIntervalMs: parseCarouselIntervalMs(existing),
+    heroDesktopHeightPx: heroLayout.desktopHeightPx,
+    heroMobileHeightPx: heroLayout.mobileHeightPx,
+    heroImageFit: heroLayout.imageFit,
   };
 }
 
@@ -104,7 +151,12 @@ export function buildConfigJson(
         draft.heroImageAlt,
         HERO_FALLBACK_IMAGE,
         HERO_FALLBACK_ALT,
-        draft.carouselIntervalMs || DEFAULT_CAROUSEL_INTERVAL_MS,
+        {
+          carouselIntervalMs: draft.carouselIntervalMs || DEFAULT_CAROUSEL_INTERVAL_MS,
+          desktopHeightPx: draft.heroDesktopHeightPx,
+          mobileHeightPx: draft.heroMobileHeightPx,
+          imageFit: draft.heroImageFit,
+        },
       ),
     );
   }

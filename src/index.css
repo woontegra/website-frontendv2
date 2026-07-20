@@ -45,6 +45,16 @@
     background: linear-gradient(135deg, #0f172a 0%, #123c3a 55%, #0f172a 100%);
   }
 
+  .hero-carousel-viewport {
+    height: var(--hero-h-mobile, 520px);
+  }
+
+  @media (min-width: 1024px) {
+    .hero-carousel-viewport {
+      height: var(--hero-h-desktop, 650px);
+    }
+  }
+
   .cta-section-bg {
     background: linear-gradient(135deg, #0f172a 0%, #134e4a 48%, #0f172a 100%);
   }
