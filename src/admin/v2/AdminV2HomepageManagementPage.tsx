@@ -40,7 +40,6 @@ import {
   TrustMetricsCmsGrid,
 } from '@/admin/v2/homepageCmsUi';
 import { isStaleHeroPlaceholderPath, parseHeroSlidesFromConfig } from '@/lib/homepageHero';
-import { syncAdminV2MediaFromCloudinary } from '@/lib/adminV2Media';
 import { textUsesTextarea } from '@/admin/v2/adminV2EditUi';
 
 const HOMEPAGE_SECTION_SAVE_LABELS: Record<string, string> = {
@@ -68,8 +67,6 @@ export function AdminV2HomepageManagementPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
-  const [syncingCloudinary, setSyncingCloudinary] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const { tokenPresent, revision, invalidateBundle } = useAdminToken();
 
   const load = useCallback(async () => {
@@ -169,35 +166,17 @@ export function AdminV2HomepageManagementPage() {
 
   const appendHeroSlide = (prev: SectionDraft, value: string, asset: AdminMediaAssetRow): SectionDraft => {
     const alt = asset.altText?.trim() ?? '';
-    const heroImages: HeroSlideDraft[] = [...prev.heroImages, { url: value, alt }];
+    const nextIndex = prev.heroImages.length;
+    const heroImages: HeroSlideDraft[] = [
+      ...prev.heroImages,
+      { url: value, alt, link: '', mobileUrl: '', isActive: true, sortOrder: nextIndex },
+    ];
     return {
       ...prev,
       heroImages,
-      heroImage: heroImages[0]?.url ?? value,
+      heroImage: heroImages.find((slide) => slide.isActive)?.url ?? value,
       heroImageAlt: prev.heroImageAlt || alt,
     };
-  };
-
-  const syncCloudinaryToMediaDb = async () => {
-    setSyncingCloudinary(true);
-    setSyncMessage(null);
-    setSaveError(null);
-    try {
-      const result = await syncAdminV2MediaFromCloudinary({
-        includeAll: true,
-        attachToHero: false,
-      });
-      setSyncMessage(
-        `Cloudinary: ${result.cloudinaryCount} görsel · medya tablosuna ${result.created} yeni kayıt. Hero için Düzenle → Görsel ekle ile seçin.`,
-      );
-      invalidateBundle();
-      await load();
-    } catch (err) {
-      const apiErr = err as ApiError;
-      setSaveError(apiErr.message ?? 'Cloudinary senkronizasyonu başarısız');
-    } finally {
-      setSyncingCloudinary(false);
-    }
   };
 
   const applyHeroMediaAdd = async (value: string, asset: AdminMediaAssetRow) => {
@@ -235,9 +214,16 @@ export function AdminV2HomepageManagementPage() {
   };
 
   const heroDraft = activeEdit === 'hero' ? draft : null;
-  const heroSlidesReadOnly: HeroSlideDraft[] = parseHeroSlidesFromConfig(hero?.config ?? null).map(
-    (s) => ({ url: s.url, alt: s.alt ?? '' }),
-  );
+  const heroSlidesReadOnly: HeroSlideDraft[] = parseHeroSlidesFromConfig(hero?.config ?? null, {
+    includeInactive: true,
+  }).map((slide, index) => ({
+    url: slide.url,
+    mobileUrl: slide.mobileUrl ?? '',
+    alt: slide.alt ?? '',
+    link: slide.link ?? '',
+    isActive: slide.isActive !== false,
+    sortOrder: typeof slide.sortOrder === 'number' ? slide.sortOrder : index,
+  }));
   const heroSlidesEdit = heroDraft?.heroImages ?? heroSlidesReadOnly;
   const heroCarouselWasReset =
     heroSlidesReadOnly.length === 0 &&
@@ -371,17 +357,13 @@ export function AdminV2HomepageManagementPage() {
                 {heroCarouselWasReset && (
                   <InfoBanner tone="info" className="mb-3">
                     Hero kaydında <code className="text-xs">heroImages</code> yok — sadece seed placeholder var.
-                    <strong> Düzenle</strong> → Cloudinary linki yapıştır veya <strong>Görsel ekle</strong> → Kaydet.
-                  </InfoBanner>
-                )}
-                {syncMessage && (
-                  <InfoBanner tone="success" className="mb-3">
-                    {syncMessage}
+                    <strong> Düzenle</strong> → görsel URL’si yapıştır veya <strong>Görsel ekle</strong> → Kaydet.
                   </InfoBanner>
                 )}
                 <CmsHeroCarouselEditor
                   slides={heroSlidesEdit}
                   heroImageAlt={draft.heroImageAlt}
+                  carouselIntervalMs={draft.carouselIntervalMs}
                   assets={mediaAssets}
                   onSlidesChange={(heroImages) =>
                     setDraft((d) =>
@@ -389,20 +371,21 @@ export function AdminV2HomepageManagementPage() {
                         ? {
                             ...d,
                             heroImages,
-                            heroImage: heroImages[0]?.url ?? '',
+                            heroImage: heroImages.find((slide) => slide.isActive)?.url ?? '',
                           }
                         : d,
                     )
                   }
                   onAltChange={(heroImageAlt) => setDraft((d) => (d ? { ...d, heroImageAlt } : d))}
+                  onIntervalChange={(carouselIntervalMs) =>
+                    setDraft((d) => (d ? { ...d, carouselIntervalMs } : d))
+                  }
                   onAddSlide={applyHeroMediaAdd}
                   pickDisabled={saving}
                   enableUpload
                   uploadUsageLabel="Ana sayfa hero görseli"
                   onAssetUploaded={mergeUploadedMediaAsset}
                   saving={saving}
-                  onSyncCloudinary={syncCloudinaryToMediaDb}
-                  syncingCloudinary={syncingCloudinary}
                 />
                 <HeroButtonsPreview />
                 <CmsSaveError message={saveError} />
@@ -417,7 +400,7 @@ export function AdminV2HomepageManagementPage() {
                 {heroSlidesReadOnly.length === 0 && (
                   <InfoBanner tone="info" className="mb-3">
                     Hero’da görsel yok (DB’de <code className="text-xs">heroImages</code> boş).{' '}
-                    <strong>Düzenle</strong> ile görsel ekleyin veya Medya sayfasından Cloudinary → DB senkronu yapıp
+                    <strong>Düzenle</strong> ile görsel ekleyin veya Medya sayfasından yükleyip seçin.
                     buradan seçin.
                   </InfoBanner>
                 )}
@@ -426,12 +409,18 @@ export function AdminV2HomepageManagementPage() {
                   heroImageAlt={
                     typeof hero.config?.heroImageAlt === 'string' ? hero.config.heroImageAlt : ''
                   }
+                  carouselIntervalMs={
+                    typeof hero.config?.carouselIntervalMs === 'number'
+                      ? hero.config.carouselIntervalMs
+                      : undefined
+                  }
                   assets={mediaAssets}
                   readOnly
                 />
-                {heroSlidesReadOnly.length > 1 && (
+                {heroSlidesReadOnly.filter((slide) => slide.isActive).length > 1 && (
                   <p className="mt-2 text-xs text-slate-500">
-                    {heroSlidesReadOnly.length} görsel carousel olarak canlı sitede gösterilir.
+                    {heroSlidesReadOnly.filter((slide) => slide.isActive).length} aktif görsel carousel
+                    olarak canlı sitede gösterilir.
                   </p>
                 )}
                 <HeroButtonsPreview />

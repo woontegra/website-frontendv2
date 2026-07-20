@@ -24,7 +24,7 @@ export function getBackendAssetOrigin(): string {
   return '';
 }
 
-/** imageUrl tek path veya JSON dizi: ["/uploads/a.png","https://res.cloudinary.com/..."] */
+/** imageUrl tek path veya JSON dizi: ["/uploads/a.png","https://…blob.vercel-storage.com/…"] */
 export function parseProductImageUrls(imageUrl?: string | null): string[] {
   const raw = (imageUrl || '').trim();
   if (!raw) return [];

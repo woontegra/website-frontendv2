@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  Images,
   Home,
   CircleDollarSign,
   Percent,
@@ -40,6 +41,12 @@ export const cmsNavItems: CmsNavItem[] = [
     label: 'Ana Sayfa Yönetimi',
     icon: Home,
     description: 'Hero, güven, modüller vitrini, Excel, alt CTA',
+  },
+  {
+    to: '/admin/v2/homepage/hero-images',
+    label: 'Ana Sayfa Hero Görselleri',
+    icon: Images,
+    description: 'Ana sayfa sağ görsel alanı — carousel ve tek görsel',
   },
   {
     to: '/admin/v2/calculations',
@@ -142,6 +149,7 @@ export const cmsNavItems: CmsNavItem[] = [
 const routeTitles: { match: (path: string) => boolean; title: string }[] = [
   { match: (p) => p === '/admin/v2/overview', title: 'Genel Bakış' },
   { match: (p) => p === '/admin/v2/homepage', title: 'Ana Sayfa Yönetimi' },
+  { match: (p) => p === '/admin/v2/homepage/hero-images', title: 'Ana Sayfa Hero Görselleri' },
   { match: (p) => p === '/admin/v2/calculations', title: 'Hesaplama Sayfaları' },
   { match: (p) => p === '/admin/v2/pricing', title: 'Fiyatlandırma' },
   {

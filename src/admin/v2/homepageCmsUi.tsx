@@ -272,8 +272,10 @@ export function CmsMediaBlock({
 export function CmsHeroCarouselEditor({
   slides,
   heroImageAlt,
+  carouselIntervalMs,
   onSlidesChange,
   onAltChange,
+  onIntervalChange,
   assets,
   onAddSlide,
   readOnly = false,
@@ -282,13 +284,13 @@ export function CmsHeroCarouselEditor({
   uploadUsageLabel,
   onAssetUploaded,
   saving,
-  onSyncCloudinary,
-  syncingCloudinary,
 }: {
   slides: HeroSlideDraft[];
   heroImageAlt: string;
+  carouselIntervalMs?: number;
   onSlidesChange?: (slides: HeroSlideDraft[]) => void;
   onAltChange?: (alt: string) => void;
+  onIntervalChange?: (intervalMs: number) => void;
   assets: AdminMediaAssetRow[];
   onAddSlide?: (value: string, asset: AdminMediaAssetRow) => void | Promise<void>;
   readOnly?: boolean;
@@ -297,10 +299,9 @@ export function CmsHeroCarouselEditor({
   uploadUsageLabel?: string;
   onAssetUploaded?: (asset: AdminMediaAssetRow) => void;
   saving?: boolean;
-  onSyncCloudinary?: () => void | Promise<void>;
-  syncingCloudinary?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [mobilePickerIndex, setMobilePickerIndex] = useState<number | null>(null);
   const [pasteUrl, setPasteUrl] = useState('');
   const [pasteError, setPasteError] = useState<string | null>(null);
 
@@ -311,24 +312,38 @@ export function CmsHeroCarouselEditor({
     const copy = [...slides];
     const [item] = copy.splice(index, 1);
     copy.splice(next, 0, item);
-    onSlidesChange(copy);
+    onSlidesChange(
+      copy.map((slide, slideIndex) => ({
+        ...slide,
+        sortOrder: slideIndex,
+      })),
+    );
   };
 
   const removeSlide = (index: number) => {
     if (!onSlidesChange) return;
-    onSlidesChange(slides.filter((_, i) => i !== index));
+    onSlidesChange(
+      slides
+        .filter((_, i) => i !== index)
+        .map((slide, slideIndex) => ({ ...slide, sortOrder: slideIndex })),
+    );
   };
 
-  const updateSlideAlt = (index: number, alt: string) => {
+  const updateSlideField = (
+    index: number,
+    patch: Partial<Pick<HeroSlideDraft, 'alt' | 'link' | 'isActive' | 'mobileUrl'>>,
+  ) => {
     if (!onSlidesChange) return;
-    onSlidesChange(slides.map((s, i) => (i === index ? { ...s, alt } : s)));
+    onSlidesChange(slides.map((slide, i) => (i === index ? { ...slide, ...patch } : slide)));
   };
+
+  const activeCount = slides.filter((slide) => slide.isActive).length;
 
   const addSlideFromUrl = (rawUrl: string) => {
     if (!onAddSlide) return;
     const url = rawUrl.trim();
     if (!/^https?:\/\//i.test(url)) {
-      setPasteError('Geçerli bir https:// görsel adresi girin (Cloudinary linki yapıştırabilirsiniz).');
+      setPasteError('Geçerli bir https:// görsel adresi girin (Blob medya URL’si).');
       return;
     }
     setPasteError(null);
@@ -350,11 +365,39 @@ export function CmsHeroCarouselEditor({
   return (
     <div className={`space-y-3 ${adminMutedPanelClass} p-3`}>
       <div>
-        <p className="text-[12px] font-medium text-[#5c6b7a]">Hero görselleri (carousel)</p>
+        <p className="text-[12px] font-medium text-[#5c6b7a]">Ana sayfa hero görselleri</p>
         <p className="mt-0.5 text-[11px] text-[#8a9aaa]">
-          Yatay, geniş görseller ekleyin. Canlı sitede otomatik slayt olarak döner.
+          Tek aktif görsel sabit gösterilir. Birden fazla aktif görselde otomatik carousel çalışır.
+          {activeCount > 0 && (
+            <span className="ml-1 font-medium text-[#0f5c56]">
+              ({activeCount} aktif / {slides.length} toplam)
+            </span>
+          )}
         </p>
       </div>
+
+      {!readOnly && onIntervalChange && (
+        <FieldGroup label="Otomatik geçiş süresi (ms)" hint="2000–30000 arası; yalnızca 2+ aktif görselde uygulanır">
+          <input
+            type="number"
+            min={2000}
+            max={30000}
+            step={500}
+            value={carouselIntervalMs ?? 5500}
+            disabled={saving}
+            onChange={(e) => {
+              const next = Number.parseInt(e.target.value, 10);
+              if (Number.isFinite(next)) onIntervalChange(next);
+            }}
+            className={`${adminInputClass} max-w-[12rem]`}
+          />
+        </FieldGroup>
+      )}
+      {readOnly && carouselIntervalMs != null && (
+        <p className="text-xs text-slate-600">
+          Otomatik geçiş: <span className="font-medium">{carouselIntervalMs} ms</span>
+        </p>
+      )}
 
       {slides.length === 0 ? (
         <p className="text-sm text-slate-500">Henüz görsel yok. İlk görseli ekleyin.</p>
@@ -363,26 +406,104 @@ export function CmsHeroCarouselEditor({
           {slides.map((slide, index) => (
             <li
               key={`${slide.url}-${index}`}
-              className="flex flex-col gap-2 rounded-lg border border-[#dbe4ea] bg-white p-2.5 sm:flex-row sm:items-center"
+              className={`flex flex-col gap-3 rounded-lg border bg-white p-3 sm:flex-row sm:items-start ${
+                slide.isActive ? 'border-[#dbe4ea]' : 'border-amber-200 bg-amber-50/40'
+              }`}
             >
-              <CmsMediaThumb assets={assets} value={slide.url} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-mono text-[11px] text-[#5c6b7a]">{slide.url}</p>
+              <div className="flex min-w-0 flex-1 flex-col gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+                    Sıra {slide.sortOrder + 1}
+                  </span>
+                  {!slide.isActive && (
+                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                      Pasif
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex gap-2 sm:gap-3">
+                  <CmsMediaThumb assets={assets} value={slide.url} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-medium text-[#5c6b7a]">Masaüstü görseli</p>
+                    <p className="mt-0.5 truncate font-mono text-[11px] text-[#5c6b7a]">{slide.url}</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 sm:gap-3">
+                  <CmsMediaThumb assets={assets} value={slide.mobileUrl || slide.url} />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <p className="text-[12px] font-medium text-[#5c6b7a]">Mobil görseli</p>
+                    {!readOnly && onSlidesChange ? (
+                      <>
+                        <input
+                          type="url"
+                          value={slide.mobileUrl}
+                          onChange={(e) => updateSlideField(index, { mobileUrl: e.target.value })}
+                          disabled={saving}
+                          placeholder="Boş bırakılırsa masaüstü görseli kullanılır"
+                          className={`${adminInputClass} font-mono text-xs`}
+                        />
+                        <ActionButton
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          disabled={pickDisabled || saving}
+                          onClick={() => setMobilePickerIndex(index)}
+                        >
+                          Mobil görsel seç
+                        </ActionButton>
+                      </>
+                    ) : slide.mobileUrl ? (
+                      <p className="truncate font-mono text-[11px] text-[#5c6b7a]">{slide.mobileUrl}</p>
+                    ) : (
+                      <p className="text-[11px] text-[#8a9aaa]">Masaüstü görseli kullanılıyor</p>
+                    )}
+                  </div>
+                </div>
+
                 {!readOnly && onSlidesChange ? (
-                  <input
-                    type="text"
-                    value={slide.alt}
-                    onChange={(e) => updateSlideAlt(index, e.target.value)}
-                    disabled={saving}
-                    placeholder="Slayt alt metni (isteğe bağlı)"
-                    className={`${adminInputClass} mt-1.5 text-xs`}
-                  />
-                ) : slide.alt ? (
-                  <p className="mt-1 text-xs text-slate-600">{slide.alt}</p>
-                ) : null}
+                  <>
+                    <div>
+                      <p className="mb-1 text-[12px] font-medium text-[#5c6b7a]">Alt metin</p>
+                      <input
+                        type="text"
+                        value={slide.alt}
+                        onChange={(e) => updateSlideField(index, { alt: e.target.value })}
+                        disabled={saving}
+                        placeholder="Alternatif metin"
+                        className={`${adminInputClass} text-xs`}
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={slide.link}
+                      onChange={(e) => updateSlideField(index, { link: e.target.value })}
+                      disabled={saving}
+                      placeholder="İsteğe bağlı bağlantı (/fiyatlandirma veya https://…)"
+                      className={`${adminInputClass} font-mono text-xs`}
+                    />
+                    <label className="flex items-center gap-2 text-[12px] text-[#334155]">
+                      <input
+                        type="checkbox"
+                        checked={slide.isActive}
+                        disabled={saving}
+                        onChange={(e) => updateSlideField(index, { isActive: e.target.checked })}
+                      />
+                      Aktif (canlı sitede göster)
+                    </label>
+                  </>
+                ) : (
+                  <>
+                    {slide.alt ? <p className="text-xs text-slate-600">Alt: {slide.alt}</p> : null}
+                    {slide.link ? (
+                      <p className="truncate font-mono text-xs text-sky-800">{slide.link}</p>
+                    ) : null}
+                  </>
+                )}
               </div>
               {!readOnly && onSlidesChange && (
-                <div className="flex shrink-0 gap-1 self-end sm:self-center">
+                <div className="flex shrink-0 gap-1 self-end sm:self-start">
                   <button
                     type="button"
                     disabled={saving || index === 0}
@@ -420,13 +541,13 @@ export function CmsHeroCarouselEditor({
       {!readOnly && onAddSlide && (
         <>
           <div className="space-y-2 rounded-lg border border-dashed border-[#cfe0db] bg-white/80 p-3">
-            <p className="text-[12px] font-medium text-[#5c6b7a]">Cloudinary linki yapıştır</p>
+            <p className="text-[12px] font-medium text-[#5c6b7a]">Görsel URL’si yapıştır</p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="url"
                 value={pasteUrl}
                 disabled={pickDisabled || saving}
-                placeholder="https://res.cloudinary.com/..."
+                placeholder="https://…blob.vercel-storage.com/…"
                 className={`${adminInputClass} flex-1 font-mono text-xs`}
                 onChange={(e) => {
                   setPasteUrl(e.target.value);
@@ -464,24 +585,6 @@ export function CmsHeroCarouselEditor({
             >
               Görsel ekle
             </ActionButton>
-            {onSyncCloudinary && (
-              <ActionButton
-                variant="ghost"
-                size="sm"
-                type="button"
-                disabled={pickDisabled || saving || syncingCloudinary}
-                onClick={() => void onSyncCloudinary()}
-              >
-                {syncingCloudinary ? (
-                  <>
-                    <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" />
-                    Cloudinary senkron…
-                  </>
-                ) : (
-                  'Cloudinary → medya DB'
-                )}
-              </ActionButton>
-            )}
           </div>
           <MediaPickerModal
             open={pickerOpen}
@@ -498,6 +601,23 @@ export function CmsHeroCarouselEditor({
             }}
           />
         </>
+      )}
+
+      {mobilePickerIndex !== null && onSlidesChange && (
+        <MediaPickerModal
+          open={mobilePickerIndex !== null}
+          onClose={() => setMobilePickerIndex(null)}
+          assets={assets}
+          title="Mobil hero görseli seç"
+          enableUpload={enableUpload}
+          autoSelectAfterUpload
+          uploadUsageLabel={uploadUsageLabel}
+          onAssetUploaded={onAssetUploaded}
+          onSelect={(_asset, value) => {
+            updateSlideField(mobilePickerIndex, { mobileUrl: value });
+            setMobilePickerIndex(null);
+          }}
+        />
       )}
 
       <FieldGroup

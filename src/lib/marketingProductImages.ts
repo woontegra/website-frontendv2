@@ -124,7 +124,7 @@ function isLikelyBrokenLocalPlaceholder(url: string): boolean {
   return /^\/images\/product-\d+/i.test(url);
 }
 
-/** Satın Al: ürün imageUrl (admin) öncelikli — Cloudinary https ve /uploads */
+/** Satın Al: ürün imageUrl (admin) öncelikli — Blob https ve /uploads */
 export function getSatinAlDisplayImages(imageUrl?: string | null): string[] {
   const fromAdmin = parseProductImageUrls(imageUrl)
     .filter((u) => !isLikelyBrokenLocalPlaceholder(u))

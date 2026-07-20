@@ -142,7 +142,7 @@ ${legalSection(`
   <li><strong>PayTR:</strong> Online ödeme işlemlerinin güvenli yürütülmesi; ödeme sırasında PayTR çerezleri kullanılabilir.</li>
   <li><strong>Gmail API / e-posta gönderimi:</strong> Bilgilendirme, demo, abonelik ve destek e-postalarının iletilmesi.</li>
   <li><strong>Google Fonts:</strong> Public sitede yazı tiplerinin tutarlı gösterilmesi (teknik/görsel hizmet).</li>
-  <li><strong>Cloudinary:</strong> Görsellerin ve medya dosyalarının CDN üzerinden sunulması.</li>
+  <li><strong>Vercel Blob:</strong> Görsellerin ve medya dosyalarının depolanması ve sunulması.</li>
   <li><strong>Meta Pixel:</strong> Yalnızca <strong>public website</strong> ziyaretçileri için ve <strong>pazarlama çerezlerine onay</strong> verilmesi halinde; program/panel oturumunda Meta Pixel çalıştırılmaz.</li>
 </ul>
 ${legalNote(`<p><strong>Kullanılmayan veya farklı yapılandırılan hizmetler:</strong> Public tanıtım sitesinde Google Analytics (GA) veya Google Tag Manager (GTM) <strong>kullanılmamaktadır</strong>. Google reCAPTCHA <strong>bulunmamaktadır</strong>. Canlı destek / sohbet, üçüncü taraf bir widget yerine <strong>kendi sistemimiz</strong> üzerinden (sunucu taraflı chat ve ticket altyapısı) sunulur.</p>`)}
@@ -196,7 +196,7 @@ ${legalTableBox('', cookiePolicyMasterTableHtml(), 'public')}
   <li><strong><code>page_views</code>:</strong> Sunucu taraflı sayfa görüntüleme kaydıdır; tarayıcı çerezi değildir. Kayıt <strong>yalnızca analitik onayı</strong> sonrası <code>/api/tracking/pageview</code> ile gönderilir.</li>
   <li><strong>Meta Pixel / <code>fbevents.js</code> / <code>_fbp</code> / <code>_fbc</code>:</strong> <strong>Yalnızca pazarlama (reklam) onayı</strong> sonrası yüklenir ve çalışır. Onay geri alındığında Pixel devre dışı bırakılır ve mümkün olduğu ölçüde Meta çerezleri temizlenir.</li>
   <li><strong>PayTR çerezleri:</strong> <strong>Yalnızca ödeme sürecinde</strong> (ödeme sayfası veya iframe) kullanılabilir; işlem tamamlandıktan sonra tarayıcıda kalması PayTR politikasına tabidir.</li>
-  <li><strong>Google Fonts ve Cloudinary:</strong> Teknik ve görsel içerik sunumu için kullanılan üçüncü taraf hizmetlerdir; zorunlu/teknik hizmet kapsamında değerlendirilir.</li>
+  <li><strong>Google Fonts ve Vercel Blob:</strong> Teknik ve görsel içerik sunumu için kullanılan üçüncü taraf hizmetlerdir; zorunlu/teknik hizmet kapsamında değerlendirilir.</li>
   <li><strong><code>bh_site_branding_v1</code>:</strong> Site marka/görünüm tercihinin hatırlanması için zorunlu teknik kayıt.</li>
 </ul>
 
@@ -328,7 +328,7 @@ ${legalSection(`
 
 ${legalSection(`
 <h2>6. Yurt Dışına Veri Aktarımı</h2>
-<p>Web sitemizde kullanılan bazı teknik hizmetler, CDN, font, reklam ve analiz servisleri yurt dışında bulunan sunucular üzerinden hizmet verebilir. Bu kapsamda Google Fonts, Cloudinary ve Meta Pixel gibi üçüncü taraf servisler aracılığıyla sınırlı teknik veriler yurt dışına aktarılabilir.</p>
+<p>Web sitemizde kullanılan bazı teknik hizmetler, CDN, font, reklam ve analiz servisleri yurt dışında bulunan sunucular üzerinden hizmet verebilir. Bu kapsamda Google Fonts, Vercel Blob ve Meta Pixel gibi üçüncü taraf servisler aracılığıyla sınırlı teknik veriler yurt dışına aktarılabilir.</p>
 <p>Pazarlama amaçlı üçüncü taraf servisler, yalnızca ilgili çerez kategorisine onay vermeniz halinde aktif hale gelir. Zorunlu teknik hizmetler ise sitenin güvenli ve düzgün çalışması için gerekli olduğu ölçüde kullanılabilir.</p>
 `)}
 

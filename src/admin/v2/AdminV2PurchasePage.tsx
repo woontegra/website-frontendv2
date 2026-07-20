@@ -345,7 +345,7 @@ export function AdminV2PurchasePage() {
 
           <SectionCard
             title="Ürün galerisi"
-            description="Satın al sayfasındaki ürün görselleri (Cloudinary; JPEG/PNG/WEBP, en fazla 5 MB)"
+            description="Satın al sayfasındaki ürün görselleri (Vercel Blob; JPEG/PNG/WEBP, en fazla 5 MB)"
           >
             <div className="flex flex-wrap gap-2">
               <label

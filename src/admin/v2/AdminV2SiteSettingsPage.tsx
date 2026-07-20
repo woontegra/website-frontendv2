@@ -88,7 +88,7 @@ function GeneralTab() {
         altText: field === 'logoUrl' ? 'Site logosu' : 'Site favicon',
       });
       const url = dto.fileUrl?.trim();
-      if (!url) throw new Error('Cloudinary URL alınamadı');
+      if (!url) throw new Error('Blob görsel URL alınamadı');
       const next = data ? { ...data, [field]: url } : data;
       if (!next) throw new Error('Ayarlar yüklenemedi');
       setData(next);

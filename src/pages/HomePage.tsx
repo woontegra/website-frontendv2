@@ -10,7 +10,7 @@ import {
   resolveHomepageExcel,
   resolveHomepageFaqPreviewHeading,
   resolveHomepageHero,
-  resolveHomepageHeroCtaButtons,
+  resolveHomepageHeroCarouselInterval,
   resolveHomepageHeroSlides,
   resolveHomepageModulesHeading,
   resolveHomepagePricingCta,
@@ -29,8 +29,8 @@ export default function HomePage() {
     HOME_HERO_IMAGE_FALLBACK,
     HOME_HERO_ALT_FALLBACK,
   );
+  const heroCarouselIntervalMs = resolveHomepageHeroCarouselInterval(content);
   const heroCopy = resolveHomepageHero(content);
-  const heroButtons = resolveHomepageHeroCtaButtons(content);
   const modulesHeading = resolveHomepageModulesHeading(content);
   const excel = resolveHomepageExcel(content, HOME_EXCEL_IMAGE_FALLBACK);
   const pricingCta = resolveHomepagePricingCta(content);
@@ -45,7 +45,7 @@ export default function HomePage() {
 
   return (
     <>
-      <HeroSection slides={heroSlides} {...heroCopy} buttons={heroButtons} />
+      <HeroSection slides={heroSlides} carouselIntervalMs={heroCarouselIntervalMs} />
       <TrustSection headline={trust.headline} metrics={trust.metrics} />
       <ModulesSection {...modulesHeading} />
       <ExcelSection {...excel} />

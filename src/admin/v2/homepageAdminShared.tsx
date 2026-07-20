@@ -19,11 +19,20 @@ import {
 import { adminV2Patch, ADMIN_V2_PATCH_ROUTES, parseAdminNumericId } from '@/lib/adminV2Patch';
 import {
   buildHeroConfigPayload,
+  DEFAULT_CAROUSEL_INTERVAL_MS,
+  parseCarouselIntervalMs,
   parseHeroSlidesFromConfig,
   type HeroSlideInput,
 } from '@/lib/homepageHero';
 
-export type HeroSlideDraft = { url: string; alt: string };
+export type HeroSlideDraft = {
+  url: string;
+  mobileUrl: string;
+  alt: string;
+  link: string;
+  isActive: boolean;
+  sortOrder: number;
+};
 
 export type SectionDraft = {
   title: string;
@@ -33,6 +42,7 @@ export type SectionDraft = {
   heroImages: HeroSlideDraft[];
   heroImage: string;
   heroImageAlt: string;
+  carouselIntervalMs: number;
   benefitsText: string;
   sortOrder: string;
   isActive: boolean;
@@ -44,10 +54,14 @@ const HERO_FALLBACK_ALT = 'Bilirkişi Hesap yönetim paneli önizlemesi';
 export function draftFromSection(section: AdminHomepageSectionRow): SectionDraft {
   const cfg = section.config ?? {};
   const benefits = Array.isArray(cfg.benefits) ? (cfg.benefits as string[]).join('\n') : '';
-  const heroSlides = parseHeroSlidesFromConfig(cfg);
-  const heroImages: HeroSlideDraft[] = heroSlides.map((s) => ({
+  const heroSlides = parseHeroSlidesFromConfig(cfg, { includeInactive: true });
+  const heroImages: HeroSlideDraft[] = heroSlides.map((s, index) => ({
     url: s.url,
+    mobileUrl: s.mobileUrl ?? '',
     alt: s.alt ?? '',
+    link: s.link ?? '',
+    isActive: s.isActive !== false,
+    sortOrder: typeof s.sortOrder === 'number' ? s.sortOrder : index,
   }));
   const legacyImage =
     typeof cfg.heroImage === 'string'
@@ -61,8 +75,9 @@ export function draftFromSection(section: AdminHomepageSectionRow): SectionDraft
     subtitle: section.subtitle ?? '',
     description: section.description ?? '',
     heroImages,
-    heroImage: heroImages[0]?.url || legacyImage,
+    heroImage: heroImages.find((slide) => slide.isActive)?.url || heroImages[0]?.url || legacyImage,
     heroImageAlt: typeof cfg.heroImageAlt === 'string' ? cfg.heroImageAlt : '',
+    carouselIntervalMs: parseCarouselIntervalMs(cfg),
     benefitsText: benefits,
     sortOrder: String(section.sortOrder),
     isActive: section.isActive,
@@ -75,12 +90,22 @@ export function buildConfigJson(
   existing: Record<string, unknown> | null,
 ): string {
   if (sectionKey === 'hero') {
-    const slides: HeroSlideInput[] = draft.heroImages.map((s) => ({
+    const slides: HeroSlideInput[] = draft.heroImages.map((s, index) => ({
       url: s.url,
+      mobileUrl: s.mobileUrl,
       alt: s.alt,
+      link: s.link,
+      isActive: s.isActive,
+      sortOrder: Number.isFinite(s.sortOrder) ? s.sortOrder : index,
     }));
     return JSON.stringify(
-      buildHeroConfigPayload(slides, draft.heroImageAlt, HERO_FALLBACK_IMAGE, HERO_FALLBACK_ALT),
+      buildHeroConfigPayload(
+        slides,
+        draft.heroImageAlt,
+        HERO_FALLBACK_IMAGE,
+        HERO_FALLBACK_ALT,
+        draft.carouselIntervalMs || DEFAULT_CAROUSEL_INTERVAL_MS,
+      ),
     );
   }
   if (sectionKey === 'excel') {

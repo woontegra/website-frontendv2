@@ -7,6 +7,7 @@ import { AdminV2FooterPage } from '@/admin/v2/AdminV2FooterPage';
 import { AdminLegacyRedirect } from '@/admin/v2/AdminLegacyRedirects';
 import { AdminV2OverviewPage } from '@/admin/v2/AdminV2OverviewPage';
 import { AdminV2HomepageManagementPage } from '@/admin/v2/AdminV2HomepageManagementPage';
+import { AdminV2HeroImagesPage } from '@/admin/v2/AdminV2HeroImagesPage';
 import { AdminV2HomepagePage } from '@/admin/v2/AdminV2HomepagePage';
 import { AdminV2SettingsPage } from '@/admin/v2/AdminV2SettingsPage';
 import { AdminV2SiteSettingsPage } from '@/admin/v2/AdminV2SiteSettingsPage';
@@ -68,6 +69,7 @@ export default function App() {
           {/* Ana CMS menüsü */}
           <Route path="overview" element={<AdminV2OverviewPage />} />
         <Route path="homepage" element={<AdminV2HomepageManagementPage />} />
+        <Route path="homepage/hero-images" element={<AdminV2HeroImagesPage />} />
         <Route path="calculations" element={<AdminV2ModulesPage />} />
         <Route path="pricing" element={<AdminV2PricingPage />} />
         <Route path="campaigns" element={<AdminV2CampaignsPage />} />

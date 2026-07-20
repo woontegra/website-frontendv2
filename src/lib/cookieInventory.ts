@@ -74,8 +74,8 @@ export const PUBLIC_COOKIE_INVENTORY: CookieInventoryItem[] = [
     consentRequirement: 'Zorunlu, kapatılamaz',
   },
   {
-    name: 'Cloudinary CDN',
-    provider: 'Cloudinary',
+    name: 'Vercel Blob',
+    provider: 'Vercel',
     type: 'Ağ/CDN isteği',
     category: 'necessary',
     legalCategory: 'Zorunlu içerik hizmeti',

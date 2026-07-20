@@ -30,6 +30,7 @@ import { config } from './config';
 import {
   heroImageAltFromConfig,
   isStaleHeroPlaceholderPath,
+  parseCarouselIntervalMs,
   parseHeroSlidesFromConfig,
   type HeroSlideResolved,
 } from './homepageHero';
@@ -631,7 +632,7 @@ export function resolveHomepageHeroAlt(content: ContentBundleView, fallback: str
   return asset?.altText?.trim() || fallback;
 }
 
-/** Ana sayfa hero carousel slaytları. */
+/** Ana sayfa hero carousel slaytları (yalnız aktif görseller). */
 export function resolveHomepageHeroSlides(
   content: ContentBundleView,
   fallbackUrl: string,
@@ -640,12 +641,12 @@ export function resolveHomepageHeroSlides(
   const hero = getHomepageSection(content, 'hero');
   const cfg = hero?.config ?? null;
   const defaultAlt = heroImageAltFromConfig(cfg, fallbackAlt);
-  let inputs = parseHeroSlidesFromConfig(cfg);
+  let inputs = parseHeroSlidesFromConfig(cfg, { includeInactive: false });
 
   if (inputs.length === 0) {
     const asset = getMediaAssetByKey(content, 'home.hero.image');
     if (asset?.fileUrl?.trim()) {
-      inputs = [{ url: asset.fileUrl.trim() }];
+      inputs = [{ url: asset.fileUrl.trim(), isActive: true }];
     }
   }
 
@@ -655,9 +656,15 @@ export function resolveHomepageHeroSlides(
     const src = resolveConfigImageUrl(content, slide.url, fallbackUrl).trim();
     if (!src || isStaleHeroPlaceholderPath(src) || seen.has(src)) continue;
     seen.add(src);
+    const mobileRaw = slide.mobileUrl?.trim();
+    const mobileResolved = mobileRaw
+      ? resolveConfigImageUrl(content, mobileRaw, fallbackUrl).trim()
+      : '';
     resolved.push({
       src,
+      mobileSrc: mobileResolved && !isStaleHeroPlaceholderPath(mobileResolved) ? mobileResolved : src,
       alt: slide.alt?.trim() || defaultAlt,
+      ...(slide.link?.trim() ? { link: slide.link.trim() } : {}),
     });
   }
 
@@ -666,9 +673,15 @@ export function resolveHomepageHeroSlides(
   return [
     {
       src: resolveConfigImageUrl(content, null, fallbackUrl),
+      mobileSrc: resolveConfigImageUrl(content, null, fallbackUrl),
       alt: defaultAlt,
     },
   ];
+}
+
+export function resolveHomepageHeroCarouselInterval(content: ContentBundleView): number {
+  const cfg = getHomepageSection(content, 'hero')?.config ?? null;
+  return parseCarouselIntervalMs(cfg);
 }
 
 const DEFAULT_HERO_EYEBROW =

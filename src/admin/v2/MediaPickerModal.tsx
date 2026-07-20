@@ -22,7 +22,7 @@ type MediaPickerModalProps = {
   assets: AdminMediaAssetRow[];
   onSelect: (asset: AdminMediaAssetRow, value: string) => void;
   title?: string;
-  /** Hero vb. — modal içinden Cloudinary yükleme */
+  /** Hero vb. — modal içinden Blob yükleme */
   enableUpload?: boolean;
   /** true: yükleme bitince otomatik seç (hero slayt ekleme) */
   autoSelectAfterUpload?: boolean;
@@ -212,7 +212,7 @@ export function MediaPickerModal({
               <div>
                 <p className="text-[13px] font-semibold text-[#1e2a3a]">Yeni görsel yükle</p>
                 <p className="mt-0.5 text-[12px] text-[#5c6b7a]">
-                  Kullanım: {uploadUsageLabel} · Cloudinary&apos;de saklanır (JPEG, PNG, WEBP, SVG · max 5
+                  Kullanım: {uploadUsageLabel} · Vercel Blob&apos;da saklanır (JPEG, PNG, WEBP, SVG · max 5
                   MB)
                 </p>
               </div>

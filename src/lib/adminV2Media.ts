@@ -117,6 +117,50 @@ export async function updateAdminV2Media(
   return json.data;
 }
 
+export async function deleteAdminV2MediaBlob(id: number): Promise<void> {
+  const json = await apiRequest<Envelope<unknown>>(
+    `/api/admin/v2/media/${encodeURIComponent(String(id))}/blob`,
+    {
+      method: 'DELETE',
+      headers: authHeaders(),
+    },
+  );
+  if (!json.success) {
+    throw new Error(json.message ?? 'Medya silinemedi');
+  }
+}
+
+export type BlobStoreListResult = {
+  blobs: Array<{
+    url: string;
+    pathname: string;
+    size: number;
+    uploadedAt: string | Date;
+  }>;
+  cursor?: string;
+  hasMore: boolean;
+};
+
+export async function listAdminV2BlobStore(options?: {
+  prefix?: string;
+  limit?: number;
+  cursor?: string;
+}): Promise<BlobStoreListResult> {
+  const params = new URLSearchParams();
+  if (options?.prefix?.trim()) params.set('prefix', options.prefix.trim());
+  if (options?.limit != null) params.set('limit', String(options.limit));
+  if (options?.cursor?.trim()) params.set('cursor', options.cursor.trim());
+  const qs = params.toString();
+  const json = await apiRequest<Envelope<BlobStoreListResult>>(
+    `/api/admin/v2/media/blob-store${qs ? `?${qs}` : ''}`,
+    { method: 'GET', headers: authHeaders() },
+  );
+  if (!json.success || !json.data) {
+    throw new Error(json.message ?? 'Blob medya listesi alınamadı');
+  }
+  return json.data;
+}
+
 export function shortenUrl(url: string, max = 48): string {
   if (url.length <= max) return url;
   return `${url.slice(0, max - 3)}…`;
@@ -136,7 +180,6 @@ export function validateMediaUploadFile(file: File): string | null {
   return null;
 }
 
-/** Cloudinary upload yanıtı → admin medya satırı */
 export function mediaDtoToAdminRow(
   dto: MediaAssetDto,
   title?: string | null,
@@ -170,6 +213,8 @@ export async function uploadAdminV2Media(body: {
   altText?: string;
   sortOrder?: number;
   isActive?: boolean;
+  storageFolder?: string;
+  isMobileHero?: boolean;
 }): Promise<MediaAssetDto> {
   const fileError = validateMediaUploadFile(body.file);
   if (fileError) throw new Error(fileError);
@@ -186,6 +231,8 @@ export async function uploadAdminV2Media(body: {
   if (body.altText?.trim()) fd.append('altText', body.altText.trim());
   fd.append('sortOrder', String(body.sortOrder ?? 0));
   fd.append('isActive', body.isActive !== false ? 'true' : 'false');
+  if (body.storageFolder?.trim()) fd.append('storageFolder', body.storageFolder.trim());
+  if (body.isMobileHero) fd.append('isMobileHero', 'true');
 
   const url = resolveApiUrl('/api/admin/v2/media/upload');
   let response: Response;
@@ -218,37 +265,4 @@ export async function uploadAdminV2Media(body: {
     throw new Error(formatMediaCreateError(data?.message ?? 'Medya yüklemesi tamamlanamadı'));
   }
   return data.data;
-}
-
-export type CloudinarySyncResult = {
-  cloudinaryCount: number;
-  created: number;
-  skipped: number;
-  syncedUrls: number;
-  heroAttached: number;
-  includeAll: boolean;
-};
-
-/** Cloudinary'deki görselleri veritabanına aktarır; isteğe bağlı hero carousel'e bağlar. */
-export async function syncAdminV2MediaFromCloudinary(options?: {
-  includeAll?: boolean;
-  attachToHero?: boolean;
-  maxHeroSlides?: number;
-}): Promise<CloudinarySyncResult> {
-  const json = await apiRequest<Envelope<CloudinarySyncResult>>(
-    '/api/admin/v2/media/sync-cloudinary',
-    {
-      method: 'POST',
-      headers: authHeaders(),
-      body: {
-        includeAll: options?.includeAll === true,
-        attachToHero: options?.attachToHero === true,
-        maxHeroSlides: options?.maxHeroSlides,
-      },
-    },
-  );
-  if (!json.success || !json.data) {
-    throw new Error(json.message ?? 'Cloudinary senkronizasyonu başarısız');
-  }
-  return json.data;
 }
