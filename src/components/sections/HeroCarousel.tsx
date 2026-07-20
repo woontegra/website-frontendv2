@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { HeroCarouselLayout, HeroImageFit, HeroSlideResolved } from '@/lib/homepageHero';
+import type { HeroCarouselLayout, HeroSlideResolved } from '@/lib/homepageHero';
 import {
   DEFAULT_CAROUSEL_INTERVAL_MS,
   DEFAULT_HERO_DESKTOP_HEIGHT_PX,
   DEFAULT_HERO_MOBILE_HEIGHT_PX,
-  HERO_DESKTOP_DESIGN_WIDTH_PX,
-  heroViewportAspectRatio,
 } from '@/lib/homepageHero';
 
 type HeroCarouselProps = {
@@ -17,23 +15,20 @@ type HeroCarouselProps = {
 
 function SlideImage({
   slide,
-  imageFit,
   onError,
 }: {
   slide: HeroSlideResolved;
-  imageFit: HeroImageFit;
   onError: () => void;
 }) {
-  const fitClass = imageFit === 'contain' ? 'object-contain' : 'object-cover';
-
+  // Genişliğe göre ölçeklenir; object-cover kullanılmaz → sağ/sol kırpılmaz.
   const image = (
-    <picture className="absolute inset-0 block h-full w-full">
+    <picture className="block w-full max-w-full">
       <source media="(min-width: 1024px)" srcSet={slide.src} />
       <img
-        key={`${slide.src}-${slide.mobileSrc}-${imageFit}`}
+        key={`${slide.src}-${slide.mobileSrc}`}
         src={slide.mobileSrc}
         alt={slide.alt}
-        className={`block h-full w-full ${fitClass} object-center`}
+        className="block h-auto w-full max-w-full"
         loading="eager"
         decoding="async"
         onError={onError}
@@ -48,7 +43,7 @@ function SlideImage({
       <a
         href={link}
         {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-        className="absolute inset-0 block"
+        className="block w-full max-w-full"
         aria-label={slide.alt}
       >
         {image}
@@ -56,7 +51,7 @@ function SlideImage({
     );
   }
 
-  return <div className="absolute inset-0">{image}</div>;
+  return <div className="block w-full max-w-full">{image}</div>;
 }
 
 export function HeroCarousel({
@@ -70,8 +65,6 @@ export function HeroCarousel({
   const safeInterval = Number.isFinite(intervalMs) && intervalMs >= 2000 ? intervalMs : DEFAULT_CAROUSEL_INTERVAL_MS;
   const desktopHeightPx = layout?.desktopHeightPx ?? DEFAULT_HERO_DESKTOP_HEIGHT_PX;
   const mobileHeightPx = layout?.mobileHeightPx ?? DEFAULT_HERO_MOBILE_HEIGHT_PX;
-  const imageFit = layout?.imageFit ?? 'cover';
-  const desktopAspect = heroViewportAspectRatio(HERO_DESKTOP_DESIGN_WIDTH_PX, desktopHeightPx);
 
   const go = useCallback(
     (next: number) => {
@@ -103,23 +96,18 @@ export function HeroCarousel({
   const showFailed = failedSrc === current.src;
 
   return (
-    <div className="relative w-full max-w-full overflow-hidden">
+    <div className="relative w-full max-w-full overflow-x-hidden">
       <div
-        className="hero-carousel-viewport relative w-full overflow-hidden"
+        className="hero-carousel-viewport relative w-full max-w-full overflow-x-hidden"
         style={{
           ['--hero-h-mobile' as string]: `${mobileHeightPx}px`,
           ['--hero-h-desktop' as string]: `${desktopHeightPx}px`,
-          ['--hero-aspect-desktop' as string]: String(desktopAspect),
         }}
       >
         {!showFailed ? (
-          <SlideImage
-            slide={current}
-            imageFit={imageFit}
-            onError={() => setFailedSrc(current.src)}
-          />
+          <SlideImage slide={current} onError={() => setFailedSrc(current.src)} />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-200 px-4 text-center text-sm text-slate-500">
+          <div className="flex min-h-[200px] w-full items-center justify-center bg-slate-200 px-4 text-center text-sm text-slate-500">
             Görsel yüklenemedi
           </div>
         )}

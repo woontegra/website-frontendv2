@@ -46,19 +46,14 @@
   }
 
   /*
-   * Mobil: sabit yükseklik (mobil görsel ayrı).
-   * Masaüstü: yükseklik ekran genişliğine orantılı — 1366 ile 1920’de aynı kompozisyon.
+   * Hero görseli ekran genişliğine göre ölçeklenir (height: auto).
+   * Sabit yükseklik / object-cover kullanılmaz → sağ-sol kırpılmaz.
    */
   .hero-carousel-viewport {
     width: 100%;
-    height: var(--hero-h-mobile, 520px);
-  }
-
-  @media (min-width: 1024px) {
-    .hero-carousel-viewport {
-      height: auto;
-      aspect-ratio: var(--hero-aspect-desktop, 2.953846);
-    }
+    max-width: 100%;
+    height: auto;
+    line-height: 0;
   }
 
   .cta-section-bg {
