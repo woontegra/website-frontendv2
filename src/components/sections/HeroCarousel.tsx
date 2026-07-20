@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { HeroCarouselLayout, HeroImageFit, HeroSlideResolved } from '@/lib/homepageHero';
-import { DEFAULT_CAROUSEL_INTERVAL_MS } from '@/lib/homepageHero';
+import {
+  DEFAULT_CAROUSEL_INTERVAL_MS,
+  DEFAULT_HERO_DESKTOP_HEIGHT_PX,
+  DEFAULT_HERO_MOBILE_HEIGHT_PX,
+  HERO_DESKTOP_DESIGN_WIDTH_PX,
+  heroViewportAspectRatio,
+} from '@/lib/homepageHero';
 
 type HeroCarouselProps = {
   slides: HeroSlideResolved[];
@@ -62,9 +68,10 @@ export function HeroCarousel({
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const count = slides.length;
   const safeInterval = Number.isFinite(intervalMs) && intervalMs >= 2000 ? intervalMs : DEFAULT_CAROUSEL_INTERVAL_MS;
-  const desktopHeightPx = layout?.desktopHeightPx ?? 650;
-  const mobileHeightPx = layout?.mobileHeightPx ?? 520;
+  const desktopHeightPx = layout?.desktopHeightPx ?? DEFAULT_HERO_DESKTOP_HEIGHT_PX;
+  const mobileHeightPx = layout?.mobileHeightPx ?? DEFAULT_HERO_MOBILE_HEIGHT_PX;
   const imageFit = layout?.imageFit ?? 'cover';
+  const desktopAspect = heroViewportAspectRatio(HERO_DESKTOP_DESIGN_WIDTH_PX, desktopHeightPx);
 
   const go = useCallback(
     (next: number) => {
@@ -102,6 +109,7 @@ export function HeroCarousel({
         style={{
           ['--hero-h-mobile' as string]: `${mobileHeightPx}px`,
           ['--hero-h-desktop' as string]: `${desktopHeightPx}px`,
+          ['--hero-aspect-desktop' as string]: String(desktopAspect),
         }}
       >
         {!showFailed ? (

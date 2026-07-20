@@ -27,8 +27,20 @@ export const DEFAULT_HERO_MOBILE_HEIGHT_PX = 520;
 export const MIN_HERO_MOBILE_HEIGHT_PX = 350;
 export const MAX_HERO_MOBILE_HEIGHT_PX = 800;
 
-export const HERO_DESKTOP_RECOMMENDED_RATIO = 1920 / 720;
-export const HERO_MOBILE_RECOMMENDED_RATIO = 1080 / 1350;
+/** Masaüstü hero görseli tasarım genişliği — yükseklik ayarı bu genişlikte yorumlanır. */
+export const HERO_DESKTOP_DESIGN_WIDTH_PX = 1920;
+/** Mobil hero görseli tasarım genişliği — yükseklik ayarı bu genişlikte yorumlanır. */
+export const HERO_MOBILE_DESIGN_WIDTH_PX = 1080;
+
+export const HERO_DESKTOP_RECOMMENDED_RATIO = HERO_DESKTOP_DESIGN_WIDTH_PX / 720;
+export const HERO_MOBILE_RECOMMENDED_RATIO = HERO_MOBILE_DESIGN_WIDTH_PX / 1350;
+
+/** Admin yüksekliğini tasarım genişliğine göre en-boy oranına çevirir (width / height). */
+export function heroViewportAspectRatio(designWidthPx: number, heightPx: number): number {
+  const width = Number.isFinite(designWidthPx) && designWidthPx > 0 ? designWidthPx : HERO_DESKTOP_DESIGN_WIDTH_PX;
+  const height = Number.isFinite(heightPx) && heightPx > 0 ? heightPx : DEFAULT_HERO_DESKTOP_HEIGHT_PX;
+  return width / height;
+}
 
 export type HeroImageFit = 'cover' | 'contain';
 
