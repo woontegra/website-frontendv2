@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2, Percent } from 'lucide-react';
+import { canonicalizeCampaignCode } from '@/lib/campaignCodeAlias';
 
 /** Eski ID ve yeni publicCode kısa linkleri: /k/:code → /satin-al?c=:code */
 export default function CampaignRedirectPage() {
@@ -8,7 +9,9 @@ export default function CampaignRedirectPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (id) navigate(`/satin-al?c=${encodeURIComponent(id)}`, { replace: true });
+    if (!id) return;
+    const code = canonicalizeCampaignCode(id);
+    navigate(`/satin-al?c=${encodeURIComponent(code)}`, { replace: true });
   }, [id, navigate]);
 
   return (

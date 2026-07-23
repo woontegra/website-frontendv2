@@ -1,5 +1,6 @@
 import { apiRequest, resolveApiUrl } from '@/lib/apiClient';
 import { getAdminToken } from '@/lib/adminAuth';
+import { canonicalizeCampaignCode } from '@/lib/campaignCodeAlias';
 
 export type ApiEnvelope<T> = {
   success?: boolean;
@@ -225,12 +226,13 @@ export async function fetchCampaignQuote(params: {
   subscriptionPeriod: number;
 }): Promise<CampaignQuoteResponse> {
   try {
+    const campaignPublicCode = canonicalizeCampaignCode(params.campaignCode);
     const json = await apiRequest<ApiEnvelope<CampaignQuoteResponse> & CampaignQuoteResponse>(
       CAMPAIGN_QUOTE_PATH,
       {
         method: 'POST',
         body: {
-          campaignPublicCode: params.campaignCode,
+          campaignPublicCode,
           productType: params.productType,
           subscriptionPeriod: params.subscriptionPeriod,
         },
@@ -379,7 +381,7 @@ export async function requestPaytrToken(params: {
     ...(params.billingInfo && { billingInfo: params.billingInfo }),
     ...(!params.renewalToken &&
       (params.campaignCode || params.campaignId) && {
-        campaignId: params.campaignCode || params.campaignId,
+        campaignId: canonicalizeCampaignCode(params.campaignCode || params.campaignId || ''),
       }),
     ...(params.renewalToken && { renewalToken: params.renewalToken }),
     ...(params.legalConsents && { legalConsents: params.legalConsents }),
@@ -447,7 +449,7 @@ export async function requestBankTransferOrder(params: {
     billingInfo: params.billingInfo,
     ...(!params.renewalToken &&
       (params.campaignCode || params.campaignId) && {
-        campaignId: params.campaignCode || params.campaignId,
+        campaignId: canonicalizeCampaignCode(params.campaignCode || params.campaignId || ''),
       }),
     ...(params.renewalToken && { renewalToken: params.renewalToken }),
     ...(params.legalConsents && { legalConsents: params.legalConsents }),

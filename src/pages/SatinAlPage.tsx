@@ -19,6 +19,7 @@ import { AnnualGiftPromoSection } from '@/components/checkout/AnnualGiftPromoSec
 import { ProductGallery } from '@/components/checkout/ProductGallery';
 import { Button } from '@/components/ui/Button';
 import { showToast } from '@/components/ui/toast';
+import { canonicalizeCampaignCode } from '@/lib/campaignCodeAlias';
 import { getSatinAlDisplayImages } from '@/lib/marketingProductImages';
 import {
   fetchAuthMe,
@@ -158,7 +159,7 @@ function formatBillingForApi(data: BillingFormData): Record<string, unknown> {
 export default function SatinAlPage() {
   const navigate = useNavigate();
   const { content } = useContentBundle();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [product, setProduct] = useState<PublicProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -199,9 +200,19 @@ export default function SatinAlPage() {
     totalTL: number;
     periodLabel: string;
   } | null>(null);
-  const campaignCode = searchParams.get('c')?.trim() || undefined;
+  const rawCampaignCode = searchParams.get('c')?.trim() || undefined;
+  const campaignCode = rawCampaignCode
+    ? canonicalizeCampaignCode(rawCampaignCode)
+    : undefined;
   const renewalToken = searchParams.get('renew')?.trim() || undefined;
   const renewalEmail = renewalContext?.accountEmail ?? renewalContext?.targetEmail ?? null;
+
+  useEffect(() => {
+    if (!rawCampaignCode || !campaignCode || rawCampaignCode === campaignCode) return;
+    const next = new URLSearchParams(searchParams);
+    next.set('c', campaignCode);
+    setSearchParams(next, { replace: true });
+  }, [rawCampaignCode, campaignCode, searchParams, setSearchParams]);
 
   useEffect(() => {
     const plan = searchParams.get('plan');
