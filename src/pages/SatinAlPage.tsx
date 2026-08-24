@@ -48,7 +48,7 @@ const subscriptionRenewalEnabled =
   import.meta.env.VITE_SUBSCRIPTION_RENEWAL_ENABLED === 'true';
 
 const DEFAULT_FEATURES = [
-  '40+ farklı hesaplama türü',
+  '50+ farklı hesaplama türü',
   'Güncel mevzuata tam uyum',
   'Yargı içtihatları entegrasyonu',
   'PDF çıktı ve raporlama',
@@ -518,8 +518,9 @@ export default function SatinAlPage() {
   const productDesc =
     product?.shortDescription ??
     'Avukatlar ve bilirkişiler için profesyonel hesaplama ve raporlama platformu.';
-  const featureItems =
-    product?.features && product.features.length > 0 ? product.features : DEFAULT_FEATURES;
+  const featureItems = (
+    product?.features && product.features.length > 0 ? product.features : DEFAULT_FEATURES
+  ).map((item) => item.replace(/40\+\s*farklı hesaplama türü/gi, '50+ farklı hesaplama türü'));
   const audienceItems =
     product?.targetAudience && product.targetAudience.length > 0
       ? product.targetAudience
