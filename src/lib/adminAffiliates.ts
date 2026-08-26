@@ -278,6 +278,20 @@ export async function deactivateAdminAffiliate(id: string): Promise<AdminAffilia
   return json.data;
 }
 
+export async function deleteAdminAffiliate(id: string): Promise<{ id: string; deleted: boolean }> {
+  const json = await apiRequest<ApiEnvelope<{ id: string; deleted: boolean }>>(
+    `${BASE}/admin/${id}`,
+    {
+      method: 'DELETE',
+      headers: authHeaders(),
+    },
+  );
+  if (!json.success || !json.data) {
+    throw new Error(json.message ?? 'Silme başarısız');
+  }
+  return json.data;
+}
+
 export async function createAdminAffiliateLink(
   affiliateId: string,
   body?: {

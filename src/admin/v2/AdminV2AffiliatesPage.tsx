@@ -8,6 +8,7 @@ import {
   Search,
   ToggleLeft,
   ToggleRight,
+  Trash2,
   Users,
   Wallet,
   X,
@@ -42,6 +43,7 @@ import {
   createAdminAffiliatePayout,
   deactivateAdminAffiliate,
   deactivateAdminAffiliateLink,
+  deleteAdminAffiliate,
   fetchAdminAffiliate,
   fetchAdminAffiliateCommissions,
   fetchAdminAffiliatePayouts,
@@ -348,6 +350,8 @@ export function AdminV2AffiliatesPage() {
   const [editing, setEditing] = useState<AdminAffiliate | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AdminAffiliate | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminAffiliate | null>(null);
@@ -564,6 +568,34 @@ export function AdminV2AffiliatesPage() {
       if (selectedId === row.id) await loadDetail(row.id);
     } catch (e) {
       showToast(errorMessage(e, 'Durum değiştirilemedi'), 'error');
+    }
+  };
+
+  const confirmDeleteAffiliate = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteAdminAffiliate(deleteTarget.id);
+      showToast('İş ortağı silindi', 'success');
+      if (selectedId === deleteTarget.id) {
+        setSelectedId(null);
+        setDetail(null);
+        setCommissions(null);
+        setPayouts([]);
+        setPayoutsPagination(emptyAffiliatePagination());
+      }
+      if (editing?.id === deleteTarget.id) {
+        setShowForm(false);
+        setEditing(null);
+      }
+      setDeleteTarget(null);
+      await load();
+      await loadSummary();
+    } catch (e) {
+      showToast(errorMessage(e, 'Silme başarısız'), 'error');
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -998,6 +1030,13 @@ export function AdminV2AffiliatesPage() {
                                 <ToggleLeft className="h-3.5 w-3.5" /> Aktifleştir
                               </>
                             )}
+                          </button>
+                          <button
+                            type="button"
+                            className={smallTableBtnClass}
+                            onClick={() => setDeleteTarget(row)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Sil
                           </button>
                         </div>
                       </td>
@@ -1813,6 +1852,45 @@ export function AdminV2AffiliatesPage() {
               </div>
             </div>
           )}
+        </ModalShell>
+      )}
+
+      {deleteTarget && (
+        <ModalShell
+          title="İş ortağını sil"
+          onClose={() => {
+            if (!deleting) setDeleteTarget(null);
+          }}
+          footer={
+            <>
+              <button
+                type="button"
+                className={secondaryBtnClass}
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+                disabled={deleting}
+                onClick={() => void confirmDeleteAffiliate()}
+              >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                Kalıcı sil
+              </button>
+            </>
+          }
+        >
+          <p className="text-sm text-[#5c6b7a]">
+            <strong className="text-[#1e2a3a]">{deleteTarget.name}</strong> iş ortağını kalıcı olarak
+            silmek istediğinize emin misiniz?
+          </p>
+          <p className="mt-2 text-[13px] text-[#8a9aaa]">
+            Link, attribution, satış, komisyon veya ödeme kaydı varsa silinmez; pasifleştirmeniz
+            gerekir.
+          </p>
         </ModalShell>
       )}
     </div>
