@@ -14,6 +14,7 @@ import { AdminV2SiteSettingsPage } from '@/admin/v2/AdminV2SiteSettingsPage';
 import { AdminV2ModulesPage } from '@/admin/v2/AdminV2ModulesPage';
 import { AdminV2PricingPage } from '@/admin/v2/AdminV2PricingPage';
 import { AdminV2CampaignsPage } from '@/admin/v2/AdminV2CampaignsPage';
+import { AdminV2AffiliatesPage } from '@/admin/v2/AdminV2AffiliatesPage';
 import { AdminV2BarCampaignPerformancePage } from '@/admin/v2/AdminV2BarCampaignPerformancePage';
 import { AdminV2PurchasePage } from '@/admin/v2/AdminV2PurchasePage';
 import { AdminV2LegalArchivePage } from '@/admin/v2/AdminV2LegalArchivePage';
@@ -31,6 +32,8 @@ import { AdminV2ContentPage } from '@/admin/v2/AdminV2ContentPage';
 import { AdminV2PagesPage } from '@/admin/v2/AdminV2PagesPage';
 import { AdminV2MarketingPage } from '@/admin/v2/AdminV2MarketingPage';
 import { SiteLayout } from '@/components/layout/SiteLayout';
+import { PartnerLayout } from '@/partner/PartnerLayout';
+import { isPartnerHost } from '@/partner/partnerPaths';
 import HomePage from '@/pages/HomePage';
 import PricingPage from '@/pages/PricingPage';
 import DemoRequestPage from '@/pages/DemoRequestPage';
@@ -43,6 +46,9 @@ import OdemeBasariliPage from '@/pages/OdemeBasariliPage';
 import OdemeBeklemedePage from '@/pages/OdemeBeklemedePage';
 import OdemeBasarisizPage from '@/pages/OdemeBasarisizPage';
 import CampaignRedirectPage from '@/pages/CampaignRedirectPage';
+import AffiliateReferralRedirectPage from '@/pages/AffiliateReferralRedirectPage';
+import PartnerAuthPage from '@/pages/PartnerAuthPage';
+import PartnerPortalPage from '@/pages/PartnerPortalPage';
 import LegalDocumentPage from '@/pages/LegalDocumentPage';
 import AbonelikYenilePage from '@/pages/AbonelikYenilePage';
 import { LEGAL_PAGES, type LegalPageKey } from '@/data/legalPages';
@@ -50,6 +56,8 @@ import { calculationPageSlugs } from '@/data/calculationPages';
 import { calculationModulePathRedirects } from '@/data/calculationModulePaths';
 
 export default function App() {
+  const partnerHost = typeof window !== 'undefined' && isPartnerHost();
+
   return (
     <Routes>
       <Route path="/admin/login" element={<Navigate to="/admin/v2/login" replace />} />
@@ -68,42 +76,43 @@ export default function App() {
 
           {/* Ana CMS menüsü */}
           <Route path="overview" element={<AdminV2OverviewPage />} />
-        <Route path="homepage" element={<AdminV2HomepageManagementPage />} />
-        <Route path="homepage/hero-images" element={<AdminV2HeroImagesPage />} />
-        <Route path="calculations" element={<AdminV2ModulesPage />} />
-        <Route path="pricing" element={<AdminV2PricingPage />} />
-        <Route path="campaigns" element={<AdminV2CampaignsPage />} />
-        <Route path="campaigns/performance" element={<AdminV2BarCampaignPerformancePage />} />
-        <Route path="purchase" element={<AdminV2PurchasePage />} />
-        <Route path="legal-archive" element={<AdminV2LegalArchivePage />} />
-        <Route path="legal-archive/:id" element={<AdminV2LegalArchivePage />} />
-        <Route path="orders" element={<AdminV2OrdersPage />} />
-        <Route path="bank-transfer-payments" element={<AdminV2BankTransferPaymentsPage />} />
-        <Route path="settings" element={<AdminV2SiteSettingsPage />} />
-        <Route path="demo-page" element={<AdminV2DemoPageManagement />} />
-        <Route path="demo" element={<Navigate to="demo-page" replace />} />
-        <Route path="contact" element={<AdminV2ContactPage />} />
-        <Route path="faq" element={<AdminV2FaqPage />} />
-        <Route path="footer" element={<AdminV2FooterPage />} />
-        <Route path="seo" element={<AdminV2SeoPage />} />
-        <Route path="media" element={<AdminV2MediaPage />} />
-        <Route path="publish" element={<AdminV2PublishPlaceholderPage />} />
-        <Route path="technical" element={<AdminTechnicalHubPage />} />
+          <Route path="homepage" element={<AdminV2HomepageManagementPage />} />
+          <Route path="homepage/hero-images" element={<AdminV2HeroImagesPage />} />
+          <Route path="calculations" element={<AdminV2ModulesPage />} />
+          <Route path="pricing" element={<AdminV2PricingPage />} />
+          <Route path="campaigns" element={<AdminV2CampaignsPage />} />
+          <Route path="campaigns/performance" element={<AdminV2BarCampaignPerformancePage />} />
+          <Route path="affiliates" element={<AdminV2AffiliatesPage />} />
+          <Route path="purchase" element={<AdminV2PurchasePage />} />
+          <Route path="legal-archive" element={<AdminV2LegalArchivePage />} />
+          <Route path="legal-archive/:id" element={<AdminV2LegalArchivePage />} />
+          <Route path="orders" element={<AdminV2OrdersPage />} />
+          <Route path="bank-transfer-payments" element={<AdminV2BankTransferPaymentsPage />} />
+          <Route path="settings" element={<AdminV2SiteSettingsPage />} />
+          <Route path="demo-page" element={<AdminV2DemoPageManagement />} />
+          <Route path="demo" element={<Navigate to="demo-page" replace />} />
+          <Route path="contact" element={<AdminV2ContactPage />} />
+          <Route path="faq" element={<AdminV2FaqPage />} />
+          <Route path="footer" element={<AdminV2FooterPage />} />
+          <Route path="seo" element={<AdminV2SeoPage />} />
+          <Route path="media" element={<AdminV2MediaPage />} />
+          <Route path="publish" element={<AdminV2PublishPlaceholderPage />} />
+          <Route path="technical" element={<AdminTechnicalHubPage />} />
 
-        {/* Teknik veri — mevcut ekranlar korunur */}
-        <Route path="technical/content" element={<AdminV2ContentPage />} />
-        <Route path="technical/settings" element={<AdminV2SettingsPage />} />
-        <Route path="technical/pages" element={<AdminV2PagesPage />} />
-        <Route path="technical/marketing" element={<AdminV2MarketingPage />} />
-        <Route path="technical/homepage-editor" element={<AdminV2HomepagePage />} />
-        <Route path="technical/publish-tools" element={<AdminV2PublishPage />} />
+          {/* Teknik veri — mevcut ekranlar korunur */}
+          <Route path="technical/content" element={<AdminV2ContentPage />} />
+          <Route path="technical/settings" element={<AdminV2SettingsPage />} />
+          <Route path="technical/pages" element={<AdminV2PagesPage />} />
+          <Route path="technical/marketing" element={<AdminV2MarketingPage />} />
+          <Route path="technical/homepage-editor" element={<AdminV2HomepagePage />} />
+          <Route path="technical/publish-tools" element={<AdminV2PublishPage />} />
 
-        {/* Eski URL yönlendirmeleri */}
-        <Route path="dashboard" element={<AdminLegacyRedirect />} />
-        <Route path="content" element={<AdminLegacyRedirect />} />
-        <Route path="modules" element={<AdminLegacyRedirect />} />
-        <Route path="marketing" element={<AdminLegacyRedirect />} />
-        <Route path="pages" element={<AdminLegacyRedirect />} />
+          {/* Eski URL yönlendirmeleri */}
+          <Route path="dashboard" element={<AdminLegacyRedirect />} />
+          <Route path="content" element={<AdminLegacyRedirect />} />
+          <Route path="modules" element={<AdminLegacyRedirect />} />
+          <Route path="marketing" element={<AdminLegacyRedirect />} />
+          <Route path="pages" element={<AdminLegacyRedirect />} />
         </Route>
       </Route>
 
@@ -118,39 +127,58 @@ export default function App() {
       <Route path="odeme-beklemede" element={<OdemeBeklemedePage />} />
       <Route path="odeme-basarisiz" element={<OdemeBasarisizPage />} />
 
-      <Route element={<SiteLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="k/:id" element={<CampaignRedirectPage />} />
-        <Route path="satin-al" element={<SatinAlPage />} />
-        <Route path="bilirkisi-hesap" element={<Navigate to="/satin-al" replace />} />
-        <Route path="fiyatlandirma" element={<PricingPage />} />
-        <Route path="demo-talep" element={<DemoRequestPage />} />
-        <Route path="iletisim" element={<ContactPage />} />
-        <Route path="sss" element={<FaqPage />} />
-        <Route path="abonelik-yenile" element={<AbonelikYenilePage />} />
-        {LEGAL_PAGES.map((page) => (
-          <Route
-            key={page.path}
-            path={page.path.slice(1)}
-            element={<LegalDocumentPage pageKey={page.path.slice(1) as LegalPageKey} />}
-          />
-        ))}
-        {calculationModulePathRedirects.map(({ from, to }) => (
-          <Route
-            key={`redirect-${from}`}
-            path={from}
-            element={<Navigate to={`/${to}`} replace />}
-          />
-        ))}
-        {calculationPageSlugs.map((slug) => (
-          <Route
-            key={slug}
-            path={slug.replace(/^\//, '')}
-            element={<CalculationLandingPage />}
-          />
-        ))}
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
+      {partnerHost ? (
+        <Route element={<PartnerLayout />}>
+          <Route index element={<PartnerPortalPage />} />
+          <Route path="auth" element={<PartnerAuthPage />} />
+          <Route path="partner" element={<Navigate to="/" replace />} />
+          <Route path="partner/auth" element={<Navigate to="/auth" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      ) : (
+        <>
+          {/* Partner portal — public SiteLayout dışında (Header/Footer yok) */}
+          <Route element={<PartnerLayout />}>
+            <Route path="partner/auth" element={<PartnerAuthPage />} />
+            <Route path="partner" element={<PartnerPortalPage />} />
+          </Route>
+
+          <Route element={<SiteLayout />}>
+            <Route index element={<HomePage />} />
+            <Route path="r/:code" element={<AffiliateReferralRedirectPage />} />
+            <Route path="k/:id" element={<CampaignRedirectPage />} />
+            <Route path="satin-al" element={<SatinAlPage />} />
+            <Route path="bilirkisi-hesap" element={<Navigate to="/satin-al" replace />} />
+            <Route path="fiyatlandirma" element={<PricingPage />} />
+            <Route path="demo-talep" element={<DemoRequestPage />} />
+            <Route path="iletisim" element={<ContactPage />} />
+            <Route path="sss" element={<FaqPage />} />
+            <Route path="abonelik-yenile" element={<AbonelikYenilePage />} />
+            {LEGAL_PAGES.map((page) => (
+              <Route
+                key={page.path}
+                path={page.path.slice(1)}
+                element={<LegalDocumentPage pageKey={page.path.slice(1) as LegalPageKey} />}
+              />
+            ))}
+            {calculationModulePathRedirects.map(({ from, to }) => (
+              <Route
+                key={`redirect-${from}`}
+                path={from}
+                element={<Navigate to={`/${to}`} replace />}
+              />
+            ))}
+            {calculationPageSlugs.map((slug) => (
+              <Route
+                key={slug}
+                path={slug.replace(/^\//, '')}
+                element={<CalculationLandingPage />}
+              />
+            ))}
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </>
+      )}
     </Routes>
   );
 }

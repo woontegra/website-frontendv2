@@ -19,6 +19,7 @@ import {
   Archive,
   Landmark,
   Receipt,
+  Handshake,
 } from 'lucide-react';
 
 export type CmsNavItem = {
@@ -65,6 +66,12 @@ export const cmsNavItems: CmsNavItem[] = [
     label: 'Kampanyalar',
     icon: Percent,
     description: 'Baro indirimleri ve kampanya linkleri',
+  },
+  {
+    to: '/admin/v2/affiliates',
+    label: 'İş Ortakları',
+    icon: Handshake,
+    description: 'Affiliate ortakları, oranlar ve opaque linkler',
   },
   {
     to: '/admin/v2/purchase',
@@ -157,6 +164,7 @@ const routeTitles: { match: (path: string) => boolean; title: string }[] = [
     title: 'Baro Kampanya Performansı',
   },
   { match: (p) => p === '/admin/v2/campaigns', title: 'Kampanyalar' },
+  { match: (p) => p === '/admin/v2/affiliates', title: 'İş Ortakları' },
   { match: (p) => p === '/admin/v2/purchase', title: 'Satın Al Sayfası' },
   { match: (p) => p.startsWith('/admin/v2/legal-archive'), title: 'Sözleşme Arşivi' },
   { match: (p) => p.startsWith('/admin/v2/orders'), title: 'Siparişler' },

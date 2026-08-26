@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, Loader2, LogIn } from 'lucide-react';
 import { adminLogin } from '@/lib/adminSession';
-import { hasAdminToken } from '@/lib/adminAuth';
+import { hasUsableAdminToken } from '@/lib/adminAuth';
 import { adminAccentBtnClass, adminCardClass, adminInputClass, adminLabelClass } from '@/admin/ui/adminUiClasses';
 
 export function AdminV2LoginPage() {
@@ -16,7 +16,8 @@ export function AdminV2LoginPage() {
   const redirectTo =
     (location.state as { from?: string } | null)?.from ?? '/admin/v2/overview';
 
-  if (hasAdminToken()) {
+  // Expired localStorage tokens are cleared by hasUsableAdminToken()
+  if (hasUsableAdminToken()) {
     return <Navigate to={redirectTo} replace />;
   }
 

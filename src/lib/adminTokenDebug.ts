@@ -32,9 +32,19 @@ function formatExp(exp: unknown): string | null {
   return date.toLocaleString('tr-TR');
 }
 
-function isExpired(exp: unknown): boolean {
+function isExpired(exp: unknown, skewMs = 0): boolean {
   if (typeof exp !== 'number') return false;
-  return exp * 1000 < Date.now();
+  return exp * 1000 <= Date.now() + skewMs;
+}
+
+/** Client-side JWT exp check (no signature verify). Used to drop stale localStorage sessions. */
+export function isAccessTokenExpired(token: string, skewMs = 5_000): boolean {
+  const normalized = normalizeAdminToken(token);
+  if (!normalized) return true;
+  const payload = decodeJwtPayload(normalized);
+  if (!payload) return false; // malformed → let server reject
+  if (typeof payload.exp !== 'number') return false;
+  return isExpired(payload.exp, skewMs);
 }
 
 export type AdminTokenDebugInfo = {

@@ -8,7 +8,7 @@ import {
 } from 'react';
 import {
   clearAdminToken,
-  hasAdminToken,
+  hasUsableAdminToken,
   normalizeAdminToken,
   setAdminToken,
 } from '@/lib/adminAuth';
@@ -26,7 +26,7 @@ const AdminTokenContext = createContext<AdminTokenContextValue | null>(null);
 
 export function AdminTokenProvider({ children }: { children: ReactNode }) {
   const [revision, setRevision] = useState(0);
-  const tokenPresent = hasAdminToken();
+  const tokenPresent = hasUsableAdminToken();
 
   const bump = () => setRevision((n) => n + 1);
 
@@ -49,7 +49,7 @@ export function AdminTokenProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      tokenPresent: hasAdminToken(),
+      tokenPresent: hasUsableAdminToken(),
       revision,
       saveToken,
       removeToken,
@@ -67,7 +67,7 @@ export function useAdminToken(): AdminTokenContextValue {
   const ctx = useContext(AdminTokenContext);
   if (!ctx) {
     return {
-      tokenPresent: hasAdminToken(),
+      tokenPresent: hasUsableAdminToken(),
       revision: 0,
       saveToken: (token: string) => {
         const normalized = normalizeAdminToken(token);

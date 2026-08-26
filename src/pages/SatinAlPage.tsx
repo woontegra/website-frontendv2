@@ -323,69 +323,61 @@ export default function SatinAlPage() {
       setCampaignValidating(false);
       return;
     }
-    if (!campaignCode) {
-      setCampaign(null);
-      setBackendQuote(null);
-      setPackageQuotes({ monthly: null, annual: null });
-      setPackageQuoteReasons({ monthly: null, annual: null });
-      setCampaignNotice(null);
-      setValidatedCampaignCode(null);
-      setCampaignValidating(false);
-      return;
-    }
     let cancelled = false;
     setCampaignValidating(true);
-    setValidatedCampaignCode(null);
+    if (!campaignCode) {
+      setValidatedCampaignCode(null);
+    }
     setPackageQuotes({ monthly: null, annual: null });
     setPackageQuoteReasons({ monthly: null, annual: null });
     void Promise.all([
       fetchCampaignQuote({
-        campaignCode,
+        campaignCode: campaignCode || undefined,
         productType: 'monthly',
         subscriptionPeriod: 0,
       }),
       fetchCampaignQuote({
-        campaignCode,
+        campaignCode: campaignCode || undefined,
         productType: 'annual',
         subscriptionPeriod: 1,
       }),
     ])
       .then(([monthlyResult, annualResult]) => {
         if (cancelled) return;
-        const monthlyQuote =
-          monthlyResult.valid && monthlyResult.quote?.valid ? monthlyResult.quote : null;
-        const annualQuote =
-          annualResult.valid && annualResult.quote?.valid ? annualResult.quote : null;
-        setPackageQuotes({ monthly: monthlyQuote, annual: annualQuote });
+        const monthlyResolved = monthlyResult.quote?.valid ? monthlyResult.quote : null;
+        const annualResolved = annualResult.quote?.valid ? annualResult.quote : null;
+        setPackageQuotes({ monthly: monthlyResolved, annual: annualResolved });
         setPackageQuoteReasons({
-          monthly: monthlyQuote
+          monthly: monthlyResolved
             ? null
             : monthlyResult.reason ?? monthlyResult.quote?.reason ?? null,
-          annual: annualQuote
+          annual: annualResolved
             ? null
             : annualResult.reason ?? annualResult.quote?.reason ?? null,
         });
         const campaignMeta =
-          monthlyQuote?.campaign
+          monthlyResolved?.campaign
           ?? monthlyResult.campaign
-          ?? annualQuote?.campaign
+          ?? annualResolved?.campaign
           ?? annualResult.campaign
           ?? null;
-        setCampaign(monthlyQuote || annualQuote ? campaignMeta : null);
-        setValidatedCampaignCode(campaignCode);
+        setCampaign(campaignCode && (monthlyResolved || annualResolved) ? campaignMeta : null);
+        setValidatedCampaignCode(campaignCode || null);
       })
       .catch((err) => {
         if (cancelled) return;
         setCampaign(null);
         setPackageQuotes({ monthly: null, annual: null });
         setPackageQuoteReasons({
-          monthly: err instanceof Error ? err.message : 'Kampanya doğrulanamadı',
-          annual: err instanceof Error ? err.message : 'Kampanya doğrulanamadı',
+          monthly: err instanceof Error ? err.message : 'Fiyat doğrulanamadı',
+          annual: err instanceof Error ? err.message : 'Fiyat doğrulanamadı',
         });
         setValidatedCampaignCode(null);
-        setCampaignNotice(
-          campaignReasonMessage(err instanceof Error ? err.message : 'Kampanya doğrulanamadı'),
-        );
+        if (campaignCode) {
+          setCampaignNotice(
+            campaignReasonMessage(err instanceof Error ? err.message : 'Kampanya doğrulanamadı'),
+          );
+        }
       })
       .finally(() => {
         if (!cancelled) setCampaignValidating(false);
@@ -396,8 +388,8 @@ export default function SatinAlPage() {
   }, [campaignCode, renewalToken]);
 
   useEffect(() => {
-    if (renewalToken || !campaignCode || campaignValidating) return;
-    if (validatedCampaignCode !== campaignCode) return;
+    if (renewalToken || campaignValidating) return;
+    if (campaignCode && validatedCampaignCode !== campaignCode) return;
     const selectedPackageQuote =
       productType === 'monthly' ? packageQuotes.monthly : packageQuotes.annual;
     const selectedReason =
@@ -405,14 +397,19 @@ export default function SatinAlPage() {
     if (selectedPackageQuote?.valid) {
       setBackendQuote(selectedPackageQuote);
       if (selectedPackageQuote.campaign) setCampaign(selectedPackageQuote.campaign);
+      else if (!campaignCode) setCampaign(null);
       setCampaignNotice(null);
       return;
     }
     setBackendQuote(null);
-    if (!packageQuotes.monthly?.valid && !packageQuotes.annual?.valid) {
-      setCampaign(null);
+    if (campaignCode) {
+      if (!packageQuotes.monthly?.valid && !packageQuotes.annual?.valid) {
+        setCampaign(null);
+      }
+      setCampaignNotice(campaignReasonMessage(selectedReason));
+    } else {
+      setCampaignNotice(null);
     }
-    setCampaignNotice(campaignReasonMessage(selectedReason));
   }, [
     campaignCode,
     campaignValidating,
@@ -455,10 +452,7 @@ export default function SatinAlPage() {
     if (!campaignCode) {
       setCampaign(null);
       setCampaignNotice(null);
-      setValidatedCampaignCode(null);
-      setPackageQuotes({ monthly: null, annual: null });
-      setPackageQuoteReasons({ monthly: null, annual: null });
-      setCampaignValidating(false);
+      // Do NOT clear packageQuotes here — affiliate (cookie) quotes load without ?c=
     }
   }, [campaignCode]);
 
@@ -824,10 +818,18 @@ export default function SatinAlPage() {
                       <span>Paket indirimi</span>
                       <span>-{formatPriceTL(quoteAmountTL(selectedQuote.packageDiscount))}</span>
                     </div>
-                    <div className="flex justify-between text-emerald-700">
-                      <span>Kampanya / baro indirimi</span>
-                      <span>-{formatPriceTL(quoteAmountTL(selectedQuote.campaignDiscount))}</span>
-                    </div>
+                    {quoteAmountTL(selectedQuote.campaignDiscount) > 0 && (
+                      <div className="flex justify-between text-emerald-700">
+                        <span>Kampanya / baro indirimi</span>
+                        <span>-{formatPriceTL(quoteAmountTL(selectedQuote.campaignDiscount))}</span>
+                      </div>
+                    )}
+                    {quoteAmountTL(selectedQuote.partnerDiscount ?? 0) > 0 && (
+                      <div className="flex justify-between text-emerald-700">
+                        <span>İş Ortağı İndirimi</span>
+                        <span>-{formatPriceTL(quoteAmountTL(selectedQuote.partnerDiscount ?? 0))}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between border-t border-slate-100 pt-2 font-bold text-slate-900">
                       <span>Son fiyat (KDV dahil)</span>
                       <span>{formatPriceTL(quoteAmountTL(selectedQuote.finalPrice))}</span>

@@ -1,4 +1,5 @@
 import { config } from './config';
+import { handleCmsAdminAuthFailure } from './adminSessionGuard';
 
 export type ApiError = {
   status: number;
@@ -13,6 +14,8 @@ export type RequestOptions = {
   headers?: Record<string, string>;
   body?: unknown;
   signal?: AbortSignal;
+  /** Cross-origin cookie (e.g. bh_aff_ref) for purchase quote/checkout */
+  credentials?: RequestCredentials;
 };
 
 export function resolveApiUrl(path: string): string {
@@ -29,7 +32,7 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { method = 'GET', headers = {}, body, signal } = options;
+  const { method = 'GET', headers = {}, body, signal, credentials } = options;
   const url = resolveApiUrl(path);
 
   const init: RequestInit = {
@@ -40,6 +43,7 @@ export async function apiRequest<T>(
       ...headers,
     },
     signal,
+    ...(credentials ? { credentials } : {}),
   };
 
   if (body !== undefined && method !== 'GET') {
@@ -83,6 +87,8 @@ export async function apiRequest<T>(
     const message = apiMessage
       ? `${apiMessage} (HTTP ${response.status})`
       : `İstek başarısız: HTTP ${response.status} — ${method} ${url}`;
+
+    handleCmsAdminAuthFailure(path, response.status, apiMessage);
 
     const error: ApiError = { status: response.status, message, url, method, body: data };
     throw error;

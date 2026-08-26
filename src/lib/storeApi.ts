@@ -117,6 +117,9 @@ export type ValidCheckoutQuote = {
   normalPrice: number;
   packageDiscount: number;
   campaignDiscount: number;
+  partnerDiscount?: number;
+  partnerDiscountRate?: number;
+  appliedDiscountSource?: 'none' | 'campaign' | 'affiliate' | string;
   finalPrice: number;
   currency: 'TRY';
   campaign: PublicQuoteCampaign | null;
@@ -128,6 +131,9 @@ export type InvalidCheckoutQuote = {
   normalPrice: null;
   packageDiscount: null;
   campaignDiscount: null;
+  partnerDiscount?: null;
+  partnerDiscountRate?: null;
+  appliedDiscountSource?: null;
   finalPrice: null;
   currency: 'TRY';
   campaign: PublicQuoteCampaign | null;
@@ -221,18 +227,21 @@ export async function fetchCampaignById(id: string): Promise<Campaign | null> {
 }
 
 export async function fetchCampaignQuote(params: {
-  campaignCode: string;
+  campaignCode?: string | null;
   productType: CheckoutProductType;
   subscriptionPeriod: number;
 }): Promise<CampaignQuoteResponse> {
   try {
-    const campaignPublicCode = canonicalizeCampaignCode(params.campaignCode);
+    const campaignPublicCode = params.campaignCode
+      ? canonicalizeCampaignCode(params.campaignCode)
+      : undefined;
     const json = await apiRequest<ApiEnvelope<CampaignQuoteResponse> & CampaignQuoteResponse>(
       CAMPAIGN_QUOTE_PATH,
       {
         method: 'POST',
+        credentials: 'include',
         body: {
-          campaignPublicCode,
+          ...(campaignPublicCode ? { campaignPublicCode } : {}),
           productType: params.productType,
           subscriptionPeriod: params.subscriptionPeriod,
         },
@@ -295,6 +304,7 @@ export async function submitDemoRequest(
   const res = await fetch(resolveApiUrl('/api/demo/request'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    credentials: 'include',
     body: JSON.stringify(data),
   });
   const json = (await res.json()) as ApiEnvelope<unknown> & { error?: string };
@@ -391,6 +401,7 @@ export async function requestPaytrToken(params: {
     method: 'POST',
     body,
     headers: authHeaders(),
+    credentials: 'include',
   });
 }
 
@@ -460,6 +471,7 @@ export async function requestBankTransferOrder(params: {
     {
       method: 'POST',
       body,
+      credentials: 'include',
     },
   );
   if (!json.success) {
