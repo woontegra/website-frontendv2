@@ -292,6 +292,50 @@ export async function deleteAdminAffiliate(id: string): Promise<{ id: string; de
   return json.data;
 }
 
+export type AdminAffiliateDeletePreview = {
+  affiliateId: string;
+  name: string;
+  canDelete: boolean;
+  blockReasons: string[];
+  counts: {
+    links: number;
+    attributions: number;
+    commissions: number;
+    payouts: number;
+    payoutItems: number;
+    paymentsToNull: number;
+    auditLogs: number;
+    partnerAccess: number;
+    partnerMagicTokens: number;
+    partnerSessions: number;
+    paidCommissions: number;
+    earnedCommissions: number;
+    productionPaymentsLinked: number;
+    testPaymentsLinked: number;
+  };
+  actions: {
+    delete: string[];
+    nullify: string[];
+    preserve: string[];
+  } | null;
+};
+
+export async function fetchAdminAffiliateDeletePreview(
+  id: string,
+): Promise<AdminAffiliateDeletePreview> {
+  const json = await apiRequest<ApiEnvelope<AdminAffiliateDeletePreview>>(
+    `${BASE}/admin/${id}/delete-preview`,
+    {
+      method: 'GET',
+      headers: authHeaders(),
+    },
+  );
+  if (!json.success || !json.data) {
+    throw new Error(json.message ?? 'Silme önizlemesi yüklenemedi');
+  }
+  return json.data;
+}
+
 export async function createAdminAffiliateLink(
   affiliateId: string,
   body?: {
