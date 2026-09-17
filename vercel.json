@@ -1,5 +1,12 @@
 {
   "version": 2,
+  "redirects": [
+    {
+      "source": "/k/:code",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/satin-al?c=:code",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
