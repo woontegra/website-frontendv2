@@ -1,24 +1,104 @@
-{
-  "version": 2,
-  "redirects": [
-    {
-      "source": "/k/:code",
-      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/satin-al?c=:code",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://webapi.bilirkisihesap.com/api/$1"
-    },
-    {
-      "source": "/uploads/(.*)",
-      "destination": "https://webapi.bilirkisihesap.com/uploads/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
-}
+{
+  "version": 2,
+  "redirects": [
+    {
+      "source": "/k/:code",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/satin-al?c=:code",
+      "permanent": false
+    },
+    {
+      "source": "/fazla-mesai-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/fazla-mesai-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/kidem-tazminati-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/kidem-tazminati-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/ihbar-tazminati-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/ihbar-tazminati-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/yillik-izin-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/yillik-izin-ucreti-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/ubgt-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/ubgt-ucreti-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/hafta-tatili-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/hafta-tatili-ucreti-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/ucret-alacagi-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/ucret-alacagi-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/bakiye-ucret-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/bakiye-ucret-alacagi-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/kotu-niyet-tazminati",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/kotu-niyet-tazminati-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/ise-baslatmama-tazminati",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/ise-baslatmama-tazminati-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/bosta-gecen-sure-ucreti",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/bosta-gecen-sure-ucreti-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/ayrimcilik-tazminati",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/ayrimcilik-tazminati-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/prim-alacagi-hesaplama",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/prim-alacagi-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/haksiz-fesih-tazminati",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap/moduller/haksiz-fesih-tazminati-nasil-hesaplanir",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!api(?:/|$)|uploads(?:/|$)|admin(?:/|$)|partner(?:/|$)|k(?:/|$)|r(?:/|$)|odeme-basarili(?:/|$)|odeme-beklemede(?:/|$)|odeme-basarisiz(?:/|$)|assets(?:/|$)|favicon\\.ico|favicon\\.svg|robots\\.txt|sitemap\\.xml).*)",
+      "destination": "https://www.woontegra.com/yazilimlar/bilirkisi-hesap",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://webapi.bilirkisihesap.com/api/$1"
+    },
+    {
+      "source": "/uploads/(.*)",
+      "destination": "https://webapi.bilirkisihesap.com/uploads/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
